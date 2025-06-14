@@ -1,5 +1,17 @@
 import { Readability } from '@mozilla/readability'
 
+interface Article {
+  title: string
+  content: string
+  textContent: string
+  length: number
+  excerpt: string
+  byline: string | null
+  dir: string | null
+  siteName: string | null
+  lang: string | null
+}
+
 export class ReaderViewManager {
   private readonly READER_VIEW_ACTIVE_KEY = 'readerViewActive'
   private readonly ORIGINAL_PAGE_HTML_KEY = 'originalPageHTML'
@@ -64,13 +76,22 @@ export class ReaderViewManager {
     }
   }
 
-  private isValidArticle(article: any): boolean {
-    if (article === null) {
+  private isArticle(article: unknown): article is Article {
+    return (
+      typeof article === 'object' &&
+      article !== null &&
+      typeof (article as Article).title === 'string' &&
+      typeof (article as Article).content === 'string' &&
+      typeof (article as Article).textContent === 'string' &&
+      typeof (article as Article).length === 'number'
+    )
+  }
+
+  private isValidArticle(article: unknown): boolean {
+    if (!this.isArticle(article)) {
       return false
     }
     return (
-      typeof article.title === 'string' && 
-      typeof article.content === 'string' &&
       article.title.trim() !== '' &&
       article.content.trim() !== ''
     )
