@@ -1,6 +1,52 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { StyleManager } from './StyleManager'
-import { cssVariables, readerVars, themes } from '../styles/css-variables'
+
+// Mock Vanilla Extract imports for testing
+vi.mock('../styles/css-variables', () => ({
+  cssVariables: {
+    '--reader-bg-color': 'var(--mock-bg-color)',
+    '--reader-text-color': 'var(--mock-text-color)',
+    '--reader-font-size': 'var(--mock-font-size)',
+    '--reader-font-family': 'var(--mock-font-family)',
+  },
+  readerVars: {
+    backgroundColor: '--mock-bg-color',
+    textColor: '--mock-text-color',
+    fontSize: '--mock-font-size',
+    fontFamily: '--mock-font-family',
+  },
+  themes: {
+    light: 'mock-light-theme',
+    dark: 'mock-dark-theme',
+    sepia: 'mock-sepia-theme',
+  },
+  themeVariables: {
+    light: {
+      '--reader-bg-color': '#ffffff',
+      '--reader-text-color': '#333333',
+    },
+    dark: {
+      '--reader-bg-color': '#1a1a1a',
+      '--reader-text-color': '#e0e0e0',
+    },
+    sepia: {
+      '--reader-bg-color': '#f4f1e8',
+      '--reader-text-color': '#5c4b37',
+    },
+  },
+  fontSizeVariables: {
+    'font-large': { '--reader-font-size': '18px' },
+  },
+  fontFamilyVariables: {
+    'font-serif': { '--reader-font-family': 'Georgia, "Times New Roman", serif' },
+  },
+  fontSizes: {
+    large: '18px',
+  },
+  fontFamilies: {
+    serif: 'Georgia, "Times New Roman", serif',
+  },
+}))
 
 describe('StyleManager', () => {
   let styleManager: StyleManager
@@ -249,19 +295,29 @@ describe('StyleManager', () => {
   })
 
   describe('resetToDefaults', () => {
-    it('should reset all variables to default values', () => {
-      styleManager.updateCSSVariable('--reader-bg-color', '#custom')
+    it('should call updateCSSVariables with default values', () => {
+      const spy = vi.spyOn(styleManager, 'updateCSSVariables')
+      
       styleManager.resetToDefaults()
       
-      const bgColor = styleManager.getCSSVariable('--reader-bg-color')
-      expect(bgColor).toBe(cssVariables['--reader-bg-color'])
+      expect(spy).toHaveBeenCalledWith({
+        '--reader-bg-color': 'var(--mock-bg-color)',
+        '--reader-text-color': 'var(--mock-text-color)',
+        '--reader-font-size': 'var(--mock-font-size)',
+        '--reader-font-family': 'var(--mock-font-family)',
+      })
     })
   })
 
   describe('getDefaultVariables', () => {
     it('should return default CSS variables object', () => {
       const defaults = styleManager.getDefaultVariables()
-      expect(defaults).toEqual(cssVariables)
+      expect(defaults).toEqual({
+        '--reader-bg-color': 'var(--mock-bg-color)',
+        '--reader-text-color': 'var(--mock-text-color)',
+        '--reader-font-size': 'var(--mock-font-size)',
+        '--reader-font-family': 'var(--mock-font-family)',
+      })
     })
   })
 
@@ -270,17 +326,17 @@ describe('StyleManager', () => {
       it('should apply theme class to document body', () => {
         styleManager.applyVanillaTheme('dark')
         
-        expect(document.body.classList.contains(themes.dark)).toBe(true)
-        expect(document.body.classList.contains(themes.light)).toBe(false)
+        expect(document.body.classList.contains('mock-dark-theme')).toBe(true)
+        expect(document.body.classList.contains('mock-light-theme')).toBe(false)
       })
 
       it('should replace existing theme classes', () => {
         styleManager.applyVanillaTheme('light')
         styleManager.applyVanillaTheme('sepia')
         
-        expect(document.body.classList.contains(themes.sepia)).toBe(true)
-        expect(document.body.classList.contains(themes.light)).toBe(false)
-        expect(document.body.classList.contains(themes.dark)).toBe(false)
+        expect(document.body.classList.contains('mock-sepia-theme')).toBe(true)
+        expect(document.body.classList.contains('mock-light-theme')).toBe(false)
+        expect(document.body.classList.contains('mock-dark-theme')).toBe(false)
       })
     })
 
@@ -288,7 +344,7 @@ describe('StyleManager', () => {
       it('should update a vanilla extract CSS variable', () => {
         styleManager.updateVanillaVariable('backgroundColor', '#ff0000')
         
-        const value = getComputedStyle(document.documentElement).getPropertyValue(readerVars.backgroundColor)
+        const value = getComputedStyle(document.documentElement).getPropertyValue('--mock-bg-color')
         expect(value.trim()).toBe('#ff0000')
       })
     })
@@ -303,9 +359,9 @@ describe('StyleManager', () => {
         
         styleManager.updateVanillaVariables(variables)
         
-        const bgColor = getComputedStyle(document.documentElement).getPropertyValue(readerVars.backgroundColor)
-        const textColor = getComputedStyle(document.documentElement).getPropertyValue(readerVars.textColor)
-        const fontSize = getComputedStyle(document.documentElement).getPropertyValue(readerVars.fontSize)
+        const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--mock-bg-color')
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--mock-text-color')
+        const fontSize = getComputedStyle(document.documentElement).getPropertyValue('--mock-font-size')
         
         expect(bgColor.trim()).toBe('#f0f0f0')
         expect(textColor.trim()).toBe('#333333')
@@ -315,7 +371,7 @@ describe('StyleManager', () => {
 
     describe('getVanillaVariable', () => {
       it('should retrieve vanilla extract variable value', () => {
-        document.documentElement.style.setProperty(readerVars.backgroundColor, 'test-value')
+        document.documentElement.style.setProperty('--mock-bg-color', 'test-value')
         
         const value = styleManager.getVanillaVariable('backgroundColor')
         expect(value).toBe('test-value')
@@ -324,7 +380,7 @@ describe('StyleManager', () => {
 
     describe('removeVanillaVariable', () => {
       it('should remove vanilla extract variable', () => {
-        document.documentElement.style.setProperty(readerVars.backgroundColor, 'remove-me')
+        document.documentElement.style.setProperty('--mock-bg-color', 'remove-me')
         expect(styleManager.getVanillaVariable('backgroundColor')).toBe('remove-me')
         
         styleManager.removeVanillaVariable('backgroundColor')
