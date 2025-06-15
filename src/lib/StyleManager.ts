@@ -1,11 +1,28 @@
+import { 
+  cssVariables,
+  CSSVariableKeys,
+  themeVariables,
+  Theme,
+  fontSizeVariables,
+  FontSizeClass,
+  fontFamilyVariables,
+  FontFamilyClass,
+  themes,
+  readerVars,
+  fontSizes,
+  fontFamilies,
+  FontSize,
+  FontFamily
+} from '../styles/css-variables'
+
 interface CustomStyles {
-  fontSize?: string
-  fontFamily?: string
+  fontSize?: string | FontSize
+  fontFamily?: string | FontFamily
   backgroundColor?: string
   textColor?: string
-  theme?: 'light' | 'dark' | 'sepia'
-  fontSizeClass?: 'font-small' | 'font-medium' | 'font-large' | 'font-xlarge'
-  fontFamilyClass?: 'font-serif' | 'font-sans' | 'font-mono'
+  theme?: Theme
+  fontSizeClass?: FontSizeClass
+  fontFamilyClass?: FontFamilyClass
 }
 
 export class StyleManager {
@@ -140,5 +157,93 @@ export class StyleManager {
     }
     
     return classes
+  }
+
+  updateCSSVariable(variableName: CSSVariableKeys, value: string): void {
+    document.documentElement.style.setProperty(variableName, value)
+  }
+
+  updateCSSVariables(variables: Partial<Record<CSSVariableKeys, string>>): void {
+    const root = document.documentElement
+    
+    Object.entries(variables).forEach(([variableName, value]) => {
+      if (value !== undefined) {
+        root.style.setProperty(variableName as CSSVariableKeys, value)
+      }
+    })
+  }
+
+  getCSSVariable(variableName: CSSVariableKeys): string {
+    return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim()
+  }
+
+  removeCSSVariable(variableName: CSSVariableKeys): void {
+    document.documentElement.style.removeProperty(variableName)
+  }
+
+  applyTheme(theme: Theme): void {
+    const themeVars = themeVariables[theme]
+    this.updateCSSVariables(themeVars)
+  }
+
+  applyFontSize(fontSizeClass: FontSizeClass): void {
+    const fontSizeVars = fontSizeVariables[fontSizeClass]
+    this.updateCSSVariables(fontSizeVars)
+  }
+
+  applyFontFamily(fontFamilyClass: FontFamilyClass): void {
+    const fontFamilyVars = fontFamilyVariables[fontFamilyClass]
+    this.updateCSSVariables(fontFamilyVars)
+  }
+
+  resetToDefaults(): void {
+    this.updateCSSVariables(cssVariables)
+  }
+
+  getDefaultVariables(): typeof cssVariables {
+    return cssVariables
+  }
+
+  applyVanillaTheme(theme: Theme): void {
+    const themeClass = themes[theme]
+    
+    // Apply theme class to document body or a specific container
+    const existingThemes = Object.values(themes)
+    document.body.classList.remove(...existingThemes)
+    document.body.classList.add(themeClass)
+  }
+
+  updateVanillaVariable(variableName: keyof typeof readerVars, value: string): void {
+    const cssVar = readerVars[variableName]
+    document.documentElement.style.setProperty(cssVar, value)
+  }
+
+  updateVanillaVariables(variables: Partial<Record<keyof typeof readerVars, string>>): void {
+    Object.entries(variables).forEach(([key, value]) => {
+      if (value !== undefined) {
+        const cssVar = readerVars[key as keyof typeof readerVars]
+        document.documentElement.style.setProperty(cssVar, value)
+      }
+    })
+  }
+
+  getVanillaVariable(variableName: keyof typeof readerVars): string {
+    const cssVar = readerVars[variableName]
+    return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim()
+  }
+
+  removeVanillaVariable(variableName: keyof typeof readerVars): void {
+    const cssVar = readerVars[variableName]
+    document.documentElement.style.removeProperty(cssVar)
+  }
+
+  applyFontSizeBySize(fontSize: FontSize): void {
+    const sizeValue = fontSizes[fontSize]
+    this.updateVanillaVariable('fontSize', sizeValue)
+  }
+
+  applyFontFamilyByFamily(fontFamily: FontFamily): void {
+    const familyValue = fontFamilies[fontFamily]
+    this.updateVanillaVariable('fontFamily', familyValue)
   }
 }
