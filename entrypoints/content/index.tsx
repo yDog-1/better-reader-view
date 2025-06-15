@@ -1,9 +1,7 @@
 import ReactDOM from "react-dom/client";
 import "./style.css";
 import PopupMessage from "@/components/popupMsg";
-import UI from "@/components/ui"; // createUiで使われているので残す
 import { Readability } from "@mozilla/readability";
-import type { ContentScriptContext } from "#imports"; // createUiで使われているので残す
 
 const articleErrorMessage = "記事が見つかりませんでした。";
 
@@ -16,7 +14,7 @@ export default defineContentScript({
 	matches: [],
 	cssInjectionMode: "ui",
 
-	async main(ctx) { // ctx は createUi で使うので引数として残す
+	async main() {
 		const isActive = sessionStorage.getItem(READER_VIEW_ACTIVE_KEY) === "true";
 
 		if (isActive) {
@@ -24,8 +22,6 @@ export default defineContentScript({
 		} else {
 			activateReaderViewAndStoreOriginal();
 		}
-		// const ui = await createUi(ctx); // 元のコードにあったが、今回のリクエストとは直接関係ない
-		// ui.mount();
 
 		return;
 	},
@@ -114,16 +110,6 @@ function deactivateReaderView() {
 	}
 }
 
-// removeAllStyleSheets は直接使われなくなるが、他の場所で使われている可能性を考慮して残す
-function removeAllStyleSheets() {
-	const styleSheets = document.styleSheets;
-	for (let i = styleSheets.length - 1; i >= 0; i--) {
-		const styleSheet = styleSheets[i];
-		if (styleSheet.ownerNode && styleSheet.ownerNode.parentNode) {
-			styleSheet.ownerNode.parentNode.removeChild(styleSheet.ownerNode);
-		}
-	}
-}
 
 function showPopupMessage(message: string) {
 	const containerId = "reader-view-popup-container";
@@ -176,17 +162,3 @@ function isVaildArticle(article: BaseArticle | null): article is Article {
 	);
 }
 
-function createUi(ctx: ContentScriptContext) {
-	return createShadowRootUi(ctx, {
-		name: "active-tab-ui",
-		position: "inline",
-		append: "before",
-		onMount(container) {
-			const wrapper = document.createElement("div");
-			container.append(wrapper);
-
-			const root = ReactDOM.createRoot(wrapper);
-			root.render(<UI />);
-		},
-	});
-}

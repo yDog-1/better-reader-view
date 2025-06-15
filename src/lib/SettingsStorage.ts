@@ -21,8 +21,8 @@ export class SettingsStorage {
     try {
       const settingsJson = JSON.stringify(settings)
       localStorage.setItem(this.STORAGE_KEY, settingsJson)
-    } catch (error) {
-      console.warn('Failed to save reader view settings:', error)
+    } catch {
+      console.warn('Failed to save reader view settings')
       // Handle storage quota exceeded or other storage errors gracefully
     }
   }
@@ -42,8 +42,8 @@ export class SettingsStorage {
         ...this.defaultSettings,
         ...savedSettings
       }
-    } catch (error) {
-      console.warn('Failed to load reader view settings, using defaults:', error)
+    } catch {
+      console.warn('Failed to load reader view settings, using defaults')
       return { ...this.defaultSettings }
     }
   }
@@ -55,8 +55,8 @@ export class SettingsStorage {
   resetSettings(): void {
     try {
       localStorage.removeItem(this.STORAGE_KEY)
-    } catch (error) {
-      console.warn('Failed to reset reader view settings:', error)
+    } catch {
+      console.warn('Failed to reset reader view settings')
     }
   }
 
@@ -76,7 +76,7 @@ export class SettingsStorage {
   hasStoredSettings(): boolean {
     try {
       return localStorage.getItem(this.STORAGE_KEY) !== null
-    } catch (error) {
+    } catch {
       return false
     }
   }
@@ -99,13 +99,13 @@ export class SettingsStorage {
       }
       
       return false
-    } catch (error) {
-      console.warn('Failed to import settings:', error)
+    } catch {
+      console.warn('Failed to import settings')
       return false
     }
   }
 
-  private isValidSettings(obj: any): obj is Settings {
+  private isValidSettings(obj: unknown): obj is Settings {
     if (!obj || typeof obj !== 'object') {
       return false
     }

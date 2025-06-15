@@ -4,7 +4,7 @@ import { WxtVitest } from 'wxt/testing'
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
 
 export default defineConfig({
-  // @ts-ignore
+  // @ts-expect-error - WxtVitest plugin type compatibility
   plugins: [WxtVitest(), vanillaExtractPlugin()],
   test: {
     globals: true,
