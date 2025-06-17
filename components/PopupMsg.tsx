@@ -1,8 +1,10 @@
 import { useEffect } from "react";
+import { popupContainer } from "../assets/popup.css";
 
 interface PopupMessageProps {
   message: string;
   onClose: () => void;
+  theme?: "light" | "dark" | "sepia";
 }
 
 export default function PopupMessage({ message, onClose }: PopupMessageProps) {
@@ -13,20 +15,5 @@ export default function PopupMessage({ message, onClose }: PopupMessageProps) {
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  const popupStyle: React.CSSProperties = {
-    position: "fixed",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-    color: "white",
-    padding: "30px 50px",
-    borderRadius: "10px",
-    zIndex: "9999",
-    fontSize: "24px",
-    textAlign: "center",
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.3)",
-  };
-
-  return <div style={popupStyle}>{message}</div>;
+  return <div className={popupContainer}>{message}</div>;
 }
