@@ -1,6 +1,6 @@
 import ReactDOM from "react-dom/client";
 import "./style.css";
-import PopupMessage from "@/components/popupMsg";
+import PopupMessage from "../../components/PopupMsg";
 import { Readability } from "@mozilla/readability";
 
 const articleErrorMessage = "記事が見つかりませんでした。";
@@ -10,50 +10,50 @@ const ORIGINAL_PAGE_HTML_KEY = "originalPageHTML";
 const ORIGINAL_PAGE_TITLE_KEY = "originalPageTitle"; // タイトルも保存・復元
 
 export default defineContentScript({
-	registration: "runtime",
-	matches: [],
-	cssInjectionMode: "ui",
+  registration: "runtime",
+  matches: [],
+  cssInjectionMode: "ui",
 
-	async main() {
-		const isActive = sessionStorage.getItem(READER_VIEW_ACTIVE_KEY) === "true";
+  async main() {
+    const isActive = sessionStorage.getItem(READER_VIEW_ACTIVE_KEY) === "true";
 
-		if (isActive) {
-			deactivateReaderView();
-		} else {
-			activateReaderViewAndStoreOriginal();
-		}
+    if (isActive) {
+      deactivateReaderView();
+    } else {
+      activateReaderViewAndStoreOriginal();
+    }
 
-		return;
-	},
+    return;
+  },
 });
 
 // HTMLエスケープ用のヘルパー関数
 function escapeHtml(unsafe: string): string {
-    if (typeof unsafe !== 'string') {
-        return '';
-    }
-    return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
+  if (typeof unsafe !== "string") {
+    return "";
+  }
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function activateReaderViewAndStoreOriginal() {
-	const originalHTML = document.documentElement.innerHTML;
-	const originalTitle = document.title;
+  const originalHTML = document.documentElement.innerHTML;
+  const originalTitle = document.title;
 
-	// Readabilityには現在のdocumentのクローンを渡す
-	const documentClone = document.cloneNode(true) as Document;
-	const article = new Readability(documentClone).parse();
+  // Readabilityには現在のdocumentのクローンを渡す
+  const documentClone = document.cloneNode(true) as Document;
+  const article = new Readability(documentClone).parse();
 
-	if (isVaildArticle(article)) {
-		sessionStorage.setItem(ORIGINAL_PAGE_HTML_KEY, originalHTML);
-		sessionStorage.setItem(ORIGINAL_PAGE_TITLE_KEY, originalTitle);
+  if (isVaildArticle(article)) {
+    sessionStorage.setItem(ORIGINAL_PAGE_HTML_KEY, originalHTML);
+    sessionStorage.setItem(ORIGINAL_PAGE_TITLE_KEY, originalTitle);
 
-		// リーダー表示用の新しいHTMLコンテンツを作成
-		const readerHTML = `
+    // リーダー表示用の新しいHTMLコンテンツを作成
+    const readerHTML = `
 			<!DOCTYPE html>
 			<html>
 			<head>
@@ -75,90 +75,93 @@ function activateReaderViewAndStoreOriginal() {
 			</body>
 			</html>
 		`;
-		
-		document.documentElement.innerHTML = readerHTML;
 
-		sessionStorage.setItem(READER_VIEW_ACTIVE_KEY, "true");
-	} else {
-		showPopupMessage(articleErrorMessage);
-		// 失敗した場合は保存した可能性のある情報をクリア
-		sessionStorage.removeItem(ORIGINAL_PAGE_HTML_KEY);
-		sessionStorage.removeItem(ORIGINAL_PAGE_TITLE_KEY);
-	}
+    document.documentElement.innerHTML = readerHTML;
+
+    sessionStorage.setItem(READER_VIEW_ACTIVE_KEY, "true");
+  } else {
+    showPopupMessage(articleErrorMessage);
+    // 失敗した場合は保存した可能性のある情報をクリア
+    sessionStorage.removeItem(ORIGINAL_PAGE_HTML_KEY);
+    sessionStorage.removeItem(ORIGINAL_PAGE_TITLE_KEY);
+  }
 }
 
 function deactivateReaderView() {
-	const originalHTML = sessionStorage.getItem(ORIGINAL_PAGE_HTML_KEY);
-	
-	if (originalHTML) {
-		document.documentElement.innerHTML = originalHTML;
-		// タイトルも復元
-		const originalTitle = sessionStorage.getItem(ORIGINAL_PAGE_TITLE_KEY);
-		if (originalTitle) {
-			document.title = originalTitle;
-		}
+  const originalHTML = sessionStorage.getItem(ORIGINAL_PAGE_HTML_KEY);
 
-		sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
-		sessionStorage.removeItem(ORIGINAL_PAGE_HTML_KEY);
-		sessionStorage.removeItem(ORIGINAL_PAGE_TITLE_KEY);
-	} else {
-		showPopupMessage("元のページ情報を復元できませんでした。ページをリロードしてください。");
-		// 念のためクリア
-		sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
-		sessionStorage.removeItem(ORIGINAL_PAGE_HTML_KEY);
-		sessionStorage.removeItem(ORIGINAL_PAGE_TITLE_KEY);
-	}
+  if (originalHTML) {
+    document.documentElement.innerHTML = originalHTML;
+    // タイトルも復元
+    const originalTitle = sessionStorage.getItem(ORIGINAL_PAGE_TITLE_KEY);
+    if (originalTitle) {
+      document.title = originalTitle;
+    }
+
+    sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
+    sessionStorage.removeItem(ORIGINAL_PAGE_HTML_KEY);
+    sessionStorage.removeItem(ORIGINAL_PAGE_TITLE_KEY);
+  } else {
+    showPopupMessage(
+      "元のページ情報を復元できませんでした。ページをリロードしてください。",
+    );
+    // 念のためクリア
+    sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
+    sessionStorage.removeItem(ORIGINAL_PAGE_HTML_KEY);
+    sessionStorage.removeItem(ORIGINAL_PAGE_TITLE_KEY);
+  }
 }
 
-
 function showPopupMessage(message: string) {
-	const containerId = "reader-view-popup-container";
-	let container = document.getElementById(containerId);
-	if (!container) {
-		container = document.createElement("div");
-		container.id = containerId;
-		// body が存在する場合のみ body に追加する
-		if (document.body) {
-		    document.body.appendChild(container);
-		} else if (document.documentElement) {
-            // body がまだ利用できない場合 (例: DOMContentLoaded 前)、documentElement に追加
-            document.documentElement.appendChild(container);
-        } else {
-            // 通常ここには来ないはずだが、フォールバック
-            console.error("Cannot show popup: no body or documentElement found to append the container.");
-            return;
-        }
-	}
-	const root = ReactDOM.createRoot(container);
+  const containerId = "reader-view-popup-container";
+  let container = document.getElementById(containerId);
+  if (!container) {
+    container = document.createElement("div");
+    container.id = containerId;
+    // body が存在する場合のみ body に追加する
+    if (document.body) {
+      document.body.appendChild(container);
+    } else if (document.documentElement) {
+      // body がまだ利用できない場合 (例: DOMContentLoaded 前)、documentElement に追加
+      document.documentElement.appendChild(container);
+    } else {
+      // 通常ここには来ないはずだが、フォールバック
+      console.error(
+        "Cannot show popup: no body or documentElement found to append the container.",
+      );
+      return;
+    }
+  }
+  const root = ReactDOM.createRoot(container);
 
-	const handleClose = () => {
-		root.unmount();
-		if (container && container.parentNode) { // container が null でないことを確認
-			container.parentNode.removeChild(container);
-		}
-	};
+  const handleClose = () => {
+    root.unmount();
+    if (container && container.parentNode) {
+      // container が null でないことを確認
+      container.parentNode.removeChild(container);
+    }
+  };
 
-	root.render(<PopupMessage message={message} onClose={handleClose} />);
+  root.render(<PopupMessage message={message} onClose={handleClose} />);
 }
 
 // Readability.prototype.parse の戻り値の型 (ParseResult)
 type BaseArticle = typeof Readability.prototype.parse extends () => infer R
-	? R
-	: never;
+  ? R
+  : never;
 
 // title と content が string であることを保証する Article 型
 type Article = BaseArticle & {
-	title: string;
-	content: string;
+  title: string;
+  content: string;
 };
 
 // 型ガード関数: article が Article 型であるかをチェック
 function isVaildArticle(article: BaseArticle | null): article is Article {
-	if (article === null) {
-		return false;
-	}
-	return (
-		typeof article.title === "string" && typeof article.content === "string"
-	);
+  if (article === null) {
+    return false;
+  }
+  return (
+    typeof article.title === "string" && typeof article.content === "string"
+  );
 }
-

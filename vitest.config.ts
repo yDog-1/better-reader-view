@@ -1,14 +1,13 @@
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 /// <reference types="vitest" />
-import { defineConfig } from 'vitest/config'
-import { WxtVitest } from 'wxt/testing'
-import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
+import { defineConfig } from "vitest/config";
+import { WxtVitest } from "wxt/testing";
 
 export default defineConfig({
-  // @ts-expect-error - WxtVitest plugin type compatibility
   plugins: [WxtVitest(), vanillaExtractPlugin()],
   test: {
     globals: true,
-    environment: 'happy-dom',
-    setupFiles: ['./src/test/setup.ts'],
+    environment: "happy-dom",
+    setupFiles: ["./test/setup.ts"],
   },
-})
+});
