@@ -1,19 +1,11 @@
-import { 
-  cssVariables,
-  CSSVariableKeys,
-  themeVariables,
-  Theme,
-  fontSizeVariables,
-  FontSizeClass,
-  fontFamilyVariables,
-  FontFamilyClass,
-  themes,
-  readerVars,
-  fontSizes,
-  fontFamilies,
-  FontSize,
-  FontFamily
-} from '../styles/css-variables'
+import * as CSSVars from '../styles/css-variables'
+
+type CSSVariableKeys = CSSVars.CSSVariableKeys
+type Theme = CSSVars.Theme
+type FontSizeClass = CSSVars.FontSizeClass
+type FontFamilyClass = CSSVars.FontFamilyClass
+type FontSize = CSSVars.FontSize
+type FontFamily = CSSVars.FontFamily
 
 interface CustomStyles {
   fontSize?: string | FontSize
@@ -182,68 +174,68 @@ export class StyleManager {
   }
 
   applyTheme(theme: Theme): void {
-    const themeVars = themeVariables[theme]
+    const themeVars = CSSVars.themeVariables[theme]
     this.updateCSSVariables(themeVars)
   }
 
   applyFontSize(fontSizeClass: FontSizeClass): void {
-    const fontSizeVars = fontSizeVariables[fontSizeClass]
+    const fontSizeVars = CSSVars.fontSizeVariables[fontSizeClass]
     this.updateCSSVariables(fontSizeVars)
   }
 
   applyFontFamily(fontFamilyClass: FontFamilyClass): void {
-    const fontFamilyVars = fontFamilyVariables[fontFamilyClass]
+    const fontFamilyVars = CSSVars.fontFamilyVariables[fontFamilyClass]
     this.updateCSSVariables(fontFamilyVars)
   }
 
   resetToDefaults(): void {
-    this.updateCSSVariables(cssVariables)
+    this.updateCSSVariables(CSSVars.cssVariables)
   }
 
-  getDefaultVariables(): typeof cssVariables {
-    return cssVariables
+  getDefaultVariables(): typeof CSSVars.cssVariables {
+    return CSSVars.cssVariables
   }
 
   applyVanillaTheme(theme: Theme): void {
-    const themeClass = themes[theme]
+    const themeClass = CSSVars.themes[theme]
     
     // Apply theme class to document body or a specific container
-    const existingThemes = Object.values(themes)
+    const existingThemes = Object.values(CSSVars.themes)
     document.body.classList.remove(...existingThemes)
     document.body.classList.add(themeClass)
   }
 
-  updateVanillaVariable(variableName: keyof typeof readerVars, value: string): void {
-    const cssVar = readerVars[variableName]
+  updateVanillaVariable(variableName: keyof typeof CSSVars.readerVars, value: string): void {
+    const cssVar = CSSVars.readerVars[variableName]
     document.documentElement.style.setProperty(cssVar, value)
   }
 
-  updateVanillaVariables(variables: Partial<Record<keyof typeof readerVars, string>>): void {
+  updateVanillaVariables(variables: Partial<Record<keyof typeof CSSVars.readerVars, string>>): void {
     Object.entries(variables).forEach(([key, value]) => {
       if (value !== undefined) {
-        const cssVar = readerVars[key as keyof typeof readerVars]
+        const cssVar = CSSVars.readerVars[key as keyof typeof CSSVars.readerVars]
         document.documentElement.style.setProperty(cssVar, value)
       }
     })
   }
 
-  getVanillaVariable(variableName: keyof typeof readerVars): string {
-    const cssVar = readerVars[variableName]
+  getVanillaVariable(variableName: keyof typeof CSSVars.readerVars): string {
+    const cssVar = CSSVars.readerVars[variableName]
     return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim()
   }
 
-  removeVanillaVariable(variableName: keyof typeof readerVars): void {
-    const cssVar = readerVars[variableName]
+  removeVanillaVariable(variableName: keyof typeof CSSVars.readerVars): void {
+    const cssVar = CSSVars.readerVars[variableName]
     document.documentElement.style.removeProperty(cssVar)
   }
 
   applyFontSizeBySize(fontSize: FontSize): void {
-    const sizeValue = fontSizes[fontSize]
+    const sizeValue = CSSVars.fontSizes[fontSize]
     this.updateVanillaVariable('fontSize', sizeValue)
   }
 
   applyFontFamilyByFamily(fontFamily: FontFamily): void {
-    const familyValue = fontFamilies[fontFamily]
+    const familyValue = CSSVars.fontFamilies[fontFamily]
     this.updateVanillaVariable('fontFamily', familyValue)
   }
 }
