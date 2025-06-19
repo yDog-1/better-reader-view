@@ -11,26 +11,7 @@ import {
   settingsButton,
   closeToolbarButton,
 } from "../assets/integrated-reader.css";
-
-interface Article {
-  title: string;
-  content: string;
-  textContent: string;
-  length: number;
-  excerpt: string;
-  byline: string;
-  dir: string;
-  siteName: string;
-  lang: string;
-}
-
-interface Settings {
-  fontSize: string;
-  fontFamily: string;
-  theme: "light" | "dark" | "sepia";
-  backgroundColor: string;
-  textColor: string;
-}
+import { type Article, type Settings } from "../types";
 
 interface IntegratedReaderViewProps {
   article: Article;

@@ -6,25 +6,7 @@ import {
   readerByline,
   readerBody,
 } from "../assets/reader.css";
-
-interface Article {
-  title: string;
-  content: string;
-  textContent: string;
-  length: number;
-  excerpt: string;
-  byline: string;
-  dir: string;
-  siteName: string;
-  lang: string;
-}
-
-interface CustomStyles {
-  fontSize?: string;
-  fontFamily?: string;
-  backgroundColor?: string;
-  textColor?: string;
-}
+import { type Article, type CustomStyles } from "../types";
 
 interface ReaderViewProps {
   article: Article;

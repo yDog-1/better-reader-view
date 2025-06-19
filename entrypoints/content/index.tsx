@@ -1,13 +1,19 @@
+import React from "react";
 import ReactDOM from "react-dom/client";
-import "./style.css";
 import PopupMessage from "../../components/PopupMsg";
+import { SafeReaderView } from "../../components/SafeReaderView";
 import { Readability } from "@mozilla/readability";
+import { type Article, isValidArticle } from "../../types";
 
 const articleErrorMessage = "記事が見つかりませんでした。";
 
 const READER_VIEW_ACTIVE_KEY = "readerViewActive";
-const ORIGINAL_PAGE_HTML_KEY = "originalPageHTML";
-const ORIGINAL_PAGE_TITLE_KEY = "originalPageTitle"; // タイトルも保存・復元
+const READER_VIEW_CONTAINER_ID = "better-reader-view-container";
+
+// Global variables for managing the reader view
+let readerViewRoot: ReactDOM.Root | null = null;
+let readerViewContainer: HTMLElement | null = null;
+let originalBodyOverflow: string | null = null;
 
 export default defineContentScript({
   registration: "runtime",
@@ -20,96 +26,84 @@ export default defineContentScript({
     if (isActive) {
       deactivateReaderView();
     } else {
-      activateReaderViewAndStoreOriginal();
+      activateReaderViewSafely();
     }
 
     return;
   },
 });
 
-// HTMLエスケープ用のヘルパー関数
-function escapeHtml(unsafe: string): string {
-  if (typeof unsafe !== "string") {
-    return "";
-  }
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function activateReaderViewAndStoreOriginal() {
-  const originalHTML = document.documentElement.innerHTML;
-  const originalTitle = document.title;
-
-  // Readabilityには現在のdocumentのクローンを渡す
+function activateReaderViewSafely() {
+  // Parse article content using Readability
   const documentClone = document.cloneNode(true) as Document;
   const article = new Readability(documentClone).parse();
 
-  if (isVaildArticle(article)) {
-    sessionStorage.setItem(ORIGINAL_PAGE_HTML_KEY, originalHTML);
-    sessionStorage.setItem(ORIGINAL_PAGE_TITLE_KEY, originalTitle);
-
-    // リーダー表示用の新しいHTMLコンテンツを作成
-    const readerHTML = `
-			<!DOCTYPE html>
-			<html>
-			<head>
-				<meta charset="UTF-8">
-				<title>${escapeHtml(article.title)}</title>
-				<style>
-					body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; line-height: 1.7; max-width: 70ch; margin: 2rem auto; padding: 2rem; background-color: #fff; color: #1a1a1a; }
-					h1 { font-size: 2.2em; margin-bottom: 1em; color: #000; font-weight: 600;}
-					p, li, blockquote { font-size: 1.1em; margin-bottom: 1em; }
-					a { color: #007bff; }
-					img, video, figure { max-width: 100%; height: auto; margin: 1.5em 0; }
-					pre { background-color: #f0f0f0; padding: 1em; overflow-x: auto; border-radius: 4px; }
-					code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; }
-				</style>
-			</head>
-			<body>
-				<h1>${escapeHtml(article.title)}</h1>
-				<div>${article.content}</div>
-			</body>
-			</html>
-		`;
-
-    document.documentElement.innerHTML = readerHTML;
-
+  if (isValidArticle(article)) {
+    createReaderViewContainer(article);
     sessionStorage.setItem(READER_VIEW_ACTIVE_KEY, "true");
   } else {
     showPopupMessage(articleErrorMessage);
-    // 失敗した場合は保存した可能性のある情報をクリア
-    sessionStorage.removeItem(ORIGINAL_PAGE_HTML_KEY);
-    sessionStorage.removeItem(ORIGINAL_PAGE_TITLE_KEY);
+  }
+}
+
+function createReaderViewContainer(article: Article) {
+  // Clean up any existing reader view
+  if (readerViewContainer) {
+    deactivateReaderView();
+  }
+
+  // Create container element
+  readerViewContainer = document.createElement("div");
+  readerViewContainer.id = READER_VIEW_CONTAINER_ID;
+
+  // Hide page content behind reader view
+  originalBodyOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+
+  // Append to body
+  document.body.appendChild(readerViewContainer);
+
+  // Create React root and render
+  try {
+    readerViewRoot = ReactDOM.createRoot(readerViewContainer);
+    readerViewRoot.render(
+      React.createElement(SafeReaderView, {
+        article,
+        onClose: deactivateReaderView,
+      }),
+    );
+  } catch (error) {
+    console.error("Failed to create reader view:", error);
+    deactivateReaderView();
+    showPopupMessage("リーダービューの作成に失敗しました。");
   }
 }
 
 function deactivateReaderView() {
-  const originalHTML = sessionStorage.getItem(ORIGINAL_PAGE_HTML_KEY);
-
-  if (originalHTML) {
-    document.documentElement.innerHTML = originalHTML;
-    // タイトルも復元
-    const originalTitle = sessionStorage.getItem(ORIGINAL_PAGE_TITLE_KEY);
-    if (originalTitle) {
-      document.title = originalTitle;
+  // Clean up React root
+  if (readerViewRoot) {
+    try {
+      readerViewRoot.unmount();
+    } catch (error) {
+      console.warn("Failed to unmount React root:", error);
     }
-
-    sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
-    sessionStorage.removeItem(ORIGINAL_PAGE_HTML_KEY);
-    sessionStorage.removeItem(ORIGINAL_PAGE_TITLE_KEY);
-  } else {
-    showPopupMessage(
-      "元のページ情報を復元できませんでした。ページをリロードしてください。",
-    );
-    // 念のためクリア
-    sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
-    sessionStorage.removeItem(ORIGINAL_PAGE_HTML_KEY);
-    sessionStorage.removeItem(ORIGINAL_PAGE_TITLE_KEY);
+    readerViewRoot = null;
   }
+
+  // Remove container element
+  if (readerViewContainer && readerViewContainer.parentNode) {
+    readerViewContainer.parentNode.removeChild(readerViewContainer);
+    readerViewContainer = null;
+  }
+
+  // Restore body overflow
+  if (originalBodyOverflow !== null) {
+    document.body.style.overflow = originalBodyOverflow;
+    originalBodyOverflow = null;
+  }
+
+  // Update session storage
+  sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
 }
 
 function showPopupMessage(message: string) {
@@ -143,25 +137,4 @@ function showPopupMessage(message: string) {
   };
 
   root.render(<PopupMessage message={message} onClose={handleClose} />);
-}
-
-// Readability.prototype.parse の戻り値の型 (ParseResult)
-type BaseArticle = typeof Readability.prototype.parse extends () => infer R
-  ? R
-  : never;
-
-// title と content が string であることを保証する Article 型
-type Article = BaseArticle & {
-  title: string;
-  content: string;
-};
-
-// 型ガード関数: article が Article 型であるかをチェック
-function isVaildArticle(article: BaseArticle | null): article is Article {
-  if (article === null) {
-    return false;
-  }
-  return (
-    typeof article.title === "string" && typeof article.content === "string"
-  );
 }

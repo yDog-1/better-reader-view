@@ -1,12 +1,5 @@
 import * as CSSVars from "../assets/css-variables";
-
-interface Settings {
-  fontSize: string;
-  fontFamily: string;
-  theme: CSSVars.Theme;
-  backgroundColor: string;
-  textColor: string;
-}
+import { type Settings } from "../types";
 
 export class SettingsStorage {
   private readonly STORAGE_KEY = "readerViewSettings";

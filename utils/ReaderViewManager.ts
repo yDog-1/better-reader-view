@@ -1,16 +1,5 @@
 import { Readability } from "@mozilla/readability";
-
-interface Article {
-  title: string;
-  content: string;
-  textContent: string;
-  length: number;
-  excerpt: string;
-  byline: string | null;
-  dir: string | null;
-  siteName: string | null;
-  lang: string | null;
-}
+import { type Article } from "../types";
 
 export class ReaderViewManager {
   private readonly READER_VIEW_ACTIVE_KEY = "readerViewActive";

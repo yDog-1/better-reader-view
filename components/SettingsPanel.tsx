@@ -15,14 +15,7 @@ import {
   sepiaTheme,
   lightTheme,
 } from "../assets/settings-panel.css";
-
-interface Settings {
-  fontSize: string;
-  fontFamily: string;
-  theme: "light" | "dark" | "sepia";
-  backgroundColor: string;
-  textColor: string;
-}
+import { type Settings } from "../types";
 
 interface SettingsPanelProps {
   isVisible: boolean;
