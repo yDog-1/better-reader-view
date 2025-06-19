@@ -1,10 +1,25 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { SettingsStorage } from "./SettingsStorage";
 
-// Test constants for default settings
+// Mock CSS variables
+vi.mock("../assets/css-variables", () => ({
+  fontSizes: {
+    small: "14px",
+    medium: "16px",
+    large: "18px",
+    xlarge: "20px",
+  },
+  fontFamilies: {
+    serif: 'Georgia, "Times New Roman", serif',
+    sans: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+    mono: '"Fira Code", "SF Mono", Consolas, monospace',
+  },
+}));
+
+// Test constants for default settings (updated to match new defaults)
 const defaultSettings = {
   fontSize: "16px",
-  fontFamily: "serif",
+  fontFamily: 'Georgia, "Times New Roman", serif',
   theme: "light" as const,
   backgroundColor: "#ffffff",
   textColor: "#000000",
@@ -95,7 +110,7 @@ describe("SettingsStorage", () => {
 
       const expectedMergedSettings = {
         fontSize: "20px",
-        fontFamily: "serif",
+        fontFamily: 'Georgia, "Times New Roman", serif',
         theme: "dark" as const,
         backgroundColor: "#ffffff",
         textColor: "#000000",
@@ -271,7 +286,7 @@ describe("SettingsStorage", () => {
       // Should include known properties and merge with defaults, preserving extra properties
       expect(loaded).toEqual({
         fontSize: "20px",
-        fontFamily: "serif", // from defaults
+        fontFamily: 'Georgia, "Times New Roman", serif', // from defaults
         theme: "dark",
         backgroundColor: "#ffffff", // from defaults
         textColor: "#000000", // from defaults

@@ -19,12 +19,40 @@ interface CustomStyles {
 
 export class StyleManager {
   private readonly STYLE_ID = "reader-view-styles";
+  private currentThemeClass: string | null = null;
 
+  // Apply Vanilla Extract theme classes directly to the document
+  applyVanillaExtractTheme(theme: Theme): void {
+    // Remove existing theme classes
+    if (this.currentThemeClass) {
+      document.documentElement.classList.remove(this.currentThemeClass);
+    }
+
+    // Apply new theme class
+    const themeClass = CSSVars.themes[theme];
+    document.documentElement.classList.add(themeClass);
+    this.currentThemeClass = themeClass;
+  }
+
+  // Modern approach: Use CSS variables with Vanilla Extract contract
+  applyThemeVariables(theme: Theme): void {
+    // Apply theme class to enable contract variables
+    this.applyVanillaExtractTheme(theme);
+
+    // The theme contract will provide the values automatically
+    // Individual variables can be overridden if needed using updateVanillaVariable
+  }
+
+  // Legacy method for backward compatibility - now uses Vanilla Extract
   injectStyles(cssContent: string): void {
+    console.warn(
+      "injectStyles is deprecated. Use applyVanillaExtractTheme instead.",
+    );
+
     // Remove existing styles
     this.removeStyles();
 
-    // Create and inject new styles
+    // For legacy compatibility, still create style element but prefer CSS variables
     const styleElement = document.createElement("style");
     styleElement.setAttribute("data-reader-view", "true");
     styleElement.id = this.STYLE_ID;
@@ -37,6 +65,12 @@ export class StyleManager {
     const existingStyle = document.getElementById(this.STYLE_ID);
     if (existingStyle) {
       existingStyle.remove();
+    }
+
+    // Remove theme classes
+    if (this.currentThemeClass) {
+      document.documentElement.classList.remove(this.currentThemeClass);
+      this.currentThemeClass = null;
     }
 
     // Also remove any styles with the data attribute
@@ -96,9 +130,40 @@ export class StyleManager {
     return css;
   }
 
+  // Modern method: Apply styles using Vanilla Extract variables
+  async applyModernStyles(customStyles: CustomStyles): Promise<void> {
+    // Apply theme using Vanilla Extract if specified
+    if (customStyles.theme) {
+      this.applyVanillaExtractTheme(customStyles.theme);
+    }
+
+    // Apply individual variable overrides
+    if (customStyles.fontSize) {
+      this.updateVanillaVariable("fontSize", customStyles.fontSize);
+    }
+
+    if (customStyles.fontFamily) {
+      this.updateVanillaVariable("fontFamily", customStyles.fontFamily);
+    }
+
+    if (customStyles.backgroundColor) {
+      this.updateVanillaVariable(
+        "backgroundColor",
+        customStyles.backgroundColor,
+      );
+    }
+
+    if (customStyles.textColor) {
+      this.updateVanillaVariable("textColor", customStyles.textColor);
+    }
+  }
+
+  // Legacy compatibility methods
   async loadBaseStyles(): Promise<string> {
-    // In a real implementation, this would load from the CSS file
-    // For testing, we'll return a mock CSS content
+    console.warn(
+      "loadBaseStyles is deprecated. Use applyModernStyles with Vanilla Extract instead.",
+    );
+    // Return base styles that use CSS variables compatible with Vanilla Extract
     return `
       .reader-view-container {
         position: fixed;
@@ -106,17 +171,17 @@ export class StyleManager {
         left: 0;
         width: 100vw;
         height: 100vh;
-        background-color: var(--reader-bg-color);
-        color: var(--reader-text-color);
-        font-family: var(--reader-font-family);
-        font-size: var(--reader-font-size);
+        background-color: ${CSSVars.readerVars.backgroundColor};
+        color: ${CSSVars.readerVars.textColor};
+        font-family: ${CSSVars.readerVars.fontFamily};
+        font-size: ${CSSVars.readerVars.fontSize};
         z-index: 999999;
       }
       
       .reader-content {
-        max-width: 800px;
+        max-width: ${CSSVars.readerVars.maxWidth};
         margin: 0 auto;
-        padding: 40px 20px;
+        padding: ${CSSVars.readerVars.padding};
       }
       
       .reader-title {
@@ -128,11 +193,12 @@ export class StyleManager {
   }
 
   async applyCustomStyles(customStyles: CustomStyles): Promise<void> {
-    const baseCSS = await this.loadBaseStyles();
-    const customCSS = this.generateCustomCSS(customStyles);
-    const combinedCSS = baseCSS + "\n" + customCSS;
+    console.warn(
+      "applyCustomStyles is deprecated. Use applyModernStyles instead.",
+    );
 
-    this.injectStyles(combinedCSS);
+    // Use modern approach for better performance
+    await this.applyModernStyles(customStyles);
   }
 
   getAppliedClasses(customStyles: CustomStyles): string[] {
@@ -203,12 +269,10 @@ export class StyleManager {
   }
 
   applyVanillaTheme(theme: Theme): void {
-    const themeClass = CSSVars.themes[theme];
-
-    // Apply theme class to document body or a specific container
-    const existingThemes = Object.values(CSSVars.themes);
-    document.body.classList.remove(...existingThemes);
-    document.body.classList.add(themeClass);
+    console.warn(
+      "applyVanillaTheme is deprecated. Use applyVanillaExtractTheme instead.",
+    );
+    this.applyVanillaExtractTheme(theme);
   }
 
   updateVanillaVariable(

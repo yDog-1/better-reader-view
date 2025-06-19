@@ -1,7 +1,9 @@
+import * as CSSVars from "../assets/css-variables";
+
 interface Settings {
   fontSize: string;
   fontFamily: string;
-  theme: "light" | "dark" | "sepia";
+  theme: CSSVars.Theme;
   backgroundColor: string;
   textColor: string;
 }
@@ -10,8 +12,8 @@ export class SettingsStorage {
   private readonly STORAGE_KEY = "readerViewSettings";
 
   private defaultSettings: Settings = {
-    fontSize: "16px",
-    fontFamily: "serif",
+    fontSize: CSSVars.fontSizes.medium,
+    fontFamily: CSSVars.fontFamilies.serif,
     theme: "light",
     backgroundColor: "#ffffff",
     textColor: "#000000",

@@ -165,7 +165,7 @@ describe("StyleManager", () => {
   });
 
   describe("applyCustomStyles", () => {
-    it("should inject combined base and custom styles", async () => {
+    it("should apply modern styles using Vanilla Extract", async () => {
       const customStyles = {
         fontSize: "20px",
         theme: "dark" as const,
@@ -173,10 +173,16 @@ describe("StyleManager", () => {
 
       await styleManager.applyCustomStyles(customStyles);
 
-      const injectedStyle = document.querySelector("style[data-reader-view]");
-      expect(injectedStyle).toBeTruthy();
-      expect(injectedStyle?.textContent).toContain(".reader-view-container");
-      expect(injectedStyle?.textContent).toContain("--reader-font-size: 20px");
+      // Check that theme class is applied to document element
+      expect(
+        document.documentElement.classList.contains("mock-dark-theme"),
+      ).toBe(true);
+
+      // Check that CSS variables are set
+      const fontSize = getComputedStyle(
+        document.documentElement,
+      ).getPropertyValue("--mock-font-size");
+      expect(fontSize.trim()).toBe("20px");
     });
   });
 
@@ -351,24 +357,33 @@ describe("StyleManager", () => {
 
   describe("Vanilla Extract methods", () => {
     describe("applyVanillaTheme", () => {
-      it("should apply theme class to document body", () => {
+      it("should apply theme class to document element", () => {
         styleManager.applyVanillaTheme("dark");
 
-        expect(document.body.classList.contains("mock-dark-theme")).toBe(true);
-        expect(document.body.classList.contains("mock-light-theme")).toBe(
-          false,
-        );
+        expect(
+          document.documentElement.classList.contains("mock-dark-theme"),
+        ).toBe(true);
+        expect(
+          document.documentElement.classList.contains("mock-light-theme"),
+        ).toBe(false);
       });
 
       it("should replace existing theme classes", () => {
+        // Clear any existing classes first
+        document.documentElement.className = "";
+
         styleManager.applyVanillaTheme("light");
         styleManager.applyVanillaTheme("sepia");
 
-        expect(document.body.classList.contains("mock-sepia-theme")).toBe(true);
-        expect(document.body.classList.contains("mock-light-theme")).toBe(
-          false,
-        );
-        expect(document.body.classList.contains("mock-dark-theme")).toBe(false);
+        expect(
+          document.documentElement.classList.contains("mock-sepia-theme"),
+        ).toBe(true);
+        expect(
+          document.documentElement.classList.contains("mock-light-theme"),
+        ).toBe(false);
+        expect(
+          document.documentElement.classList.contains("mock-dark-theme"),
+        ).toBe(false);
       });
     });
 
