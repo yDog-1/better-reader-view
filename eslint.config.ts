@@ -44,6 +44,9 @@ export default [
         WebSocket: 'readonly',
         CustomEvent: 'readonly',
         Document: 'readonly',
+        // Test environment globals
+        global: 'readonly',
+        DOMParser: 'readonly',
       },
     },
     plugins: {

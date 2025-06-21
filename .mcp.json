@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "WXT": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "sitemcp",
+        "https://wxt.dev/",
+        "-m",
+        "/guide/**",
+        "-m",
+        "/api/reference/**"
+      ]
+    }
+  }
+}
