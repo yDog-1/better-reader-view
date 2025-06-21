@@ -58,6 +58,20 @@ export const renderReaderView = ({ title, content }: { title: string; content: s
   `;
 };
 
+/**
+ * 純粋関数: documentを引数に受け取り、上記2つを組み合わせる
+ */
+export const activateReader = (document: Document): boolean => {
+  const content = extractContent(document);
+  if (!content) {
+    return false;
+  }
+  
+  const html = renderReaderView(content);
+  document.documentElement.innerHTML = html;
+  return true;
+};
+
 // 型ガード関数: article が Article 型であるかをチェック
 function isValidArticle(article: BaseArticle | null): article is Article {
   if (article === null) {
