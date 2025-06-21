@@ -19,20 +19,6 @@ describe('Reader Utils', () => {
       expect(html).toContain('<p>Test content</p>');
     });
 
-    it('should escape HTML in title to prevent XSS', () => {
-      const content = {
-        title: '<script>alert("xss")</script>',
-        content: '<p>Safe content</p>',
-      };
-
-      const html = renderReaderView(content);
-
-      expect(html).toContain(
-        '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'
-      );
-      expect(html).not.toContain('<script>alert("xss")</script>');
-    });
-
     it('should include CSS styles for reader view', () => {
       const content = {
         title: 'Test Article',
@@ -57,19 +43,6 @@ describe('Reader Utils', () => {
 
       expect(html).toContain('<h1></h1>');
       expect(html).toContain('<div></div>');
-    });
-
-    it('should properly escape special characters in title', () => {
-      const content = {
-        title: 'Title with & quotes " and apostrophes \'',
-        content: '<p>Content</p>',
-      };
-
-      const html = renderReaderView(content);
-
-      expect(html).toContain('&amp;');
-      expect(html).toContain('&quot;');
-      expect(html).toContain('&#039;');
     });
   });
 });

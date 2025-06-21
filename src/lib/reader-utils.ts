@@ -1,17 +1,5 @@
 import { Readability } from '@mozilla/readability';
-
-// HTMLエスケープ用のヘルパー関数
-function escapeHtml(unsafe: string): string {
-  if (typeof unsafe !== 'string') {
-    return '';
-  }
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+import DOMPurify from 'dompurify';
 
 // Readability.prototype.parse の戻り値の型 (ParseResult)
 type BaseArticle = typeof Readability.prototype.parse extends () => infer R
@@ -48,8 +36,8 @@ export const extractContent = (
 
   if (isValidArticle(article)) {
     return {
-      title: article.title,
-      content: article.content,
+      title: DOMPurify.sanitize(article.title),
+      content: DOMPurify.sanitize(article.content),
     };
   }
 
@@ -58,10 +46,13 @@ export const extractContent = (
 
 /**
  * 純粋関数: コンテンツを受け取り、レンダリング用のHTML文字列を生成する
- * @param content - タイトルとコンテンツを含むオブジェクト
+ * @param param0 - タイトルとコンテンツを含むオブジェクト（分割代入）
  * @returns レンダリング用のHTML文字列
  */
-export const renderReaderView = (content: {
+export const renderReaderView = ({
+  title,
+  content,
+}: {
   title: string;
   content: string;
 }): string => {
@@ -70,7 +61,7 @@ export const renderReaderView = (content: {
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>${escapeHtml(content.title)}</title>
+      <title>${title}</title>
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; line-height: 1.7; max-width: 70ch; margin: 2rem auto; padding: 2rem; background-color: #fff; color: #1a1a1a; }
         h1 { font-size: 2.2em; margin-bottom: 1em; color: #000; font-weight: 600;}
@@ -82,8 +73,8 @@ export const renderReaderView = (content: {
       </style>
     </head>
     <body>
-      <h1>${escapeHtml(content.title)}</h1>
-      <div>${content.content}</div>
+      <h1>${title}</h1>
+      <div>${content}</div>
     </body>
     </html>
   `;
@@ -92,8 +83,10 @@ export const renderReaderView = (content: {
 /**
  * リーダービューをアクティベートする関数
  * 上記の純粋関数を組み合わせて使用する
+ * @param document - 対象のDocument
+ * @returns 成功した場合true、失敗した場合false
  */
-export const activateReader = (): boolean => {
+export const activateReader = (document: Document): boolean => {
   const content = extractContent(document);
   if (content) {
     const html = renderReaderView(content);
