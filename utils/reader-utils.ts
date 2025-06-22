@@ -85,8 +85,8 @@ class ReaderViewManager {
     this.readerContainer.style.cssText =
       'all: initial; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2147483647;';
 
-    // Shadow DOMを作成
-    this.shadowRoot = this.readerContainer.attachShadow({ mode: 'open' });
+    // Shadow DOMを作成（closedモードでセキュリティ向上）
+    this.shadowRoot = this.readerContainer.attachShadow({ mode: 'closed' });
 
     // ReactコンポーネントをShadow DOMにレンダリング
     this.reactRoot = this.renderReaderViewToShadow(this.shadowRoot, content);
