@@ -44,6 +44,9 @@ export default [
         WebSocket: 'readonly',
         CustomEvent: 'readonly',
         Document: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        ShadowRoot: 'readonly',
       },
     },
     plugins: {
