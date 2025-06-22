@@ -13,31 +13,28 @@ export default defineContentScript({
   cssInjectionMode: 'ui',
 
   async main() {
-    const isActive = sessionStorage.getItem(READER_VIEW_ACTIVE_KEY) === 'true';
-
-    if (isActive) {
-      deactivateReaderView();
-    } else {
-      activateReaderViewFunc();
-    }
-
+    toggleReaderView();
     return;
   },
 });
 
-function activateReaderViewFunc() {
-  const success = activateReader(document);
+function toggleReaderView() {
+  const isActive = sessionStorage.getItem(READER_VIEW_ACTIVE_KEY) === 'true';
 
-  if (success) {
-    sessionStorage.setItem(READER_VIEW_ACTIVE_KEY, 'true');
+  if (isActive) {
+    // リーダービューを無効化
+    deactivateReader(document);
+    sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
   } else {
-    showPopupMessage(articleErrorMessage);
-  }
-}
+    // リーダービューを有効化
+    const success = activateReader(document);
 
-function deactivateReaderView() {
-  deactivateReader(document);
-  sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
+    if (success) {
+      sessionStorage.setItem(READER_VIEW_ACTIVE_KEY, 'true');
+    } else {
+      showPopupMessage(articleErrorMessage);
+    }
+  }
 }
 
 function showPopupMessage(message: string) {

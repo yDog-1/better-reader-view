@@ -43,98 +43,118 @@ const extractContent = (
 };
 
 /**
- * ReactコンポーネントをShadow DOMにレンダリングする関数
+ * リーダービューの状態とライフサイクルを管理するクラス
  */
-const renderReaderViewToShadow = (
-  shadowRoot: ShadowRoot,
-  content: { title: string; content: string }
-): ReactDOM.Root => {
-  const root = ReactDOM.createRoot(shadowRoot);
-  root.render(React.createElement(ReaderView, content));
-  return root;
-};
+class ReaderViewManager {
+  private readerContainer: HTMLElement | null = null;
+  private shadowRoot: ShadowRoot | null = null;
+  private reactRoot: ReactDOM.Root | null = null;
+  private originalPageDisplay: string = '';
 
-// Reader viewの状態を管理するグローバル変数
-let readerContainer: HTMLElement | null = null;
-let shadowRoot: ShadowRoot | null = null;
-let reactRoot: ReactDOM.Root | null = null;
-let originalPageDisplay: string = '';
+  /**
+   * ReactコンポーネントをShadow DOMにレンダリング
+   */
+  private renderReaderViewToShadow(
+    shadowRoot: ShadowRoot,
+    content: { title: string; content: string }
+  ): ReactDOM.Root {
+    const root = ReactDOM.createRoot(shadowRoot);
+    root.render(React.createElement(ReaderView, content));
+    return root;
+  }
+
+  /**
+   * リーダービューをShadow DOMで表示
+   */
+  activateReader(doc: Document): boolean {
+    const content = extractContent(doc);
+    if (!content) {
+      return false;
+    }
+
+    // 既存のリーダービューがあれば先に削除
+    this.deactivateReader(doc);
+
+    // 既存ページを非表示
+    this.originalPageDisplay = doc.body.style.display;
+    doc.body.style.display = 'none';
+
+    // コンテナ要素を作成
+    this.readerContainer = doc.createElement('div');
+    this.readerContainer.id = 'better-reader-view-container';
+    this.readerContainer.style.cssText =
+      'all: initial; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2147483647;';
+
+    // Shadow DOMを作成
+    this.shadowRoot = this.readerContainer.attachShadow({ mode: 'open' });
+
+    // ReactコンポーネントをShadow DOMにレンダリング
+    this.reactRoot = this.renderReaderViewToShadow(this.shadowRoot, content);
+
+    // コンテナをドキュメントに追加
+    doc.body.parentElement?.appendChild(this.readerContainer);
+
+    return true;
+  }
+
+  /**
+   * リーダービューを非表示にして元ページを復元
+   */
+  deactivateReader(doc: Document): void {
+    // React rootをアンマウント
+    if (this.reactRoot) {
+      try {
+        this.reactRoot.unmount();
+      } catch (e) {
+        console.warn('Failed to unmount React root:', e);
+      }
+      this.reactRoot = null;
+    }
+
+    // Shadow rootのコンテンツをクリア
+    if (this.shadowRoot) {
+      this.shadowRoot.innerHTML = '';
+      this.shadowRoot = null;
+    }
+
+    // コンテナを削除（IDで検索して確実に削除）
+    const containerById = doc.getElementById('better-reader-view-container');
+    if (containerById) {
+      // ShadowRootがあれば先にクリア
+      if (containerById.shadowRoot) {
+        containerById.shadowRoot.innerHTML = '';
+      }
+      if (containerById.parentNode) {
+        containerById.parentNode.removeChild(containerById);
+      }
+    }
+
+    // インスタンス変数もクリア
+    if (this.readerContainer && this.readerContainer.parentNode) {
+      this.readerContainer.parentNode.removeChild(this.readerContainer);
+    }
+    this.readerContainer = null;
+
+    // 元ページを表示
+    doc.body.style.display = this.originalPageDisplay;
+  }
+}
+
+// シングルトンインスタンス
+const readerViewManager = new ReaderViewManager();
 
 /**
- * リーダービューをShadow DOMで表示する関数
+ * リーダービューを有効化（グローバル関数としてエクスポート）
  */
 export const activateReader = (doc: Document): boolean => {
-  const content = extractContent(doc);
-  if (!content) {
-    return false;
-  }
-
-  // 既存のリーダービューコンテナがあれば削除
-  deactivateReader(doc);
-
-  // 既存ページを非表示
-  originalPageDisplay = doc.body.style.display;
-  doc.body.style.display = 'none';
-
-  // コンテナ要素を作成してbodyに追加
-  readerContainer = doc.createElement('div');
-  readerContainer.id = 'better-reader-view-container';
-  readerContainer.style.cssText =
-    'all: initial; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2147483647;';
-
-  // Shadow DOMを作成
-  shadowRoot = readerContainer.attachShadow({ mode: 'open' });
-
-  // ReactコンポーネントをShadow DOMにレンダリング
-  reactRoot = renderReaderViewToShadow(shadowRoot, content);
-
-  // コンテナをドキュメントに追加
-  doc.body.parentElement?.appendChild(readerContainer);
-
-  return true;
+  return readerViewManager.activateReader(doc);
 };
 
 /**
- * リーダービューを非表示にして元ページを復元する関数
+ * リーダービューを無効化（グローバル関数としてエクスポート）
  */
 export const deactivateReader = (doc: Document): void => {
-  // React rootをアンマウント
-  if (reactRoot) {
-    try {
-      reactRoot.unmount();
-    } catch (e) {
-      console.warn('Failed to unmount React root:', e);
-    }
-    reactRoot = null;
-  }
-
-  // Shadow rootのコンテンツをクリア
-  if (shadowRoot) {
-    shadowRoot.innerHTML = '';
-  }
-
-  // コンテナを削除（IDで検索して確実に削除）
-  const containerById = doc.getElementById('better-reader-view-container');
-  if (containerById) {
-    // ShadowRootがあれば先にクリア
-    if (containerById.shadowRoot) {
-      containerById.shadowRoot.innerHTML = '';
-    }
-    if (containerById.parentNode) {
-      containerById.parentNode.removeChild(containerById);
-    }
-  }
-
-  // グローバル変数もクリア
-  if (readerContainer && readerContainer.parentNode) {
-    readerContainer.parentNode.removeChild(readerContainer);
-  }
-  
-  readerContainer = null;
-  shadowRoot = null;
-
-  // 元ページを表示
-  doc.body.style.display = originalPageDisplay;
+  readerViewManager.deactivateReader(doc);
 };
 
 /**
