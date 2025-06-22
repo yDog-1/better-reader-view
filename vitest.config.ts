@@ -4,7 +4,7 @@ import { WxtVitest } from 'wxt/testing';
 export default defineConfig({
   plugins: [WxtVitest()],
   test: {
-    environment: 'node',
+    environment: 'happy-dom',
     globals: true,
     clearMocks: true,
     restoreMocks: true,
