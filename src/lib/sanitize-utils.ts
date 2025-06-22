@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify';
-import type { Readability } from '@mozilla/readability';
+import { Readability } from '@mozilla/readability';
 
 type BaseArticle = typeof Readability.prototype.parse extends () => infer R
   ? R
