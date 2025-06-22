@@ -1,20 +1,31 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 
+// Type definitions for mock document
+interface MockDocument {
+  title: string;
+  documentElement: {
+    innerHTML: string;
+  };
+  cloneNode: () => MockDocument;
+  createElement: () => { innerHTML: string };
+  body: { innerHTML: string };
+}
+
 // Create simple test-only version of activateReader without external dependencies
-function testActivateReader(document: any): boolean {
+function testActivateReader(document: MockDocument): boolean {
   // Simple mock implementation for testing
   const content = document.body?.innerHTML || '';
-  
+
   // Check if content is long enough (simple heuristic)
   if (content.length < 100) {
     return false;
   }
-  
+
   // Extract title from h1 tag
   const titleMatch = content.match(/<h1[^>]*>([^<]+)<\/h1>/);
   const title = titleMatch ? titleMatch[1] : document.title || 'Article';
-  
+
   // Generate reader view HTML
   const html = `
     <!DOCTYPE html>
@@ -38,23 +49,26 @@ function testActivateReader(document: any): boolean {
     </body>
     </html>
   `;
-  
+
   document.documentElement.innerHTML = html;
   return true;
 }
 
 // Mock document factory
-const createMockDocument = (content: string, title: string = 'Test') => {
-  const mockDoc = {
+const createMockDocument = (
+  content: string,
+  title: string = 'Test'
+): MockDocument => {
+  const mockDoc: MockDocument = {
     title,
     documentElement: {
-      innerHTML: `<html><head><title>${title}</title></head><body>${content}</body></html>`
+      innerHTML: `<html><head><title>${title}</title></head><body>${content}</body></html>`,
     },
     cloneNode: () => mockDoc,
     createElement: () => ({ innerHTML: '' }),
-    body: { innerHTML: content }
-  } as any;
-  
+    body: { innerHTML: content },
+  };
+
   return mockDoc;
 };
 
@@ -72,17 +86,21 @@ describe('reader-utils (activateReader behavior test)', () => {
           <p>Multiple paragraphs make it more likely to be recognized as valid content. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.</p>
         </article>
       `;
-      
+
       const mockDoc = createMockDocument(content, 'Test Article');
       const originalHTML = mockDoc.documentElement.innerHTML;
-      
+
       const result = testActivateReader(mockDoc);
-      
+
       expect(result).toBe(true);
       expect(mockDoc.documentElement.innerHTML).not.toBe(originalHTML);
       expect(mockDoc.documentElement.innerHTML).toContain('<!DOCTYPE html>');
-      expect(mockDoc.documentElement.innerHTML).toContain('<title>Test Article Title</title>');
-      expect(mockDoc.documentElement.innerHTML).toContain('<h1>Test Article Title</h1>');
+      expect(mockDoc.documentElement.innerHTML).toContain(
+        '<title>Test Article Title</title>'
+      );
+      expect(mockDoc.documentElement.innerHTML).toContain(
+        '<h1>Test Article Title</h1>'
+      );
       expect(mockDoc.documentElement.innerHTML).toContain('font-family:');
     });
 
@@ -90,9 +108,9 @@ describe('reader-utils (activateReader behavior test)', () => {
       const content = '<div>Not enough content</div>';
       const mockDoc = createMockDocument(content, 'Empty Page');
       const originalHTML = mockDoc.documentElement.innerHTML;
-      
+
       const result = testActivateReader(mockDoc);
-      
+
       expect(result).toBe(false);
       expect(mockDoc.documentElement.innerHTML).toBe(originalHTML);
     });
@@ -100,9 +118,9 @@ describe('reader-utils (activateReader behavior test)', () => {
     it('should return false for empty document', () => {
       const mockDoc = createMockDocument('', '');
       const originalHTML = mockDoc.documentElement.innerHTML;
-      
+
       const result = testActivateReader(mockDoc);
-      
+
       expect(result).toBe(false);
       expect(mockDoc.documentElement.innerHTML).toBe(originalHTML);
     });
@@ -119,14 +137,18 @@ describe('reader-utils (activateReader behavior test)', () => {
         </main>
         <aside>Sidebar content that should be filtered out</aside>
       `;
-      
+
       const mockDoc = createMockDocument(content, 'Multi Article Page');
-      
+
       const result = testActivateReader(mockDoc);
-      
+
       expect(result).toBe(true);
-      expect(mockDoc.documentElement.innerHTML).toContain('<title>Main Article Title</title>');
-      expect(mockDoc.documentElement.innerHTML).toContain('<h1>Main Article Title</h1>');
+      expect(mockDoc.documentElement.innerHTML).toContain(
+        '<title>Main Article Title</title>'
+      );
+      expect(mockDoc.documentElement.innerHTML).toContain(
+        '<h1>Main Article Title</h1>'
+      );
     });
 
     it('should use document title when no h1 is present', () => {
@@ -136,23 +158,27 @@ describe('reader-utils (activateReader behavior test)', () => {
           <p>Multiple paragraphs make it more likely to be recognized as valid content. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
         </article>
       `;
-      
+
       const mockDoc = createMockDocument(content, 'Document Title');
-      
+
       const result = testActivateReader(mockDoc);
-      
+
       expect(result).toBe(true);
-      expect(mockDoc.documentElement.innerHTML).toContain('<title>Document Title</title>');
-      expect(mockDoc.documentElement.innerHTML).toContain('<h1>Document Title</h1>');
+      expect(mockDoc.documentElement.innerHTML).toContain(
+        '<title>Document Title</title>'
+      );
+      expect(mockDoc.documentElement.innerHTML).toContain(
+        '<h1>Document Title</h1>'
+      );
     });
 
     it('should preserve document structure when activation fails due to short content', () => {
       const content = '<p>Too short</p>';
       const mockDoc = createMockDocument(content, 'Short Page');
       const originalHTML = mockDoc.documentElement.innerHTML;
-      
+
       const result = testActivateReader(mockDoc);
-      
+
       expect(result).toBe(false);
       expect(mockDoc.documentElement.innerHTML).toBe(originalHTML);
     });
@@ -164,11 +190,11 @@ describe('reader-utils (activateReader behavior test)', () => {
           <p>This test verifies that CSS styles are included in the reader view. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
         </article>
       `;
-      
+
       const mockDoc = createMockDocument(content, 'Styled Test');
-      
+
       const result = testActivateReader(mockDoc);
-      
+
       expect(result).toBe(true);
       expect(mockDoc.documentElement.innerHTML).toContain('<style>');
       expect(mockDoc.documentElement.innerHTML).toContain('font-family:');
@@ -183,11 +209,11 @@ describe('reader-utils (activateReader behavior test)', () => {
           <p>This content should not have the h1 duplicated. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
         </article>
       `;
-      
+
       const mockDoc = createMockDocument(content, 'Duplicate Test');
-      
+
       const result = testActivateReader(mockDoc);
-      
+
       expect(result).toBe(true);
       // Should have h1 in header but not in content div
       const htmlContent = mockDoc.documentElement.innerHTML;
