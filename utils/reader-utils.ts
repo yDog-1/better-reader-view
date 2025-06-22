@@ -1,14 +1,21 @@
 import DOMPurify from 'dompurify';
 import { Readability } from '@mozilla/readability';
 
-type BaseArticle = typeof Readability.prototype.parse extends () => infer R
-  ? R
-  : never;
-
-type Article = BaseArticle & {
+/**
+ * Article type for reader view content
+ * Based on Mozilla Readability API result with extended properties
+ */
+export interface Article {
   title: string;
   content: string;
-};
+  textContent: string;
+  length: number;
+  excerpt: string;
+  byline: string | null;
+  dir: string | null;
+  siteName: string | null;
+  lang: string | null;
+}
 
 /**
  * 純粋関数: documentから抽出し、DOMPurifyでサニタイズして{title, content}を返す
@@ -69,23 +76,34 @@ const renderReaderView = ({
 /**
  * 純粋関数: documentを引数に受け取り、上記2つを組み合わせる
  */
-export const activateReader = (document: Document): boolean => {
-  const content = extractContent(document);
+export const activateReader = (doc: Document): boolean => {
+  const content = extractContent(doc);
   if (!content) {
     return false;
   }
 
   const html = renderReaderView(content);
-  document.documentElement.innerHTML = html;
+  doc.documentElement.innerHTML = html;
   return true;
 };
 
-// 型ガード関数: article が Article 型であるかをチェック
-function isValidArticle(article: BaseArticle | null): article is Article {
-  if (article === null) {
+/**
+ * Type guard function: Check if article is valid Article type
+ */
+export function isValidArticle(article: unknown): article is Article {
+  if (!article || typeof article !== 'object') {
     return false;
   }
+
+  const candidateArticle = article as Partial<Article>;
+
   return (
-    typeof article.title === 'string' && typeof article.content === 'string'
+    typeof candidateArticle.title === 'string' &&
+    candidateArticle.title.trim() !== '' &&
+    typeof candidateArticle.content === 'string' &&
+    candidateArticle.content.trim() !== '' &&
+    typeof candidateArticle.textContent === 'string' &&
+    typeof candidateArticle.length === 'number' &&
+    typeof candidateArticle.excerpt === 'string'
   );
 }
