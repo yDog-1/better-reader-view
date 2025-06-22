@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
-import { renderReaderView } from '../src/lib/sanitize-utils';
+import { renderReaderView } from '../utils/reader-utils';
 
 describe('sanitize-utils', () => {
   beforeEach(() => {

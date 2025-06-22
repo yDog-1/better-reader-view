@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom/client';
 import './style.css';
 import PopupMessage from '@/components/popupMsg';
-import { activateReader } from '@/src/lib/sanitize-utils';
+import { activateReader } from '@/utils/reader-utils';
 
 const articleErrorMessage = '記事が見つかりませんでした。';
 
