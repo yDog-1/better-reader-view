@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Git Workflow
 
 - Do not commit without explicit permission from the user
-- Before committing, always run: `bun run fix && bun test && bun run compile`
+- Before committing, always run: `bun run fix && bun run test && bun run compile`
 
 ## Architecture
 
