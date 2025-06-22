@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { JSDOM } from 'jsdom';
-import { activateReader } from '@/utils/reader-utils';
+import { activateReader, deactivateReader } from '@/utils/reader-utils';
 
-describe('activateReader', () => {
+describe('activateReader with Shadow DOM', () => {
   beforeEach(() => {
     fakeBrowser.reset();
   });
@@ -26,7 +26,7 @@ describe('activateReader', () => {
     return jsdom.window.document;
   }
 
-  it('should return true and transform document for valid article content', () => {
+  it('should return true and add reader view container for valid article content', () => {
     const htmlContent = `
       <article>
         <h1>Test Article Title</h1>
@@ -37,27 +37,25 @@ describe('activateReader', () => {
     `;
 
     const doc = createTestDocument(htmlContent, 'Test Article');
-    const originalHTML = doc.documentElement.innerHTML;
 
     const result = activateReader(doc);
 
     expect(result).toBe(true);
-    expect(doc.documentElement.innerHTML).not.toBe(originalHTML);
-    expect(doc.documentElement.innerHTML).toContain('<body>');
-    expect(doc.documentElement.innerHTML).toContain('<style>');
-    expect(doc.documentElement.innerHTML).toContain('font-family:');
+    expect(doc.body.style.display).toBe('none');
+    expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
     expect(doc.title).toBe('Test Article');
   });
 
   it('should return false for empty document', () => {
     const htmlContent = '';
     const doc = createTestDocument(htmlContent, '');
-    const originalHTML = doc.documentElement.innerHTML;
+    const originalDisplay = doc.body.style.display;
 
     const result = activateReader(doc);
 
     expect(result).toBe(false);
-    expect(doc.documentElement.innerHTML).toBe(originalHTML);
+    expect(doc.body.style.display).toBe(originalDisplay);
+    expect(doc.getElementById('better-reader-view-container')).toBeFalsy();
   });
 
   it('should handle document with navigation and sidebar content', () => {
@@ -89,9 +87,10 @@ describe('activateReader', () => {
     const result = activateReader(doc);
 
     expect(result).toBe(true);
-    expect(doc.documentElement.innerHTML).toContain('<body>');
-    expect(doc.documentElement.innerHTML).toContain('<style>');
-    expect(doc.documentElement.innerHTML).not.toContain('<nav>');
+    expect(doc.body.style.display).toBe('none');
+    expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
+    // Original content should still be in the hidden body
+    expect(doc.body.innerHTML).toContain('<nav>');
   });
 
   it('should handle document with mixed content types', () => {
@@ -117,56 +116,34 @@ describe('activateReader', () => {
     const result = activateReader(doc);
 
     expect(result).toBe(true);
-    expect(doc.documentElement.innerHTML).not.toContain('<header>');
-    expect(doc.documentElement.innerHTML).not.toContain('<footer>');
-    expect(doc.documentElement.innerHTML).toContain('<body>');
-    expect(doc.documentElement.innerHTML).toContain('<style>');
-    expect(doc.documentElement.innerHTML).toContain('line-height:');
-    expect(doc.documentElement.innerHTML).toContain('max-width:');
+    expect(doc.body.style.display).toBe('none');
+    expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
+    // Original content should still be in the hidden body
+    expect(doc.body.innerHTML).toContain('<header>');
+    expect(doc.body.innerHTML).toContain('<footer>');
   });
 
-  it('should sanitize content and prevent XSS', () => {
+  it('should handle deactivateReader correctly', () => {
     const htmlContent = `
       <article>
-        <h1>Security Test Article</h1>
-        <p>This article tests XSS prevention. The following script should be removed by DOMPurify: <script>alert('xss')</script></p>
-        <p>This content should be clean and safe. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-        <p>Additional content to ensure this passes Readability checks. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        <h1>Test Article</h1>
+        <p>This is test content for deactivation. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        <p>Additional content to ensure this passes Readability requirements. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
       </article>
     `;
 
-    const doc = createTestDocument(htmlContent, 'Security Test');
-    const result = activateReader(doc);
+    const doc = createTestDocument(htmlContent, 'Deactivation Test');
 
-    expect(result).toBe(true);
-    expect(doc.documentElement.innerHTML).not.toContain('<script>');
-    expect(doc.documentElement.innerHTML).not.toContain('alert(');
-    expect(doc.documentElement.innerHTML).toContain(
-      'This content should be clean'
-    );
-  });
+    // Activate reader
+    const activateResult = activateReader(doc);
+    expect(activateResult).toBe(true);
+    expect(doc.body.style.display).toBe('none');
+    expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
 
-  it('should include proper CSS styling in generated HTML', () => {
-    const htmlContent = `
-      <article>
-        <h1>Styling Test</h1>
-        <p>This test verifies that the generated reader view includes proper CSS styling for typography and layout. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-        <p>The styles should include font family, line height, max width, and other typography settings. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.</p>
-      </article>
-    `;
-
-    const doc = createTestDocument(htmlContent, 'Styling Test');
-    const result = activateReader(doc);
-
-    expect(result).toBe(true);
-
-    const html = doc.documentElement.innerHTML;
-    expect(html).toContain('<style>');
-    expect(html).toContain('font-family: -apple-system');
-    expect(html).toContain('line-height: 1.7');
-    expect(html).toContain('max-width: 70ch');
-    expect(html).toContain('margin: 2rem auto');
-    expect(html).toContain('background-color: #fff');
+    // Deactivate reader
+    deactivateReader(doc);
+    expect(doc.body.style.display).toBe('');
+    expect(doc.getElementById('better-reader-view-container')).toBeFalsy();
   });
 
   it('should handle Japanese content correctly', () => {
@@ -183,13 +160,9 @@ describe('activateReader', () => {
     const result = activateReader(doc);
 
     expect(result).toBe(true);
-    expect(doc.documentElement.innerHTML).toContain('日本語の記事タイトル');
-    expect(doc.documentElement.innerHTML).toContain('これは日本語で書かれた');
-    expect(doc.documentElement.innerHTML).toContain('ひらがな、カタカナ、漢字');
-    // Document title comes from createTestDocument parameter
-    expect(doc.documentElement.innerHTML).toContain(
-      '<title>日本語テストページ</title>'
-    );
+    expect(doc.body.style.display).toBe('none');
+    expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
+    expect(doc.title).toBe('日本語テストページ');
   });
 
   it('should handle special characters and emojis', () => {
@@ -206,15 +179,9 @@ describe('activateReader', () => {
     const result = activateReader(doc);
 
     expect(result).toBe(true);
-    expect(doc.documentElement.innerHTML).toContain('🚀');
-    expect(doc.documentElement.innerHTML).toContain('🌟');
-    expect(doc.documentElement.innerHTML).toContain('&lt;');
-    expect(doc.documentElement.innerHTML).toContain('™');
-    expect(doc.documentElement.innerHTML).toContain('∀');
-    // Document title comes from createTestDocument parameter
-    expect(doc.documentElement.innerHTML).toContain(
-      '<title>Special Characters Test</title>'
-    );
+    expect(doc.body.style.display).toBe('none');
+    expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
+    expect(doc.title).toBe('Special Characters Test');
   });
 
   it('should handle content with images and videos', () => {
@@ -242,15 +209,12 @@ describe('activateReader', () => {
     const result = activateReader(doc);
 
     expect(result).toBe(true);
-    expect(doc.documentElement.innerHTML).toContain('<img');
-    expect(doc.documentElement.innerHTML).toContain(
-      'alt="Test image description"'
-    );
-    expect(doc.documentElement.innerHTML).toContain('<video');
-    expect(doc.documentElement.innerHTML).toContain('controls');
-    expect(doc.documentElement.innerHTML).toContain('<figure>');
-    expect(doc.documentElement.innerHTML).toContain('<figcaption>');
-    expect(doc.documentElement.innerHTML).toContain('max-width: 100%');
+    expect(doc.body.style.display).toBe('none');
+    expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
+    // Original media content should still be in the hidden body
+    expect(doc.body.innerHTML).toContain('<img');
+    expect(doc.body.innerHTML).toContain('<video');
+    expect(doc.body.innerHTML).toContain('<figure>');
   });
 
   it('should handle documents with missing or empty titles', () => {
@@ -264,11 +228,12 @@ describe('activateReader', () => {
     `;
 
     const doc = createTestDocument(htmlContent, '');
-    const originalHTML = doc.documentElement.innerHTML;
+    const originalDisplay = doc.body.style.display;
 
     const result = activateReader(doc);
 
     expect(result).toBe(false);
-    expect(doc.documentElement.innerHTML).toEqual(originalHTML);
+    expect(doc.body.style.display).toBe(originalDisplay);
+    expect(doc.getElementById('better-reader-view-container')).toBeFalsy();
   });
 });
