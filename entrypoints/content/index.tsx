@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom/client';
 import './style.css';
 import PopupMessage from '@/components/popupMsg';
-import { Readability } from '@mozilla/readability';
+import { activateReader } from '@/utils/reader-utils';
 
 const articleErrorMessage = '記事が見つかりませんでした。';
 
@@ -30,57 +30,15 @@ export default defineContentScript({
   },
 });
 
-// HTMLエスケープ用のヘルパー関数
-function escapeHtml(unsafe: string): string {
-  if (typeof unsafe !== 'string') {
-    return '';
-  }
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 function activateReaderViewAndStoreOriginal() {
   const originalHTML = document.documentElement.innerHTML;
   const originalTitle = document.title;
 
-  // Readabilityには現在のdocumentのクローンを渡す
-  const documentClone = document.cloneNode(true) as Document;
-  const article = new Readability(documentClone).parse();
+  const success = activateReader(document);
 
-  if (isVaildArticle(article)) {
+  if (success) {
     sessionStorage.setItem(ORIGINAL_PAGE_HTML_KEY, originalHTML);
     sessionStorage.setItem(ORIGINAL_PAGE_TITLE_KEY, originalTitle);
-
-    // リーダー表示用の新しいHTMLコンテンツを作成
-    const readerHTML = `
-			<!DOCTYPE html>
-			<html>
-			<head>
-				<meta charset="UTF-8">
-				<title>${escapeHtml(article.title)}</title>
-				<style>
-					body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; line-height: 1.7; max-width: 70ch; margin: 2rem auto; padding: 2rem; background-color: #fff; color: #1a1a1a; }
-					h1 { font-size: 2.2em; margin-bottom: 1em; color: #000; font-weight: 600;}
-					p, li, blockquote { font-size: 1.1em; margin-bottom: 1em; }
-					a { color: #007bff; }
-					img, video, figure { max-width: 100%; height: auto; margin: 1.5em 0; }
-					pre { background-color: #f0f0f0; padding: 1em; overflow-x: auto; border-radius: 4px; }
-					code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; }
-				</style>
-			</head>
-			<body>
-				<h1>${escapeHtml(article.title)}</h1>
-				<div>${article.content}</div>
-			</body>
-			</html>
-		`;
-
-    document.documentElement.innerHTML = readerHTML;
-
     sessionStorage.setItem(READER_VIEW_ACTIVE_KEY, 'true');
   } else {
     showPopupMessage(articleErrorMessage);
@@ -146,25 +104,4 @@ function showPopupMessage(message: string) {
   };
 
   root.render(<PopupMessage message={message} onClose={handleClose} />);
-}
-
-// Readability.prototype.parse の戻り値の型 (ParseResult)
-type BaseArticle = typeof Readability.prototype.parse extends () => infer R
-  ? R
-  : never;
-
-// title と content が string であることを保証する Article 型
-type Article = BaseArticle & {
-  title: string;
-  content: string;
-};
-
-// 型ガード関数: article が Article 型であるかをチェック
-function isVaildArticle(article: BaseArticle | null): article is Article {
-  if (article === null) {
-    return false;
-  }
-  return (
-    typeof article.title === 'string' && typeof article.content === 'string'
-  );
 }
