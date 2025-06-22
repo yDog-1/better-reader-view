@@ -1,5 +1,8 @@
 import DOMPurify from 'dompurify';
 import { Readability } from '@mozilla/readability';
+import ReactDOM from 'react-dom/client';
+import React from 'react';
+import ReaderView from '~/components/ReaderView';
 
 /**
  * Article type for reader view content
@@ -40,41 +43,25 @@ const extractContent = (
 };
 
 /**
- * 純粋関数: 分割代入で{title, content}を受け取り、htmlStringを返す
+ * ReactコンポーネントをShadow DOMにレンダリングする関数
  */
-const renderReaderView = ({
-  title,
-  content,
-}: {
-  title: string;
-  content: string;
-}): string => {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>${title}</title>
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; line-height: 1.7; max-width: 70ch; margin: 2rem auto; padding: 2rem; background-color: #fff; color: #1a1a1a; }
-        h1 { font-size: 2.2em; margin-bottom: 1em; color: #000; font-weight: 600;}
-        p, li, blockquote { font-size: 1.1em; margin-bottom: 1em; }
-        a { color: #007bff; }
-        img, video, figure { max-width: 100%; height: auto; margin: 1.5em 0; }
-        pre { background-color: #f0f0f0; padding: 1em; overflow-x: auto; border-radius: 4px; }
-        code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; }
-      </style>
-    </head>
-    <body>
-      <h1>${title}</h1>
-      <div>${content}</div>
-    </body>
-    </html>
-  `;
+const renderReaderViewToShadow = (
+  shadowRoot: ShadowRoot,
+  content: { title: string; content: string }
+): ReactDOM.Root => {
+  const root = ReactDOM.createRoot(shadowRoot);
+  root.render(React.createElement(ReaderView, content));
+  return root;
 };
 
+// Reader viewの状態を管理するグローバル変数
+let readerContainer: HTMLElement | null = null;
+let shadowRoot: ShadowRoot | null = null;
+let reactRoot: ReactDOM.Root | null = null;
+let originalPageDisplay: string = '';
+
 /**
- * 純粋関数: documentを引数に受け取り、上記2つを組み合わせる
+ * リーダービューをShadow DOMで表示する関数
  */
 export const activateReader = (doc: Document): boolean => {
   const content = extractContent(doc);
@@ -82,9 +69,72 @@ export const activateReader = (doc: Document): boolean => {
     return false;
   }
 
-  const html = renderReaderView(content);
-  doc.documentElement.innerHTML = html;
+  // 既存のリーダービューコンテナがあれば削除
+  deactivateReader(doc);
+
+  // 既存ページを非表示
+  originalPageDisplay = doc.body.style.display;
+  doc.body.style.display = 'none';
+
+  // コンテナ要素を作成してbodyに追加
+  readerContainer = doc.createElement('div');
+  readerContainer.id = 'better-reader-view-container';
+  readerContainer.style.cssText =
+    'all: initial; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2147483647;';
+
+  // Shadow DOMを作成
+  shadowRoot = readerContainer.attachShadow({ mode: 'open' });
+
+  // ReactコンポーネントをShadow DOMにレンダリング
+  reactRoot = renderReaderViewToShadow(shadowRoot, content);
+
+  // コンテナをドキュメントに追加
+  doc.body.parentElement?.appendChild(readerContainer);
+
   return true;
+};
+
+/**
+ * リーダービューを非表示にして元ページを復元する関数
+ */
+export const deactivateReader = (doc: Document): void => {
+  // React rootをアンマウント
+  if (reactRoot) {
+    try {
+      reactRoot.unmount();
+    } catch (e) {
+      console.warn('Failed to unmount React root:', e);
+    }
+    reactRoot = null;
+  }
+
+  // Shadow rootのコンテンツをクリア
+  if (shadowRoot) {
+    shadowRoot.innerHTML = '';
+  }
+
+  // コンテナを削除（IDで検索して確実に削除）
+  const containerById = doc.getElementById('better-reader-view-container');
+  if (containerById) {
+    // ShadowRootがあれば先にクリア
+    if (containerById.shadowRoot) {
+      containerById.shadowRoot.innerHTML = '';
+    }
+    if (containerById.parentNode) {
+      containerById.parentNode.removeChild(containerById);
+    }
+  }
+
+  // グローバル変数もクリア
+  if (readerContainer && readerContainer.parentNode) {
+    readerContainer.parentNode.removeChild(readerContainer);
+  }
+  
+  readerContainer = null;
+  shadowRoot = null;
+
+  // 元ページを表示
+  doc.body.style.display = originalPageDisplay;
 };
 
 /**
