@@ -13,7 +13,7 @@ type Article = BaseArticle & {
 /**
  * 純粋関数: documentから抽出し、DOMPurifyでサニタイズして{title, content}を返す
  */
-export const extractContent = (
+const extractContent = (
   document: Document
 ): { title: string; content: string } | null => {
   const documentClone = document.cloneNode(true) as Document;
@@ -35,7 +35,7 @@ export const extractContent = (
 /**
  * 純粋関数: 分割代入で{title, content}を受け取り、htmlStringを返す
  */
-export const renderReaderView = ({
+const renderReaderView = ({
   title,
   content,
 }: {
