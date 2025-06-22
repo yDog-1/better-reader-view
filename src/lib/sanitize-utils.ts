@@ -13,7 +13,9 @@ type Article = BaseArticle & {
 /**
  * 純粋関数: documentから抽出し、DOMPurifyでサニタイズして{title, content}を返す
  */
-export const extractContent = (document: Document): { title: string; content: string } | null => {
+export const extractContent = (
+  document: Document
+): { title: string; content: string } | null => {
   const documentClone = document.cloneNode(true) as Document;
   const article = new Readability(documentClone).parse();
 
@@ -33,7 +35,13 @@ export const extractContent = (document: Document): { title: string; content: st
 /**
  * 純粋関数: 分割代入で{title, content}を受け取り、htmlStringを返す
  */
-export const renderReaderView = ({ title, content }: { title: string; content: string }): string => {
+export const renderReaderView = ({
+  title,
+  content,
+}: {
+  title: string;
+  content: string;
+}): string => {
   return `
     <!DOCTYPE html>
     <html>
@@ -66,7 +74,7 @@ export const activateReader = (document: Document): boolean => {
   if (!content) {
     return false;
   }
-  
+
   const html = renderReaderView(content);
   document.documentElement.innerHTML = html;
   return true;
