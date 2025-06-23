@@ -1,11 +1,42 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { JSDOM } from 'jsdom';
-import { activateReader, deactivateReader } from '@/utils/reader-utils';
+import { activateReader, deactivateReader, initializeReaderViewManager } from '@/utils/reader-utils';
+import { StyleController } from '@/utils/StyleController';
+
+// vanilla-extractのimportをモック
+vi.mock('@vanilla-extract/dynamic', () => ({
+  assignInlineVars: vi.fn((vars: Record<string, string>) => vars),
+}));
+
+vi.mock('../utils/theme.css', () => ({
+  themeVars: {
+    font: {
+      family: '--font-family',
+      size: {
+        small: '--font-size-small',
+        medium: '--font-size-medium',
+        large: '--font-size-large',
+        xlarge: '--font-size-xlarge',
+      },
+    },
+  },
+  lightTheme: 'light-theme-class',
+  darkTheme: 'dark-theme-class',
+  sepiaTheme: 'sepia-theme-class',
+}));
+
+// ReaderViewコンポーネントのモック
+vi.mock('~/components/ReaderView', () => ({
+  default: () => 'mocked-reader-view',
+}));
 
 describe('activateReader with Shadow DOM', () => {
   beforeEach(() => {
     fakeBrowser.reset();
+    // StyleControllerを初期化
+    const styleController = new StyleController();
+    initializeReaderViewManager(styleController);
   });
 
   function createTestDocument(
