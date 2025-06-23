@@ -21,14 +21,18 @@ const ReaderView: React.FC<ReaderViewProps> = ({
   styleController,
 }) => {
   const [showStylePanel, setShowStylePanel] = useState(false);
-  const [, forceUpdate] = useState({});
+  const [styleVersion, setStyleVersion] = useState(0);
 
+  // Re-compute theme and vars when styleVersion changes to ensure fresh values
   const themeClass = styleController.getThemeClass();
   const inlineVars = styleController.getInlineVars();
 
+  // Use styleVersion to ensure re-render dependency tracking
+  void styleVersion;
+
   const handleStyleChange = () => {
-    // Force re-render to apply new styles
-    forceUpdate({});
+    // Increment styleVersion to trigger re-render
+    setStyleVersion((prevVersion) => prevVersion + 1);
   };
 
   return (
