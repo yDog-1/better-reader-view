@@ -52,7 +52,7 @@ describe('StyleController', () => {
     // テスト前にmockをリセット
     vi.clearAllMocks();
     mockSessionStorage.clear();
-    
+
     styleController = new StyleController();
   });
 
@@ -73,7 +73,7 @@ describe('StyleController', () => {
         fontFamily: 'serif',
         customFontSize: 20,
       };
-      
+
       const customController = new StyleController(customConfig);
       expect(customController.getConfig()).toEqual(customConfig);
     });
@@ -83,7 +83,7 @@ describe('StyleController', () => {
     it('テーマを変更できる', () => {
       styleController.setTheme('dark');
       expect(styleController.getConfig().theme).toBe('dark');
-      
+
       styleController.setTheme('sepia');
       expect(styleController.getConfig().theme).toBe('sepia');
     });
@@ -106,7 +106,7 @@ describe('StyleController', () => {
     it('フォントサイズを変更できる', () => {
       styleController.setFontSize('large');
       expect(styleController.getConfig().fontSize).toBe('large');
-      
+
       styleController.setFontSize('small');
       expect(styleController.getConfig().fontSize).toBe('small');
     });
@@ -119,7 +119,7 @@ describe('StyleController', () => {
     it('フォントファミリーを変更できる', () => {
       styleController.setFontFamily('serif');
       expect(styleController.getConfig().fontFamily).toBe('serif');
-      
+
       styleController.setFontFamily('monospace');
       expect(styleController.getConfig().fontFamily).toBe('monospace');
     });
@@ -127,7 +127,7 @@ describe('StyleController', () => {
     it('フォントサイズ変更時にカスタムフォントサイズがリセットされる', () => {
       styleController.setCustomFontSize(20);
       expect(styleController.getConfig().customFontSize).toBe(20);
-      
+
       styleController.setFontSize('large');
       expect(styleController.getConfig().customFontSize).toBeUndefined();
     });
@@ -137,7 +137,7 @@ describe('StyleController', () => {
     it('フォントファミリーの変数を生成する', () => {
       styleController.setFontFamily('serif');
       const vars = styleController.getInlineVars();
-      
+
       expect(vars).toBeInstanceOf(Object);
       expect(Object.keys(vars).length).toBeGreaterThan(0);
     });
@@ -145,7 +145,7 @@ describe('StyleController', () => {
     it('カスタムフォントサイズがある時は適切な変数を生成する', () => {
       styleController.setCustomFontSize(22);
       const vars = styleController.getInlineVars();
-      
+
       expect(vars).toBeInstanceOf(Object);
       expect(Object.keys(vars).length).toBeGreaterThan(0);
     });
@@ -154,9 +154,9 @@ describe('StyleController', () => {
   describe('設定の更新', () => {
     it('部分的な設定更新ができる', () => {
       const initialConfig = styleController.getConfig();
-      
+
       styleController.updateConfig({ theme: 'dark', fontSize: 'large' });
-      
+
       const updatedConfig = styleController.getConfig();
       expect(updatedConfig.theme).toBe('dark');
       expect(updatedConfig.fontSize).toBe('large');
@@ -169,7 +169,7 @@ describe('StyleController', () => {
       styleController.setTheme('dark');
       styleController.setFontSize('large');
       styleController.saveToStorage();
-      
+
       expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
         'readerViewStyleConfig',
         JSON.stringify({
@@ -187,9 +187,12 @@ describe('StyleController', () => {
         fontFamily: 'monospace',
         customFontSize: 24,
       };
-      
-      mockSessionStorage.setItem('readerViewStyleConfig', JSON.stringify(savedConfig));
-      
+
+      mockSessionStorage.setItem(
+        'readerViewStyleConfig',
+        JSON.stringify(savedConfig)
+      );
+
       const result = styleController.loadFromStorage();
       expect(result).toBe(true);
       expect(styleController.getConfig()).toEqual(savedConfig);
@@ -197,7 +200,7 @@ describe('StyleController', () => {
 
     it('無効なストレージデータの場合はfalseを返す', () => {
       mockSessionStorage.setItem('readerViewStyleConfig', 'invalid json');
-      
+
       const result = styleController.loadFromStorage();
       expect(result).toBe(false);
     });
@@ -209,11 +212,14 @@ describe('StyleController', () => {
 
     it('部分的なストレージデータでもデフォルト値で補完される', () => {
       const partialConfig = { theme: 'dark' };
-      mockSessionStorage.setItem('readerViewStyleConfig', JSON.stringify(partialConfig));
-      
+      mockSessionStorage.setItem(
+        'readerViewStyleConfig',
+        JSON.stringify(partialConfig)
+      );
+
       styleController.loadFromStorage();
       const config = styleController.getConfig();
-      
+
       expect(config.theme).toBe('dark');
       expect(config.fontSize).toBe('medium'); // デフォルト値
       expect(config.fontFamily).toBe('sans-serif'); // デフォルト値
@@ -226,9 +232,9 @@ describe('StyleController', () => {
       styleController.setFontSize('large');
       styleController.setFontFamily('serif');
       styleController.setCustomFontSize(20);
-      
+
       styleController.reset();
-      
+
       expect(styleController.getConfig()).toEqual({
         theme: 'light',
         fontSize: 'medium',
@@ -239,8 +245,10 @@ describe('StyleController', () => {
     it('リセット時にストレージからも削除される', () => {
       styleController.saveToStorage();
       styleController.reset();
-      
-      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith('readerViewStyleConfig');
+
+      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(
+        'readerViewStyleConfig'
+      );
     });
   });
 
@@ -249,7 +257,7 @@ describe('StyleController', () => {
       mockSessionStorage.setItem.mockImplementation(() => {
         throw new Error('Storage error');
       });
-      
+
       // 例外が投げられないことを確認
       expect(() => {
         styleController.saveToStorage();
@@ -260,7 +268,7 @@ describe('StyleController', () => {
       mockSessionStorage.getItem.mockImplementation(() => {
         throw new Error('Storage error');
       });
-      
+
       // 例外が投げられず、falseが返されることを確認
       expect(() => {
         const result = styleController.loadFromStorage();

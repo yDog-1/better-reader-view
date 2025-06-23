@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { JSDOM } from 'jsdom';
-import { activateReader, deactivateReader, initializeReaderViewManager } from '@/utils/reader-utils';
+import {
+  activateReader,
+  deactivateReader,
+  initializeReaderViewManager,
+} from '@/utils/reader-utils';
 import { StyleController } from '@/utils/StyleController';
 
 // vanilla-extractのimportをモック

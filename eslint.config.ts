@@ -70,4 +70,13 @@ export default [
       },
     },
   },
+  // Test files configuration
+  {
+    files: ['tests/**/*.{js,jsx,ts,tsx}', '**/*.test.{js,jsx,ts,tsx}', '**/*.spec.{js,jsx,ts,tsx}'],
+    languageOptions: {
+      globals: {
+        global: 'writable',
+      },
+    },
+  },
 ];

@@ -15,18 +15,20 @@ export interface StyleConfig {
 // テスト用のStyleControllerの簡素版
 class TestStyleController {
   private config: StyleConfig;
-  
+
   private readonly fontFamilies = {
     'sans-serif': '"Hiragino Sans", "Yu Gothic UI", sans-serif',
-    'serif': '"Times New Roman", "Yu Mincho", serif',
-    'monospace': '"Consolas", "Monaco", monospace',
+    serif: '"Times New Roman", "Yu Mincho", serif',
+    monospace: '"Consolas", "Monaco", monospace',
   };
 
-  constructor(initialConfig: StyleConfig = {
-    theme: 'light',
-    fontSize: 'medium',
-    fontFamily: 'sans-serif',
-  }) {
+  constructor(
+    initialConfig: StyleConfig = {
+      theme: 'light',
+      fontSize: 'medium',
+      fontFamily: 'sans-serif',
+    }
+  ) {
     this.config = initialConfig;
   }
 
@@ -37,13 +39,14 @@ class TestStyleController {
   getInlineVars(): Record<string, string> {
     const fontFamily = this.fontFamilies[this.config.fontFamily];
     const vars: Record<string, string> = {};
-    
+
     vars['--font-family'] = fontFamily;
-    
+
     if (this.config.customFontSize) {
-      vars[`--font-size-${this.config.fontSize}`] = `${this.config.customFontSize}px`;
+      vars[`--font-size-${this.config.fontSize}`] =
+        `${this.config.customFontSize}px`;
     }
-    
+
     return vars;
   }
 
@@ -74,7 +77,10 @@ class TestStyleController {
 
   saveToStorage(): void {
     try {
-      sessionStorage.setItem('readerViewStyleConfig', JSON.stringify(this.config));
+      sessionStorage.setItem(
+        'readerViewStyleConfig',
+        JSON.stringify(this.config)
+      );
     } catch (error) {
       console.warn('スタイル設定の保存に失敗しました:', error);
     }
@@ -156,7 +162,7 @@ describe('StyleController Unit Tests', () => {
         fontFamily: 'serif',
         customFontSize: 20,
       };
-      
+
       const customController = new TestStyleController(customConfig);
       expect(customController.getConfig()).toEqual(customConfig);
     });
@@ -166,7 +172,7 @@ describe('StyleController Unit Tests', () => {
     it('テーマを変更できる', () => {
       styleController.setTheme('dark');
       expect(styleController.getConfig().theme).toBe('dark');
-      
+
       styleController.setTheme('sepia');
       expect(styleController.getConfig().theme).toBe('sepia');
     });
@@ -184,7 +190,7 @@ describe('StyleController Unit Tests', () => {
     it('フォントサイズを変更できる', () => {
       styleController.setFontSize('large');
       expect(styleController.getConfig().fontSize).toBe('large');
-      
+
       styleController.setFontSize('small');
       expect(styleController.getConfig().fontSize).toBe('small');
     });
@@ -197,7 +203,7 @@ describe('StyleController Unit Tests', () => {
     it('フォントファミリーを変更できる', () => {
       styleController.setFontFamily('serif');
       expect(styleController.getConfig().fontFamily).toBe('serif');
-      
+
       styleController.setFontFamily('monospace');
       expect(styleController.getConfig().fontFamily).toBe('monospace');
     });
@@ -205,7 +211,7 @@ describe('StyleController Unit Tests', () => {
     it('フォントサイズ変更時にカスタムフォントサイズがリセットされる', () => {
       styleController.setCustomFontSize(20);
       expect(styleController.getConfig().customFontSize).toBe(20);
-      
+
       styleController.setFontSize('large');
       expect(styleController.getConfig().customFontSize).toBeUndefined();
     });
@@ -215,14 +221,16 @@ describe('StyleController Unit Tests', () => {
     it('フォントファミリーの変数を生成する', () => {
       styleController.setFontFamily('serif');
       const vars = styleController.getInlineVars();
-      
-      expect(vars['--font-family']).toBe('"Times New Roman", "Yu Mincho", serif');
+
+      expect(vars['--font-family']).toBe(
+        '"Times New Roman", "Yu Mincho", serif'
+      );
     });
 
     it('カスタムフォントサイズがある時は適切な変数を生成する', () => {
       styleController.setCustomFontSize(22);
       const vars = styleController.getInlineVars();
-      
+
       expect(vars['--font-size-medium']).toBe('22px');
     });
   });
@@ -230,9 +238,9 @@ describe('StyleController Unit Tests', () => {
   describe('設定の更新', () => {
     it('部分的な設定更新ができる', () => {
       const initialConfig = styleController.getConfig();
-      
+
       styleController.updateConfig({ theme: 'dark', fontSize: 'large' });
-      
+
       const updatedConfig = styleController.getConfig();
       expect(updatedConfig.theme).toBe('dark');
       expect(updatedConfig.fontSize).toBe('large');
@@ -245,7 +253,7 @@ describe('StyleController Unit Tests', () => {
       styleController.setTheme('dark');
       styleController.setFontSize('large');
       styleController.saveToStorage();
-      
+
       expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
         'readerViewStyleConfig',
         JSON.stringify({
@@ -263,9 +271,12 @@ describe('StyleController Unit Tests', () => {
         fontFamily: 'monospace',
         customFontSize: 24,
       };
-      
-      mockSessionStorage.setItem('readerViewStyleConfig', JSON.stringify(savedConfig));
-      
+
+      mockSessionStorage.setItem(
+        'readerViewStyleConfig',
+        JSON.stringify(savedConfig)
+      );
+
       const result = styleController.loadFromStorage();
       expect(result).toBe(true);
       expect(styleController.getConfig()).toEqual(savedConfig);
@@ -273,7 +284,7 @@ describe('StyleController Unit Tests', () => {
 
     it('無効なストレージデータの場合はfalseを返す', () => {
       mockSessionStorage.setItem('readerViewStyleConfig', 'invalid json');
-      
+
       const result = styleController.loadFromStorage();
       expect(result).toBe(false);
     });
@@ -290,9 +301,9 @@ describe('StyleController Unit Tests', () => {
       styleController.setFontSize('large');
       styleController.setFontFamily('serif');
       styleController.setCustomFontSize(20);
-      
+
       styleController.reset();
-      
+
       expect(styleController.getConfig()).toEqual({
         theme: 'light',
         fontSize: 'medium',
@@ -303,8 +314,10 @@ describe('StyleController Unit Tests', () => {
     it('リセット時にストレージからも削除される', () => {
       styleController.saveToStorage();
       styleController.reset();
-      
-      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith('readerViewStyleConfig');
+
+      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(
+        'readerViewStyleConfig'
+      );
     });
   });
 
@@ -313,7 +326,7 @@ describe('StyleController Unit Tests', () => {
       mockSessionStorage.setItem.mockImplementation(() => {
         throw new Error('Storage error');
       });
-      
+
       expect(() => {
         styleController.saveToStorage();
       }).not.toThrow();
@@ -323,7 +336,7 @@ describe('StyleController Unit Tests', () => {
       mockSessionStorage.getItem.mockImplementation(() => {
         throw new Error('Storage error');
       });
-      
+
       expect(() => {
         const result = styleController.loadFromStorage();
         expect(result).toBe(false);

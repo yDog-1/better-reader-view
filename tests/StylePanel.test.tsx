@@ -42,7 +42,7 @@ describe('StylePanel', () => {
       reset: vi.fn(),
       getThemeClass: vi.fn(),
       getInlineVars: vi.fn(),
-    } as any;
+    } as unknown as StyleController;
   });
 
   describe('基本レンダリング', () => {
@@ -59,8 +59,12 @@ describe('StylePanel', () => {
       expect(screen.getByText('テーマ')).toBeInTheDocument();
       expect(screen.getByText('フォントサイズ')).toBeInTheDocument();
       expect(screen.getByText('フォント種類')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'リセット' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '閉じる' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'リセット' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: '閉じる' })
+      ).toBeInTheDocument();
     });
 
     it('初期設定値が正しく表示される', () => {
@@ -109,9 +113,15 @@ describe('StylePanel', () => {
         />
       );
 
-      expect(screen.getByRole('option', { name: 'ライト' })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: 'ダーク' })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: 'セピア' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('option', { name: 'ライト' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('option', { name: 'ダーク' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('option', { name: 'セピア' })
+      ).toBeInTheDocument();
     });
   });
 
@@ -176,9 +186,15 @@ describe('StylePanel', () => {
         />
       );
 
-      expect(screen.getByRole('option', { name: 'ゴシック体' })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: '明朝体' })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: '等幅フォント' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('option', { name: 'ゴシック体' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('option', { name: '明朝体' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('option', { name: '等幅フォント' })
+      ).toBeInTheDocument();
     });
   });
 
@@ -217,7 +233,7 @@ describe('StylePanel', () => {
 
   describe('状態管理', () => {
     it('StyleControllerの設定変更時に内部状態が更新される', () => {
-      const { rerender } = render(
+      render(
         <StylePanel
           styleController={mockStyleController}
           onClose={mockOnClose}
@@ -334,13 +350,15 @@ describe('StylePanel', () => {
       );
 
       const themeSelect = screen.getByDisplayValue('ライト');
-      
+
       // 無効な値を設定（実際のオプションにない値）
       fireEvent.change(themeSelect, { target: { value: 'invalid-theme' } });
 
       // TypeScriptの型チェックにより、実際には無効な値は渡されないが、
       // テストとしてStyleControllerが呼ばれることを確認
-      expect(mockStyleController.setTheme).toHaveBeenCalledWith('invalid-theme');
+      expect(mockStyleController.setTheme).toHaveBeenCalledWith(
+        'invalid-theme'
+      );
     });
   });
 });
