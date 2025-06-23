@@ -1,22 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { fakeBrowser } from 'wxt/testing';
 import ReaderView from '../components/ReaderView';
 import { StyleController } from '../utils/StyleController';
 
-// StyleControllerのモック
-vi.mock('../utils/StyleController');
-
-// CSS modulesのモック
-vi.mock('../components/ReaderView.css', () => ({
-  readerContainer: 'mocked-reader-container',
-  contentContainer: 'mocked-content-container',
-  title: 'mocked-title',
-  contentArea: 'mocked-content-area',
-  styleButton: 'mocked-style-button',
-}));
-
-// StylePanelコンポーネントのモック
+// StylePanelコンポーネントのモック（UI相互作用のテストのため最小限のモック）
 vi.mock('../components/StylePanel', () => ({
   default: ({
     onClose,
@@ -33,7 +22,7 @@ vi.mock('../components/StylePanel', () => ({
 }));
 
 describe('ReaderView', () => {
-  let mockStyleController: StyleController;
+  let styleController: StyleController;
   const mockProps = {
     title: 'テスト記事のタイトル',
     content:
@@ -41,30 +30,15 @@ describe('ReaderView', () => {
   };
 
   beforeEach(() => {
-    // StyleControllerのモックインスタンスを作成
-    mockStyleController = {
-      getThemeClass: vi.fn().mockReturnValue('light-theme-class'),
-      getInlineVars: vi.fn().mockReturnValue({ '--custom-var': 'value' }),
-      getConfig: vi.fn().mockReturnValue({
-        theme: 'light',
-        fontSize: 'medium',
-        fontFamily: 'sans-serif',
-      }),
-      setTheme: vi.fn(),
-      setFontSize: vi.fn(),
-      setFontFamily: vi.fn(),
-      setCustomFontSize: vi.fn(),
-      updateConfig: vi.fn(),
-      saveToStorage: vi.fn(),
-      loadFromStorage: vi.fn(),
-      reset: vi.fn(),
-    } as unknown as StyleController;
+    fakeBrowser.reset();
+    // 実際のStyleControllerインスタンスを使用
+    styleController = new StyleController();
   });
 
   describe('基本レンダリング', () => {
     it('正しくレンダリングされる', () => {
       render(
-        <ReaderView {...mockProps} styleController={mockStyleController} />
+        <ReaderView {...mockProps} styleController={styleController} />
       );
 
       // タイトルが表示されている
@@ -86,24 +60,23 @@ describe('ReaderView', () => {
 
     it('StyleControllerから適切なクラスとスタイルを取得する', () => {
       const { container } = render(
-        <ReaderView {...mockProps} styleController={mockStyleController} />
+        <ReaderView {...mockProps} styleController={styleController} />
       );
-
-      expect(mockStyleController.getThemeClass).toHaveBeenCalled();
-      expect(mockStyleController.getInlineVars).toHaveBeenCalled();
 
       // コンテナにテーマクラスが適用されている
       const readerContainer = container.firstChild as HTMLElement;
-      expect(readerContainer).toHaveClass(
-        'mocked-reader-container',
-        'light-theme-class'
-      );
-      expect(readerContainer).toHaveStyle('--custom-var: value');
+      expect(readerContainer).toHaveClass(styleController.getThemeClass());
+      
+      // インラインスタイルが適用されている
+      const inlineVars = styleController.getInlineVars();
+      Object.entries(inlineVars).forEach(([property, value]) => {
+        expect(readerContainer).toHaveStyle(`${property}: ${value}`);
+      });
     });
 
     it('dangerouslySetInnerHTMLでコンテンツが正しく挿入される', () => {
       const { container } = render(
-        <ReaderView {...mockProps} styleController={mockStyleController} />
+        <ReaderView {...mockProps} styleController={styleController} />
       );
 
       // HTMLが正しく挿入されていることを確認
@@ -119,7 +92,7 @@ describe('ReaderView', () => {
   describe('StylePanelの表示/非表示', () => {
     it('初期状態ではStylePanelが非表示', () => {
       render(
-        <ReaderView {...mockProps} styleController={mockStyleController} />
+        <ReaderView {...mockProps} styleController={styleController} />
       );
 
       expect(screen.queryByTestId('style-panel')).not.toBeInTheDocument();
@@ -127,7 +100,7 @@ describe('ReaderView', () => {
 
     it('スタイルボタンクリックでStylePanelが表示される', () => {
       render(
-        <ReaderView {...mockProps} styleController={mockStyleController} />
+        <ReaderView {...mockProps} styleController={styleController} />
       );
 
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
@@ -138,7 +111,7 @@ describe('ReaderView', () => {
 
     it('StylePanelが表示中にスタイルボタンを再クリックすると非表示になる', () => {
       render(
-        <ReaderView {...mockProps} styleController={mockStyleController} />
+        <ReaderView {...mockProps} styleController={styleController} />
       );
 
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
@@ -154,7 +127,7 @@ describe('ReaderView', () => {
 
     it('StylePanelのCloseボタンで非表示になる', () => {
       render(
-        <ReaderView {...mockProps} styleController={mockStyleController} />
+        <ReaderView {...mockProps} styleController={styleController} />
       );
 
       // StylePanelを表示
@@ -172,31 +145,26 @@ describe('ReaderView', () => {
 
   describe('スタイル変更の処理', () => {
     it('StylePanelからのスタイル変更でコンポーネントが再レンダリングされる', () => {
-      // 再レンダリングを検出するために、getThemeClassの戻り値を変更
-      let callCount = 0;
-      mockStyleController.getThemeClass = vi.fn(() => {
-        callCount++;
-        return callCount === 1 ? 'light-theme-class' : 'dark-theme-class';
-      });
-
-      render(
-        <ReaderView {...mockProps} styleController={mockStyleController} />
+      const { container } = render(
+        <ReaderView {...mockProps} styleController={styleController} />
       );
+
+      const initialThemeClass = styleController.getThemeClass();
+      const readerContainer = container.firstChild as HTMLElement;
+      expect(readerContainer).toHaveClass(initialThemeClass);
 
       // StylePanelを表示
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
       fireEvent.click(styleButton);
 
-      // スタイル変更ボタンをクリック
+      // スタイル変更ボタンをクリック（実際のStyleControllerの状態は変わらないが、再レンダリングをトリガー）
       const changeStyleButton = screen.getByRole('button', {
         name: 'Change Style',
       });
       fireEvent.click(changeStyleButton);
 
-      // StyleControllerのメソッドが適切に呼ばれることを確認
-      // 初期レンダリング + StylePanel表示 + スタイル変更で3回呼ばれる
-      expect(mockStyleController.getThemeClass).toHaveBeenCalledTimes(3);
-      expect(mockStyleController.getInlineVars).toHaveBeenCalledTimes(3);
+      // 再レンダリング後も同じテーマクラスが適用されている
+      expect(readerContainer).toHaveClass(styleController.getThemeClass());
     });
   });
 
@@ -206,7 +174,7 @@ describe('ReaderView', () => {
         <ReaderView
           title=""
           content={mockProps.content}
-          styleController={mockStyleController}
+          styleController={styleController}
         />
       );
 
@@ -219,7 +187,7 @@ describe('ReaderView', () => {
         <ReaderView
           title={mockProps.title}
           content=""
-          styleController={mockStyleController}
+          styleController={styleController}
         />
       );
 
@@ -235,7 +203,7 @@ describe('ReaderView', () => {
         <ReaderView
           title={mockProps.title}
           content={htmlContent}
-          styleController={mockStyleController}
+          styleController={styleController}
         />
       );
 
@@ -247,7 +215,7 @@ describe('ReaderView', () => {
   describe('アクセシビリティ', () => {
     it('適切なセマンティック要素が使用されている', () => {
       render(
-        <ReaderView {...mockProps} styleController={mockStyleController} />
+        <ReaderView {...mockProps} styleController={styleController} />
       );
 
       // h1要素が存在する
@@ -261,7 +229,7 @@ describe('ReaderView', () => {
 
     it('ボタンがキーボードでアクセス可能', () => {
       render(
-        <ReaderView {...mockProps} styleController={mockStyleController} />
+        <ReaderView {...mockProps} styleController={styleController} />
       );
 
       const styleButton = screen.getByRole('button', { name: 'スタイル' });

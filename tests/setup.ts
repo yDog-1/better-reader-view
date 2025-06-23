@@ -44,3 +44,22 @@ vi.mock('../utils/theme.css.ts', () => ({
 vi.mock('@vanilla-extract/dynamic', () => ({
   assignInlineVars: vi.fn((vars: Record<string, string>) => vars),
 }));
+
+// コンポーネントCSSファイルのモック
+vi.mock('../components/ReaderView.css.ts', () => ({
+  readerContainer: 'mocked-reader-container',
+  contentContainer: 'mocked-content-container',
+  title: 'mocked-title',
+  contentArea: 'mocked-content-area',
+  styleButton: 'mocked-style-button',
+}));
+
+vi.mock('../components/StylePanel.css.ts', () => ({
+  panel: 'mocked-panel',
+  panelTitle: 'mocked-panel-title',
+  controlGroup: 'mocked-control-group',
+  label: 'mocked-label',
+  select: 'mocked-select',
+  button: 'mocked-button',
+  closeButton: 'mocked-close-button',
+}));

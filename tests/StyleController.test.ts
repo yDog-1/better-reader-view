@@ -1,58 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-// vanilla-extractのimportをモック
-vi.mock('@vanilla-extract/dynamic', () => ({
-  assignInlineVars: vi.fn((vars: Record<string, string>) => vars),
-}));
-
-vi.mock('../utils/theme.css', () => ({
-  themeVars: {
-    font: {
-      family: '--font-family',
-      size: {
-        small: '--font-size-small',
-        medium: '--font-size-medium',
-        large: '--font-size-large',
-        xlarge: '--font-size-xlarge',
-      },
-    },
-  },
-  lightTheme: 'light-theme-class',
-  darkTheme: 'dark-theme-class',
-  sepiaTheme: 'sepia-theme-class',
-}));
-
+import { describe, it, expect, beforeEach } from 'vitest';
+import { fakeBrowser } from 'wxt/testing';
 import { StyleController, type StyleConfig } from '../utils/StyleController';
-
-// sessionStorageのモック
-const mockSessionStorage = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value;
-    }),
-    removeItem: vi.fn((key: string) => {
-      delete store[key];
-    }),
-    clear: vi.fn(() => {
-      store = {};
-    }),
-  };
-})();
-
-Object.defineProperty(global, 'sessionStorage', {
-  value: mockSessionStorage,
-});
 
 describe('StyleController', () => {
   let styleController: StyleController;
 
   beforeEach(() => {
-    // テスト前にmockをリセット
-    vi.clearAllMocks();
-    mockSessionStorage.clear();
-
+    // fakeBrowserの状態をリセット
+    fakeBrowser.reset();
     styleController = new StyleController();
   });
 
@@ -165,19 +120,20 @@ describe('StyleController', () => {
   });
 
   describe('ストレージ操作', () => {
-    it('設定をストレージに保存できる', () => {
+    it('設定をストレージに保存できる', async () => {
       styleController.setTheme('dark');
       styleController.setFontSize('large');
       styleController.saveToStorage();
 
-      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-        'readerViewStyleConfig',
-        JSON.stringify({
-          theme: 'dark',
-          fontSize: 'large',
-          fontFamily: 'sans-serif',
-        })
-      );
+      // sessionStorageの実際の値をチェック
+      const storedValue = sessionStorage.getItem('readerViewStyleConfig');
+      const parsedValue = JSON.parse(storedValue!);
+      
+      expect(parsedValue).toEqual({
+        theme: 'dark',
+        fontSize: 'large',
+        fontFamily: 'sans-serif',
+      });
     });
 
     it('ストレージから設定を読み込める', () => {
@@ -188,7 +144,7 @@ describe('StyleController', () => {
         customFontSize: 24,
       };
 
-      mockSessionStorage.setItem(
+      sessionStorage.setItem(
         'readerViewStyleConfig',
         JSON.stringify(savedConfig)
       );
@@ -199,7 +155,7 @@ describe('StyleController', () => {
     });
 
     it('無効なストレージデータの場合はfalseを返す', () => {
-      mockSessionStorage.setItem('readerViewStyleConfig', 'invalid json');
+      sessionStorage.setItem('readerViewStyleConfig', 'invalid json');
 
       const result = styleController.loadFromStorage();
       expect(result).toBe(false);
@@ -212,7 +168,7 @@ describe('StyleController', () => {
 
     it('部分的なストレージデータでもデフォルト値で補完される', () => {
       const partialConfig = { theme: 'dark' };
-      mockSessionStorage.setItem(
+      sessionStorage.setItem(
         'readerViewStyleConfig',
         JSON.stringify(partialConfig)
       );
@@ -246,34 +202,47 @@ describe('StyleController', () => {
       styleController.saveToStorage();
       styleController.reset();
 
-      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(
-        'readerViewStyleConfig'
-      );
+      const storedValue = sessionStorage.getItem('readerViewStyleConfig');
+      expect(storedValue).toBeNull();
     });
   });
 
   describe('エラーハンドリング', () => {
     it('ストレージ保存でエラーが発生してもクラッシュしない', () => {
-      mockSessionStorage.setItem.mockImplementation(() => {
-        throw new Error('Storage error');
+      // sessionStorageを無効化してエラーを誘発
+      Object.defineProperty(window, 'sessionStorage', {
+        value: {
+          setItem: () => { throw new Error('Storage error'); },
+          getItem: () => null,
+          removeItem: () => {},
+        },
+        configurable: true,
       });
 
-      // 例外が投げられないことを確認
       expect(() => {
         styleController.saveToStorage();
       }).not.toThrow();
+      
+      // テスト後にfakeBrowserのsessionStorageを復元
+      fakeBrowser.reset();
     });
 
     it('ストレージ読み込みでエラーが発生してもクラッシュしない', () => {
-      mockSessionStorage.getItem.mockImplementation(() => {
-        throw new Error('Storage error');
+      Object.defineProperty(window, 'sessionStorage', {
+        value: {
+          getItem: () => { throw new Error('Storage error'); },
+          setItem: () => {},
+          removeItem: () => {},
+        },
+        configurable: true,
       });
 
-      // 例外が投げられず、falseが返されることを確認
       expect(() => {
         const result = styleController.loadFromStorage();
         expect(result).toBe(false);
       }).not.toThrow();
+      
+      fakeBrowser.reset();
     });
   });
 });
