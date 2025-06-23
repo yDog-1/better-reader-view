@@ -128,7 +128,7 @@ describe('StyleController', () => {
       // sessionStorageの実際の値をチェック
       const storedValue = sessionStorage.getItem('readerViewStyleConfig');
       const parsedValue = JSON.parse(storedValue!);
-      
+
       expect(parsedValue).toEqual({
         theme: 'dark',
         fontSize: 'large',
@@ -212,7 +212,9 @@ describe('StyleController', () => {
       // sessionStorageを無効化してエラーを誘発
       Object.defineProperty(window, 'sessionStorage', {
         value: {
-          setItem: () => { throw new Error('Storage error'); },
+          setItem: () => {
+            throw new Error('Storage error');
+          },
           getItem: () => null,
           removeItem: () => {},
         },
@@ -222,7 +224,7 @@ describe('StyleController', () => {
       expect(() => {
         styleController.saveToStorage();
       }).not.toThrow();
-      
+
       // テスト後にfakeBrowserのsessionStorageを復元
       fakeBrowser.reset();
     });
@@ -230,7 +232,9 @@ describe('StyleController', () => {
     it('ストレージ読み込みでエラーが発生してもクラッシュしない', () => {
       Object.defineProperty(window, 'sessionStorage', {
         value: {
-          getItem: () => { throw new Error('Storage error'); },
+          getItem: () => {
+            throw new Error('Storage error');
+          },
           setItem: () => {},
           removeItem: () => {},
         },
@@ -241,7 +245,7 @@ describe('StyleController', () => {
         const result = styleController.loadFromStorage();
         expect(result).toBe(false);
       }).not.toThrow();
-      
+
       fakeBrowser.reset();
     });
   });

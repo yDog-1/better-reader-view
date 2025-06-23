@@ -37,9 +37,7 @@ describe('ReaderView', () => {
 
   describe('基本レンダリング', () => {
     it('正しくレンダリングされる', () => {
-      render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
       // タイトルが表示されている
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
@@ -66,7 +64,7 @@ describe('ReaderView', () => {
       // コンテナにテーマクラスが適用されている
       const readerContainer = container.firstChild as HTMLElement;
       expect(readerContainer).toHaveClass(styleController.getThemeClass());
-      
+
       // インラインスタイルが適用されている
       const inlineVars = styleController.getInlineVars();
       Object.entries(inlineVars).forEach(([property, value]) => {
@@ -91,17 +89,13 @@ describe('ReaderView', () => {
 
   describe('StylePanelの表示/非表示', () => {
     it('初期状態ではStylePanelが非表示', () => {
-      render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
       expect(screen.queryByTestId('style-panel')).not.toBeInTheDocument();
     });
 
     it('スタイルボタンクリックでStylePanelが表示される', () => {
-      render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
       fireEvent.click(styleButton);
@@ -110,9 +104,7 @@ describe('ReaderView', () => {
     });
 
     it('StylePanelが表示中にスタイルボタンを再クリックすると非表示になる', () => {
-      render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
 
@@ -126,9 +118,7 @@ describe('ReaderView', () => {
     });
 
     it('StylePanelのCloseボタンで非表示になる', () => {
-      render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
       // StylePanelを表示
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
@@ -214,9 +204,7 @@ describe('ReaderView', () => {
 
   describe('アクセシビリティ', () => {
     it('適切なセマンティック要素が使用されている', () => {
-      render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
       // h1要素が存在する
       expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
@@ -228,9 +216,7 @@ describe('ReaderView', () => {
     });
 
     it('ボタンがキーボードでアクセス可能', () => {
-      render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
       // ボタンは通常デフォルトでキーボードアクセス可能

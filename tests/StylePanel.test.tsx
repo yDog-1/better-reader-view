@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { fakeBrowser } from 'wxt/testing';
 import StylePanel from '../components/StylePanel';
-import { StyleController, type StyleConfig } from '../utils/StyleController';
+import { StyleController } from '../utils/StyleController';
 
 describe('StylePanel', () => {
   let styleController: StyleController;
@@ -74,7 +74,7 @@ describe('StylePanel', () => {
       // 実際のStyleControllerの状態が変更されたことを確認
       expect(styleController.getConfig().theme).toBe('dark');
       expect(mockOnStyleChange).toHaveBeenCalled();
-      
+
       // sessionStorageに保存されたことを確認
       const saved = sessionStorage.getItem('readerViewStyleConfig');
       expect(saved).toBeTruthy();
@@ -179,7 +179,7 @@ describe('StylePanel', () => {
       // まず設定を変更
       styleController.setTheme('dark');
       styleController.setFontSize('large');
-      
+
       render(
         <StylePanel
           styleController={styleController}
@@ -315,7 +315,7 @@ describe('StylePanel', () => {
       // セレクトボックスは有効なオプションのみを持つため、
       // 実際の使用時には無効な値は選択できない
       expect(themeSelect).toHaveValue('light');
-      
+
       // 有効な値での変更をテスト
       fireEvent.change(themeSelect, { target: { value: 'dark' } });
       expect(styleController.getConfig().theme).toBe('dark');
