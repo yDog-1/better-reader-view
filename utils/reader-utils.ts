@@ -24,7 +24,7 @@ export interface Article {
 /**
  * 純粋関数: documentから抽出し、DOMPurifyでサニタイズして{title, content}を返す
  */
-const extractContent = (
+export const extractContent = (
   document: Document
 ): { title: string; content: string } | null => {
   const documentClone = document.cloneNode(true) as Document;
