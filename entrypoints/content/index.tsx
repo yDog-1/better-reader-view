@@ -1,7 +1,12 @@
 import ReactDOM from 'react-dom/client';
 import './style.css';
 import PopupMessage from '@/components/popupMsg';
-import { activateReader, deactivateReader } from '@/utils/reader-utils';
+import {
+  activateReader,
+  deactivateReader,
+  initializeReaderViewManager,
+} from '@/utils/reader-utils';
+import { StyleController } from '@/utils/StyleController';
 
 const articleErrorMessage = '記事が見つかりませんでした。';
 
@@ -13,6 +18,15 @@ export default defineContentScript({
   cssInjectionMode: 'ui',
 
   async main() {
+    // StyleControllerを初期化
+    const styleController = new StyleController();
+
+    // ストレージから設定を読み込み
+    styleController.loadFromStorage();
+
+    // ReaderViewManagerを初期化
+    initializeReaderViewManager(styleController);
+
     toggleReaderView();
     return;
   },

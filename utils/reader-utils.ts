@@ -3,6 +3,7 @@ import { Readability } from '@mozilla/readability';
 import ReactDOM from 'react-dom/client';
 import React from 'react';
 import ReaderView from '~/components/ReaderView';
+import { StyleController } from './StyleController';
 
 /**
  * Article type for reader view content
@@ -50,6 +51,11 @@ class ReaderViewManager {
   private shadowRoot: ShadowRoot | null = null;
   private reactRoot: ReactDOM.Root | null = null;
   private originalPageDisplay: string = '';
+  private styleController: StyleController;
+
+  constructor(styleController: StyleController) {
+    this.styleController = styleController;
+  }
 
   /**
    * ReactコンポーネントをShadow DOMにレンダリング
@@ -59,7 +65,12 @@ class ReaderViewManager {
     content: { title: string; content: string }
   ): ReactDOM.Root {
     const root = ReactDOM.createRoot(shadowRoot);
-    root.render(React.createElement(ReaderView, content));
+    root.render(
+      React.createElement(ReaderView, {
+        ...content,
+        styleController: this.styleController,
+      })
+    );
     return root;
   }
 
@@ -138,23 +149,51 @@ class ReaderViewManager {
     // 元ページを表示
     doc.body.style.display = this.originalPageDisplay;
   }
+
+  /**
+   * StyleControllerへの参照を取得
+   */
+  getStyleController(): StyleController {
+    return this.styleController;
+  }
 }
 
-// シングルトンインスタンス
-const readerViewManager = new ReaderViewManager();
+// グローバルインスタンス管理
+let readerViewManager: ReaderViewManager | null = null;
+
+/**
+ * ReaderViewManagerを初期化（StyleControllerが必要）
+ */
+export const initializeReaderViewManager = (
+  styleController: StyleController
+): void => {
+  readerViewManager = new ReaderViewManager(styleController);
+};
+
+/**
+ * ReaderViewManagerインスタンスを取得
+ */
+export const getReaderViewManager = (): ReaderViewManager => {
+  if (!readerViewManager) {
+    throw new Error(
+      'ReaderViewManager が初期化されていません。initializeReaderViewManager() を先に呼び出してください。'
+    );
+  }
+  return readerViewManager;
+};
 
 /**
  * リーダービューを有効化（グローバル関数としてエクスポート）
  */
 export const activateReader = (doc: Document): boolean => {
-  return readerViewManager.activateReader(doc);
+  return getReaderViewManager().activateReader(doc);
 };
 
 /**
  * リーダービューを無効化（グローバル関数としてエクスポート）
  */
 export const deactivateReader = (doc: Document): void => {
-  readerViewManager.deactivateReader(doc);
+  getReaderViewManager().deactivateReader(doc);
 };
 
 /**
