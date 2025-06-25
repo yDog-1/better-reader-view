@@ -105,14 +105,26 @@ vi.mock('../components/StylePanel.css.ts', () => ({
 
 // React act()警告の抑制（実際にはVitestが制御しているため効果は限定的）
 // 古典学派テストでの警告ノイズ削減のための試行
-const originalStderrWrite = (globalThis as any).process?.stderr?.write;
+type ProcessLike = {
+  stderr: {
+    write: (
+      chunk: string | Uint8Array,
+      encoding?: string | (() => void),
+      callback?: () => void
+    ) => boolean;
+  };
+};
+
+const globalProcess = (globalThis as Record<string, unknown>).process as
+  | ProcessLike
+  | undefined;
+const originalStderrWrite = globalProcess?.stderr?.write;
 
 beforeAll(() => {
-  if (originalStderrWrite) {
-    // @ts-expect-error Node.js環境でのstderr制御のため型チェックを無視
-    (globalThis as any).process.stderr.write = function (
-      chunk: string | Buffer,
-      encoding?: BufferEncoding | (() => void),
+  if (originalStderrWrite && globalProcess) {
+    globalProcess.stderr.write = function (
+      chunk: string | Uint8Array,
+      encoding?: string | (() => void),
       callback?: () => void
     ) {
       const output = chunk.toString();
@@ -138,7 +150,7 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  if (originalStderrWrite) {
-    (globalThis as any).process.stderr.write = originalStderrWrite;
+  if (originalStderrWrite && globalProcess) {
+    globalProcess.stderr.write = originalStderrWrite;
   }
 });
