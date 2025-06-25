@@ -60,8 +60,11 @@ const StylePanel: React.FC<StylePanelProps> = ({
       <div className={panelTitle}>スタイル設定</div>
 
       <div className={controlGroup}>
-        <label className={label}>テーマ</label>
+        <label className={label} htmlFor="theme-select">
+          テーマ
+        </label>
         <select
+          id="theme-select"
           className={select}
           value={config.theme}
           onChange={(e) => handleThemeChange(e.target.value as ThemeType)}
@@ -73,8 +76,11 @@ const StylePanel: React.FC<StylePanelProps> = ({
       </div>
 
       <div className={controlGroup}>
-        <label className={label}>フォントサイズ</label>
+        <label className={label} htmlFor="font-size-select">
+          フォントサイズ
+        </label>
         <select
+          id="font-size-select"
           className={select}
           value={config.fontSize}
           onChange={(e) => handleFontSizeChange(e.target.value as FontSize)}
@@ -87,8 +93,11 @@ const StylePanel: React.FC<StylePanelProps> = ({
       </div>
 
       <div className={controlGroup}>
-        <label className={label}>フォント種類</label>
+        <label className={label} htmlFor="font-family-select">
+          フォント種類
+        </label>
         <select
+          id="font-family-select"
           className={select}
           value={config.fontFamily}
           onChange={(e) => handleFontFamilyChange(e.target.value as FontFamily)}
