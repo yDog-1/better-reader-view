@@ -268,7 +268,7 @@ describe('Reader Integration Tests (Classical Approach)', () => {
     it('Given: 破損したsessionStorageデータ, When: 設定読み込み, Then: デフォルト設定で継続する', () => {
       // Given: 破損したJSONデータ
       sessionStorage.setItem('readerViewStyleConfig', 'invalid json data');
-      
+
       // サイレントロガーを使用してエラーメッセージを抑制
       const silentLogger = { warn: () => {} };
       const testStyleController = new StyleController(undefined, silentLogger);

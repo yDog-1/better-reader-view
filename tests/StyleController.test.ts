@@ -160,7 +160,7 @@ describe('StyleController', () => {
       // サイレントロガーを使用してエラーメッセージを抑制
       const silentLogger = { warn: () => {} };
       const testController = new StyleController(undefined, silentLogger);
-      
+
       sessionStorage.setItem('readerViewStyleConfig', 'invalid json');
 
       const result = testController.loadFromStorage();
@@ -218,7 +218,7 @@ describe('StyleController', () => {
       // サイレントロガーを使用してエラーメッセージを抑制
       const silentLogger = { warn: () => {} };
       const testController = new StyleController(undefined, silentLogger);
-      
+
       // sessionStorageを無効化してエラーを誘発
       Object.defineProperty(window, 'sessionStorage', {
         value: {
@@ -243,7 +243,7 @@ describe('StyleController', () => {
       // サイレントロガーを使用してエラーメッセージを抑制
       const silentLogger = { warn: () => {} };
       const testController = new StyleController(undefined, silentLogger);
-      
+
       Object.defineProperty(window, 'sessionStorage', {
         value: {
           getItem: () => {

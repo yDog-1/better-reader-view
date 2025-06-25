@@ -103,20 +103,42 @@ vi.mock('../components/StylePanel.css.ts', () => ({
   closeButton: 'close-button',
 }));
 
-// Console エラーを抑制（テスト実行時の見やすさのため）
-const originalError = console.error;
+// React act()警告の抑制（実際にはVitestが制御しているため効果は限定的）
+// 古典学派テストでの警告ノイズ削減のための試行
+const originalStderrWrite = (globalThis as any).process?.stderr?.write;
+
 beforeAll(() => {
-  console.error = (...args) => {
-    if (
-      typeof args[0] === 'string' &&
-      args[0].includes('Warning: ReactDOM.render is no longer supported')
+  if (originalStderrWrite) {
+    // @ts-expect-error Node.js環境でのstderr制御のため型チェックを無視
+    (globalThis as any).process.stderr.write = function (
+      chunk: string | Buffer,
+      encoding?: BufferEncoding | (() => void),
+      callback?: () => void
     ) {
-      return;
-    }
-    originalError.call(console, ...args);
-  };
+      const output = chunk.toString();
+
+      // act()警告をフィルタリング
+      if (
+        output.includes('not wrapped in act') ||
+        output.includes('Warning: An update to') ||
+        output.includes(
+          'When testing, code that causes React state updates should be wrapped into act'
+        )
+      ) {
+        // 警告を出力しない
+        if (typeof encoding === 'function') encoding();
+        if (callback) callback();
+        return true;
+      }
+
+      // その他のエラーは通常通り出力
+      return originalStderrWrite.call(this, chunk, encoding, callback);
+    };
+  }
 });
 
 afterAll(() => {
-  console.error = originalError;
+  if (originalStderrWrite) {
+    (globalThis as any).process.stderr.write = originalStderrWrite;
+  }
 });
