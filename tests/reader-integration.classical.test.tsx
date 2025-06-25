@@ -268,13 +268,17 @@ describe('Reader Integration Tests (Classical Approach)', () => {
     it('Given: 破損したsessionStorageデータ, When: 設定読み込み, Then: デフォルト設定で継続する', () => {
       // Given: 破損したJSONデータ
       sessionStorage.setItem('readerViewStyleConfig', 'invalid json data');
+      
+      // サイレントロガーを使用してエラーメッセージを抑制
+      const silentLogger = { warn: () => {} };
+      const testStyleController = new StyleController(undefined, silentLogger);
 
       // When: 設定読み込みを試行
-      const loadResult = styleController.loadFromStorage();
+      const loadResult = testStyleController.loadFromStorage();
 
       // Then: 失敗し、デフォルト設定が保持される
       expect(loadResult).toBe(false);
-      const config = styleController.getConfig();
+      const config = testStyleController.getConfig();
       expect(config.theme).toBe('light');
       expect(config.fontSize).toBe('medium');
       expect(config.fontFamily).toBe('sans-serif');

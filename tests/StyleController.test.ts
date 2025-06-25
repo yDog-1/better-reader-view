@@ -8,6 +8,8 @@ describe('StyleController', () => {
   beforeEach(() => {
     // fakeBrowserの状態をリセット
     fakeBrowser.reset();
+    // sessionStorageを明示的にクリア
+    sessionStorage.removeItem('readerViewStyleConfig');
     styleController = new StyleController();
   });
 
@@ -155,9 +157,13 @@ describe('StyleController', () => {
     });
 
     it('無効なストレージデータの場合はfalseを返す', () => {
+      // サイレントロガーを使用してエラーメッセージを抑制
+      const silentLogger = { warn: () => {} };
+      const testController = new StyleController(undefined, silentLogger);
+      
       sessionStorage.setItem('readerViewStyleConfig', 'invalid json');
 
-      const result = styleController.loadFromStorage();
+      const result = testController.loadFromStorage();
       expect(result).toBe(false);
     });
 
@@ -209,6 +215,10 @@ describe('StyleController', () => {
 
   describe('エラーハンドリング', () => {
     it('ストレージ保存でエラーが発生してもクラッシュしない', () => {
+      // サイレントロガーを使用してエラーメッセージを抑制
+      const silentLogger = { warn: () => {} };
+      const testController = new StyleController(undefined, silentLogger);
+      
       // sessionStorageを無効化してエラーを誘発
       Object.defineProperty(window, 'sessionStorage', {
         value: {
@@ -222,7 +232,7 @@ describe('StyleController', () => {
       });
 
       expect(() => {
-        styleController.saveToStorage();
+        testController.saveToStorage();
       }).not.toThrow();
 
       // テスト後にfakeBrowserのsessionStorageを復元
@@ -230,6 +240,10 @@ describe('StyleController', () => {
     });
 
     it('ストレージ読み込みでエラーが発生してもクラッシュしない', () => {
+      // サイレントロガーを使用してエラーメッセージを抑制
+      const silentLogger = { warn: () => {} };
+      const testController = new StyleController(undefined, silentLogger);
+      
       Object.defineProperty(window, 'sessionStorage', {
         value: {
           getItem: () => {
@@ -242,7 +256,7 @@ describe('StyleController', () => {
       });
 
       expect(() => {
-        const result = styleController.loadFromStorage();
+        const result = testController.loadFromStorage();
         expect(result).toBe(false);
       }).not.toThrow();
 

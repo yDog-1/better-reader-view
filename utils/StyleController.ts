@@ -12,8 +12,13 @@ export interface StyleConfig {
   customFontSize?: number;
 }
 
+export interface Logger {
+  warn(message: string, error?: unknown): void;
+}
+
 export class StyleController {
   private config: StyleConfig;
+  private logger: Logger;
   private readonly themeClasses = {
     light: lightTheme,
     dark: darkTheme,
@@ -31,9 +36,11 @@ export class StyleController {
       theme: 'light',
       fontSize: 'medium',
       fontFamily: 'sans-serif',
-    }
+    },
+    logger?: Logger
   ) {
     this.config = initialConfig;
+    this.logger = logger || console;
   }
 
   getThemeClass(): string {
@@ -91,7 +98,7 @@ export class StyleController {
         JSON.stringify(this.config)
       );
     } catch (error) {
-      console.warn('スタイル設定の保存に失敗しました:', error);
+      this.logger.warn('スタイル設定の保存に失敗しました:', error);
     }
   }
 
@@ -109,7 +116,7 @@ export class StyleController {
         return true;
       }
     } catch (error) {
-      console.warn('スタイル設定の読み込みに失敗しました:', error);
+      this.logger.warn('スタイル設定の読み込みに失敗しました:', error);
     }
     return false;
   }
