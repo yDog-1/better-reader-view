@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { StyleController, type StyleConfig } from '../utils/StyleController';
+import { ReaderViewError, ReaderViewErrorType } from '../utils/errors';
 
 describe('StyleController', () => {
   let styleController: StyleController;
@@ -156,15 +157,16 @@ describe('StyleController', () => {
       expect(styleController.getConfig()).toEqual(savedConfig);
     });
 
-    it('無効なストレージデータの場合はfalseを返す', () => {
-      // サイレントロガーを使用してエラーメッセージを抑制
-      const silentLogger = { warn: () => {} };
-      const testController = new StyleController(undefined, silentLogger);
-
+    it('無効なストレージデータの場合はエラーをthrowする', () => {
       sessionStorage.setItem('readerViewStyleConfig', 'invalid json');
 
-      const result = testController.loadFromStorage();
-      expect(result).toBe(false);
+      expect(() => {
+        styleController.loadFromStorage();
+      }).toThrow(ReaderViewError);
+      
+      expect(() => {
+        styleController.loadFromStorage();
+      }).toThrow('スタイル設定の読み込みに失敗しました');
     });
 
     it('ストレージにデータがない場合はfalseを返す', () => {
@@ -214,11 +216,7 @@ describe('StyleController', () => {
   });
 
   describe('エラーハンドリング', () => {
-    it('ストレージ保存でエラーが発生してもクラッシュしない', () => {
-      // サイレントロガーを使用してエラーメッセージを抑制
-      const silentLogger = { warn: () => {} };
-      const testController = new StyleController(undefined, silentLogger);
-
+    it('ストレージ保存でエラーが発生するとReaderViewErrorをthrowする', () => {
       // sessionStorageを無効化してエラーを誘発
       Object.defineProperty(window, 'sessionStorage', {
         value: {
@@ -232,18 +230,18 @@ describe('StyleController', () => {
       });
 
       expect(() => {
-        testController.saveToStorage();
-      }).not.toThrow();
+        styleController.saveToStorage();
+      }).toThrow(ReaderViewError);
+
+      expect(() => {
+        styleController.saveToStorage();
+      }).toThrow('スタイル設定の保存に失敗しました');
 
       // テスト後にfakeBrowserのsessionStorageを復元
       fakeBrowser.reset();
     });
 
-    it('ストレージ読み込みでエラーが発生してもクラッシュしない', () => {
-      // サイレントロガーを使用してエラーメッセージを抑制
-      const silentLogger = { warn: () => {} };
-      const testController = new StyleController(undefined, silentLogger);
-
+    it('ストレージ読み込みでエラーが発生するとReaderViewErrorをthrowする', () => {
       Object.defineProperty(window, 'sessionStorage', {
         value: {
           getItem: () => {
@@ -256,9 +254,12 @@ describe('StyleController', () => {
       });
 
       expect(() => {
-        const result = testController.loadFromStorage();
-        expect(result).toBe(false);
-      }).not.toThrow();
+        styleController.loadFromStorage();
+      }).toThrow(ReaderViewError);
+
+      expect(() => {
+        styleController.loadFromStorage();
+      }).toThrow('スタイル設定の読み込みに失敗しました');
 
       fakeBrowser.reset();
     });

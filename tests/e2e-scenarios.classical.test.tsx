@@ -587,13 +587,17 @@ describe('E2E User Scenarios (Classical Approach)', () => {
         writable: true,
       });
 
-      // When & Then: エラーが発生してもアプリケーションが動作する
+      // When & Then: ストレージエラーの場合はReaderViewErrorがthrowされる
+      const errorHandlingController = new StyleController();
+      errorHandlingController.setTheme('dark');
+      
       expect(() => {
-        const errorHandlingController = new StyleController();
-        errorHandlingController.setTheme('dark');
         errorHandlingController.saveToStorage();
+      }).toThrow('スタイル設定の保存に失敗しました');
+      
+      expect(() => {
         errorHandlingController.loadFromStorage();
-      }).not.toThrow();
+      }).toThrow('スタイル設定の読み込みに失敗しました');
 
       // クリーンアップ
       Object.defineProperty(window, 'sessionStorage', {
