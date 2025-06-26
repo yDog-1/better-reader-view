@@ -1,5 +1,6 @@
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import { themeVars, lightTheme, darkTheme, sepiaTheme } from './theme.css';
+import { createStyleSaveError, createStyleLoadError } from './errors';
 
 export type ThemeType = 'light' | 'dark' | 'sepia';
 export type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
@@ -98,7 +99,7 @@ export class StyleController {
         JSON.stringify(this.config)
       );
     } catch (error) {
-      this.logger.warn('スタイル設定の保存に失敗しました:', error);
+      throw createStyleSaveError(error);
     }
   }
 
@@ -116,7 +117,7 @@ export class StyleController {
         return true;
       }
     } catch (error) {
-      this.logger.warn('スタイル設定の読み込みに失敗しました:', error);
+      throw createStyleLoadError(error);
     }
     return false;
   }

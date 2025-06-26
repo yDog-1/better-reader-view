@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import React from 'react';
 import ReaderView from '~/components/ReaderView';
 import { StyleController } from './StyleController';
+import { createReactUnmountError } from './errors';
 
 /**
  * Article type for reader view content
@@ -117,7 +118,7 @@ class ReaderViewManager {
       try {
         this.reactRoot.unmount();
       } catch (e) {
-        console.warn('Failed to unmount React root:', e);
+        throw createReactUnmountError(e);
       }
       this.reactRoot = null;
     }
