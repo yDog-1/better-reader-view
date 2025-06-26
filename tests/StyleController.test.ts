@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { StyleController, type StyleConfig } from '../utils/StyleController';
-import { ReaderViewError, ReaderViewErrorType } from '../utils/errors';
+import { ReaderViewError } from '../utils/errors';
 
 describe('StyleController', () => {
   let styleController: StyleController;
