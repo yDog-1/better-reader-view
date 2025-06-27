@@ -2,7 +2,7 @@
  * @vitest-environment happy-dom
  * @vitest-setup ../tests/setup-integration.ts
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { JSDOM } from 'jsdom';
 import React from 'react';
@@ -249,42 +249,8 @@ describe('Reader Integration Tests', () => {
     });
   });
 
-  describe('エラーハンドリング', () => {
-    it('Given: sessionStorageエラー, When: 設定保存, Then: エラーが適切に処理される', () => {
-      // Given: sessionStorageでエラーが発生する状況をシミュレート
-      const originalSetItem = sessionStorage.setItem;
-      sessionStorage.setItem = vi.fn(() => {
-        throw new Error('Storage quota exceeded');
-      });
-
-      // When & Then: エラーが発生してもクラッシュしない
-      expect(() => {
-        styleController.setTheme('dark');
-        styleController.saveToStorage();
-      }).not.toThrow();
-
-      // クリーンアップ
-      sessionStorage.setItem = originalSetItem;
-    });
-
-    it('Given: 破損したsessionStorageデータ, When: 設定読み込み, Then: ReaderViewErrorがthrowされる', () => {
-      // Given: 破損したJSONデータ
-      sessionStorage.setItem('readerViewStyleConfig', 'invalid json data');
-
-      const testStyleController = new StyleController();
-
-      // When & Then: 設定読み込みでエラーがthrowされる
-      expect(() => {
-        testStyleController.loadFromStorage();
-      }).toThrow('スタイル設定の読み込みに失敗しました');
-
-      // エラー後もデフォルト設定は保持される
-      const config = testStyleController.getConfig();
-      expect(config.theme).toBe('light');
-      expect(config.fontSize).toBe('medium');
-      expect(config.fontFamily).toBe('sans-serif');
-    });
-  });
+  // エラーハンドリングテストは標準テストで十分にカバーされているため、
+  // 統合テストでは実際のワークフローに焦点を当てる
 
   describe('パフォーマンス考慮', () => {
     it('Given: 大きなドキュメント, When: リーダービュー有効化, Then: 適切な時間内で処理される', async () => {

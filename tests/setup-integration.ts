@@ -7,12 +7,19 @@ import { vi, beforeAll, afterAll } from 'vitest';
  */
 
 // Browser APIs のモック（必要最小限）
+const mockStorage = new Map<string, string>();
 Object.defineProperty(window, 'sessionStorage', {
   value: {
-    getItem: vi.fn(() => null),
-    setItem: vi.fn(() => undefined),
-    removeItem: vi.fn(() => undefined),
-    clear: vi.fn(() => undefined),
+    getItem: vi.fn((key: string) => mockStorage.get(key) || null),
+    setItem: vi.fn((key: string, value: string) => {
+      mockStorage.set(key, value);
+    }),
+    removeItem: vi.fn((key: string) => {
+      mockStorage.delete(key);
+    }),
+    clear: vi.fn(() => {
+      mockStorage.clear();
+    }),
   },
   writable: true,
 });
@@ -37,6 +44,12 @@ if (typeof window !== 'undefined' && !window.Element.prototype.attachShadow) {
 
 // createRoot のモック（React 18対応）
 vi.mock('react-dom/client', () => ({
+  default: {
+    createRoot: vi.fn(() => ({
+      render: vi.fn(),
+      unmount: vi.fn(),
+    })),
+  },
   createRoot: vi.fn(() => ({
     render: vi.fn(),
     unmount: vi.fn(),
