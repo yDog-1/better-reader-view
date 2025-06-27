@@ -32,7 +32,8 @@ export default defineContentScript({
       toggleReaderView();
     } catch (error) {
       // エラーをユーザーに通知
-      const errorMessage = error instanceof Error ? error.message : 'エラーが発生しました';
+      const errorMessage =
+        error instanceof Error ? error.message : 'エラーが発生しました';
       showPopupMessage(errorMessage);
     }
     return;
@@ -59,7 +60,8 @@ function toggleReaderView() {
     }
   } catch (error) {
     // エラーをユーザーに通知
-    const errorMessage = error instanceof Error ? error.message : 'エラーが発生しました';
+    const errorMessage =
+      error instanceof Error ? error.message : 'エラーが発生しました';
     showPopupMessage(errorMessage);
   }
 }
@@ -96,6 +98,8 @@ function showPopupMessage(message: string) {
   } catch (error) {
     // showPopupMessage自体がエラーした場合のフォールバック
     // 無限ループを防ぐため、windowオブジェクトを使用
-    window.alert(error instanceof Error ? error.message : 'エラーが発生しました');
+    window.alert(
+      error instanceof Error ? error.message : 'エラーが発生しました'
+    );
   }
 }

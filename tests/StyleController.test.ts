@@ -163,7 +163,7 @@ describe('StyleController', () => {
       expect(() => {
         styleController.loadFromStorage();
       }).toThrow(ReaderViewError);
-      
+
       expect(() => {
         styleController.loadFromStorage();
       }).toThrow('スタイル設定の読み込みに失敗しました');

@@ -590,11 +590,11 @@ describe('E2E User Scenarios (Classical Approach)', () => {
       // When & Then: ストレージエラーの場合はReaderViewErrorがthrowされる
       const errorHandlingController = new StyleController();
       errorHandlingController.setTheme('dark');
-      
+
       expect(() => {
         errorHandlingController.saveToStorage();
       }).toThrow('スタイル設定の保存に失敗しました');
-      
+
       expect(() => {
         errorHandlingController.loadFromStorage();
       }).toThrow('スタイル設定の読み込みに失敗しました');

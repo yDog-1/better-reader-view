@@ -13,13 +13,8 @@ export interface StyleConfig {
   customFontSize?: number;
 }
 
-export interface Logger {
-  warn(message: string, error?: unknown): void;
-}
-
 export class StyleController {
   private config: StyleConfig;
-  private logger: Logger;
   private readonly themeClasses = {
     light: lightTheme,
     dark: darkTheme,
@@ -37,11 +32,9 @@ export class StyleController {
       theme: 'light',
       fontSize: 'medium',
       fontFamily: 'sans-serif',
-    },
-    logger?: Logger
+    }
   ) {
     this.config = initialConfig;
-    this.logger = logger || console;
   }
 
   getThemeClass(): string {
