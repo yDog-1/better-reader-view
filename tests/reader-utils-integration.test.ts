@@ -1,6 +1,6 @@
 /**
  * @vitest-environment happy-dom
- * @vitest-setup ../tests/setup-classical.ts
+ * @vitest-setup ../tests/setup-integration.ts
  */
 import { describe, it, expect } from 'vitest';
 import { JSDOM } from 'jsdom';
@@ -11,7 +11,7 @@ import {
 } from '@/utils/reader-utils';
 
 /**
- * 古典学派アプローチによるreader-utilsのテスト
+ * reader-utilsの統合テスト
  * - 実装詳細ではなく行動をテスト
  * - モックを最小限に抑制
  * - Given-When-Then パターンを採用
@@ -148,7 +148,7 @@ function createDocument(): DocumentBuilder {
   return new DocumentBuilder();
 }
 
-describe('reader-utils: Content Extraction (Classical Approach)', () => {
+describe('reader-utils: Content Extraction', () => {
   describe('extractContent 関数', () => {
     describe('正常なコンテンツ抽出', () => {
       it('Given: 最小限の有効な記事, When: コンテンツを抽出, Then: タイトルとコンテンツが返される', () => {

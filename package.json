@@ -16,6 +16,7 @@
     "lint": "bun --bun run eslint .",
     "fmt": "bun --bun run prettier --write .",
     "test": "bunx vitest",
+    "test:integration": "bunx vitest --config vitest.integration.config.ts",
     "fix": "bun --bun run eslint . --fix && bun --bun run prettier --write ."
   },
   "dependencies": {

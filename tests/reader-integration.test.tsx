@@ -1,6 +1,6 @@
 /**
  * @vitest-environment happy-dom
- * @vitest-setup ../tests/setup-classical.ts
+ * @vitest-setup ../tests/setup-integration.ts
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -15,7 +15,7 @@ import {
 } from '@/utils/reader-utils';
 
 /**
- * 古典学派アプローチによる統合テスト
+ * 統合テスト
  * - StyleController と ReaderView の実際の相互作用をテスト
  * - ユーザーが体験する実際のワークフローをテスト
  * - モックを最小限に抑制
@@ -64,7 +64,7 @@ function createTestDocument(): TestDocumentBuilder {
   return new TestDocumentBuilder();
 }
 
-describe('Reader Integration Tests (Classical Approach)', () => {
+describe('Reader Integration Tests', () => {
   let styleController: StyleController;
 
   beforeEach(() => {

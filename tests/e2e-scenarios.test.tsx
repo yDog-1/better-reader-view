@@ -1,6 +1,6 @@
 /**
  * @vitest-environment happy-dom
- * @vitest-setup ../tests/setup-classical.ts
+ * @vitest-setup ../tests/setup-integration.ts
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -16,7 +16,7 @@ import {
 } from '@/utils/reader-utils';
 
 /**
- * エンドツーエンドシナリオテスト（古典学派アプローチ）
+ * エンドツーエンドシナリオテスト
  * - 実際のユーザージャーニーをテスト
  * - 複数のコンポーネントとサービスの統合をテスト
  * - ビジネスロジック全体の動作を検証
@@ -333,7 +333,7 @@ class RealWorldDocumentBuilder {
   }
 }
 
-describe('E2E User Scenarios (Classical Approach)', () => {
+describe('E2E User Scenarios', () => {
   let styleController: StyleController;
   let user: ReturnType<typeof userEvent.setup>;
 
