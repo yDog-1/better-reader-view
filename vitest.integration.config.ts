@@ -8,7 +8,7 @@ export default defineConfig({
     globals: true,
     clearMocks: true,
     restoreMocks: true,
-    setupFiles: ['./tests/setup-classical.ts'],
-    include: ['tests/*.classical.test.{ts,tsx}'],
+    setupFiles: ['./tests/setup-integration.ts'],
+    include: ['tests/*-integration.test.{ts,tsx}'],
   },
 });
