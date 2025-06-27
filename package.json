@@ -16,9 +16,11 @@
     "lint": "bun --bun run eslint .",
     "fmt": "bun --bun run prettier --write .",
     "test": "bunx vitest --run",
-    "test:integration": "bunx vitest --config vitest.integration.config.ts --run",
+    "test:e2e": "bun run build && bunx playwright test",
+    "test:e2e:headed": "bun run build && bunx playwright test --headed",
+    "test:e2e:debug": "bun run build && bunx playwright test --debug",
     "fix": "bun --bun run eslint . --fix && bun --bun run prettier --write .",
-    "ci": "bun run fix && bun run test && bun run test:integration && bun run compile"
+    "ci": "bun run fix && bun run test && bun run compile && bun run test:e2e"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
@@ -31,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/compat": "^1.3.0",
+    "@playwright/test": "^1.53.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -44,9 +47,11 @@
     "@vitest/ui": "^3.2.4",
     "@wxt-dev/module-react": "^1.1.3",
     "eslint": "^9.29.0",
+    "eslint-plugin-playwright": "^2.2.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "jsdom": "^26.1.0",
+    "playwright": "^1.53.1",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4",

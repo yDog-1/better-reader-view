@@ -17,7 +17,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing
 
 - `bun test` - Run unit tests in watch mode (uses Vitest)
-- `bun run test:integration` - Run integration tests with classical approach
+- `bun run test:e2e` - Run E2E tests with Playwright
+- `bun run test:e2e:headed` - Run E2E tests in headed mode (visible browser)
 - Run single test: `bunx vitest tests/specific-test.test.ts`
 
 ### Code Quality
@@ -25,12 +26,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run lint` - Run ESLint on codebase
 - `bun fmt` - Format code with Prettier
 - `bun run fix` - Auto-fix issues (lint + format combined)
-- `bun run ci` - Complete quality check (fix + test + test:integration + compile)
+- `bun run ci` - Complete quality check (fix + test + test:e2e + compile)
 
 ## Git Workflow
 
 - Do not commit without explicit permission from the user
-- Before committing, always run: `bun run fix && bun test && bun run test:integration && bun run compile`
+- Before committing, always run: `bun run fix && bun test && bun run test:e2e && bun run compile`
 
 ## Architecture
 
@@ -121,36 +122,42 @@ WXT automatically imports from `components/`, `utils/`, `hooks/`, and `composabl
 
 ## Testing
 
-This project uses a comprehensive dual testing approach with Vitest for browser extension functionality.
+This project uses a modern testing approach combining unit tests and E2E tests for comprehensive coverage.
 
-### Dual Testing Strategy
+### Testing Strategy
 
-1. **Standard Unit Tests** (`vitest.config.ts`)
+1. **Unit Tests** (`vitest.config.ts`)
 
    - Uses `happy-dom` environment for fast execution
-   - Comprehensive mocking for CSS-in-JS and components
+   - Component and utility function testing
    - Setup file: `tests/setup.ts`
-   - Patterns: `*.test.ts`, `*.spec.ts`
+   - Patterns: `*.test.ts`, `*.test.tsx`
 
-2. **Integration Tests** (`vitest.integration.config.ts`)
-   - Classical testing approach with minimal mocking
-   - Real Shadow DOM polyfills for realistic browser behavior
-   - Setup file: `tests/setup-integration.ts`
-   - Patterns: `*.classical.test.ts`, `*.classical.test.tsx`
+2. **E2E Tests** (`playwright.config.ts`)
+
+   - Real browser testing with Playwright
+   - Complete user workflows and browser extension behavior
+   - Setup file: `tests/e2e/`
+   - Patterns: `tests/e2e/*.spec.ts`
+
+3. **Error Scenario Tests** (`tests/error-scenarios.test.tsx`)
+   - Comprehensive error handling validation
+   - Edge cases and failure recovery testing
+   - Browser compatibility and permission errors
 
 ### Test Coverage
 
 - **Component Tests**: ReaderView, StylePanel with user interactions
-- **Unit Tests**: StyleController, reader utilities, error handling
-- **Integration Tests**: End-to-end reader view functionality
-- **E2E Scenarios**: Complete user workflows with real DOM behavior
+- **Unit Tests**: StyleController, reader utilities, pure functions
+- **E2E Tests**: Complete browser extension workflows
+- **Error Handling**: DOM manipulation, storage, and component errors
 
 ### Key Testing Utilities
 
 - `@testing-library/react` and `@testing-library/jest-dom` for component testing
-- Custom mocks for Vanilla Extract CSS-in-JS
-- Shadow DOM polyfills for realistic browser extension testing
-- WXT browser API mocking via `@webext-core/fake-browser`
+- `@playwright/test` for E2E browser automation
+- Custom mocks for Vanilla Extract CSS-in-JS (unit tests only)
+- Real browser APIs and Shadow DOM in E2E tests
 
 ## Development Patterns
 

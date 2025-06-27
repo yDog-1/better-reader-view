@@ -10,7 +10,7 @@ vi.mock('@vanilla-extract/dynamic', () => ({
 }));
 
 // テーマCSS変数のモック（vanilla-extractの制約対応）
-vi.mock('../utils/theme.css.ts', () => ({
+vi.mock('../utils/theme.css', () => ({
   themeVars: {
     color: {
       text: '--text-color',

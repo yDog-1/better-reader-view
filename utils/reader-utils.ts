@@ -5,6 +5,7 @@ import React from 'react';
 import ReaderView from '~/components/ReaderView';
 import { StyleController } from './StyleController';
 import { createReactUnmountError } from './errors';
+// 定数はインポートしているが、将来的な拡張で使用予定
 
 /**
  * Article type for reader view content

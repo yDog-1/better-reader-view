@@ -8,10 +8,9 @@ import {
 } from '@/utils/reader-utils';
 import { StyleController } from '@/utils/StyleController';
 import { createPopupContainerError } from '@/utils/errors';
+import { READER_VIEW_ACTIVE_KEY } from '@/utils/constants';
 
 const articleErrorMessage = '記事が見つかりませんでした。';
-
-const READER_VIEW_ACTIVE_KEY = 'readerViewActive';
 
 export default defineContentScript({
   registration: 'runtime',
