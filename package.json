@@ -15,9 +15,10 @@
     "postinstall": "wxt prepare",
     "lint": "bun --bun run eslint .",
     "fmt": "bun --bun run prettier --write .",
-    "test": "bunx vitest",
-    "test:integration": "bunx vitest --config vitest.integration.config.ts",
-    "fix": "bun --bun run eslint . --fix && bun --bun run prettier --write ."
+    "test": "bunx vitest --run",
+    "test:integration": "bunx vitest --config vitest.integration.config.ts --run",
+    "fix": "bun --bun run eslint . --fix && bun --bun run prettier --write .",
+    "ci": "bun run fix && bun run test && bun run test:integration && bun run compile"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
