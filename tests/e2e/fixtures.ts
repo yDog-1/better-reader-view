@@ -23,7 +23,7 @@ export const test = base.extend<{
     console.log(`Loading extension from: ${pathToExtension}`);
 
     const context = await chromium.launchPersistentContext('', {
-      headless: false, // 拡張機能テストではheadlessは無効
+      headless: process.env.CI === 'true', // CI環境ではheadlessモード
       channel: 'chromium',
       args: [
         '--disable-extensions-except=' + pathToExtension,
@@ -32,7 +32,7 @@ export const test = base.extend<{
         '--disable-default-apps',
         '--disable-web-security', // 開発用
       ],
-      slowMo: 100, // デバッグ用のスロー実行
+      slowMo: process.env.CI === 'true' ? 0 : 100, // CI環境ではスロー実行を無効
     });
 
     await use(context);
