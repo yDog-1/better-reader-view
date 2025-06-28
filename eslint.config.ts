@@ -88,6 +88,11 @@ export default [
   {
     files: ['tests/e2e/**/*.{js,jsx,ts,tsx}'],
     ...playwright.configs['flat/recommended'],
+    languageOptions: {
+      globals: {
+        process: 'readonly', // Node.js process global for CI environment detection
+      },
+    },
     rules: {
       ...playwright.configs['flat/recommended'].rules,
       'react-hooks/rules-of-hooks': 'off', // Playwright fixtures use() conflicts with React hooks
