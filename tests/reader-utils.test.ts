@@ -5,6 +5,7 @@ import {
   activateReader,
   deactivateReader,
   initializeReaderViewManager,
+  extractContent,
 } from '@/utils/reader-utils';
 import { StyleController } from '@/utils/StyleController';
 
@@ -13,6 +14,101 @@ import { StyleController } from '@/utils/StyleController';
 vi.mock('~/components/ReaderView', () => ({
   default: () => 'mocked-reader-view',
 }));
+
+describe('extractContent', () => {
+  function createTestDocument(
+    htmlContent: string,
+    title: string = 'Test Document'
+  ): Document {
+    const jsdom = new JSDOM(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title}</title>
+        </head>
+        <body>
+          ${htmlContent}
+        </body>
+      </html>
+    `);
+    return jsdom.window.document;
+  }
+
+  it('should extract content from valid article', () => {
+    const htmlContent = `
+      <article>
+        <h1>Test Article Title</h1>
+        <p>This is substantial article content with enough text to pass Readability requirements. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        <p>Additional paragraph with more content. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      </article>
+    `;
+
+    const doc = createTestDocument(htmlContent, 'Test Article');
+    const result = extractContent(doc);
+
+    expect(result).not.toBeNull();
+    expect(result?.title).toBe('Test Article'); // Mozilla Readability uses document title, not h1
+    expect(result?.content).toContain('substantial article content');
+  });
+
+  it('should return null for empty document', () => {
+    const doc = createTestDocument('', '');
+    const result = extractContent(doc);
+
+    expect(result).toBeNull();
+  });
+
+  it('should extract content even from short documents', () => {
+    // Mozilla Readability is more permissive than expected
+    const htmlContent = '<p>Too short</p>';
+    const doc = createTestDocument(htmlContent, 'Short');
+    const result = extractContent(doc);
+
+    expect(result).not.toBeNull();
+    expect(result?.title).toBe('Short');
+    expect(result?.content).toContain('Too short');
+  });
+
+  it('should sanitize malformed HTML', () => {
+    const htmlContent = `
+      <article>
+        <h1>Test Article</h1>
+        <p>Valid content with <script>alert('xss')</script> malicious script. This paragraph has enough text to meet Readability requirements. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        <p>Additional content to ensure extraction succeeds. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+      </article>
+    `;
+
+    const doc = createTestDocument(htmlContent, 'Malicious Test');
+    const result = extractContent(doc);
+
+    expect(result).not.toBeNull();
+    expect(result?.content).not.toContain('<script>');
+    expect(result?.content).not.toContain('alert(');
+  });
+
+  it('should handle documents with complex structure', () => {
+    const htmlContent = `
+      <nav>Navigation</nav>
+      <main>
+        <article>
+          <h1>Main Article</h1>
+          <p>This is the main article content that should be extracted. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+          <p>More content to ensure proper extraction. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        </article>
+      </main>
+      <aside>Sidebar content</aside>
+    `;
+
+    const doc = createTestDocument(htmlContent, 'Complex Page');
+    const result = extractContent(doc);
+
+    expect(result).not.toBeNull();
+    expect(result?.title).toBe('Complex Page'); // Mozilla Readability uses document title
+    expect(result?.content).toContain('main article content');
+    expect(result?.content).not.toContain('Navigation');
+    expect(result?.content).not.toContain('Sidebar content');
+  });
+});
 
 describe('activateReader with Shadow DOM', () => {
   beforeEach(() => {

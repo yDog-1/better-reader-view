@@ -19,6 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun test` - Run unit tests in watch mode (uses Vitest)
 - `bun run test:e2e` - Run E2E tests with Playwright
 - `bun run test:e2e:headed` - Run E2E tests in headed mode (visible browser)
+- `bun run test:e2e:debug` - Run E2E tests in debug mode with Playwright inspector
 - Run single test: `bunx vitest tests/specific-test.test.ts`
 
 ### Code Quality
@@ -31,7 +32,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Git Workflow
 
 - Do not commit without explicit permission from the user
-- Before committing, always run: `bun run fix && bun test && bun run test:e2e && bun run compile`
+- Before committing, always run: `bun run ci`
+
+## CI/CD
+
+The project uses GitHub Actions with Playwright's official workflow pattern:
+
+- **CI Environment**: Automatically detects CI via `process.env.CI` for headless browser testing
+- **Playwright Setup**: Uses `bunx playwright install --with-deps` for browser dependencies
+- **Test Reports**: Uploaded as artifacts with 30-day retention
+- **Quality Gates**: All tests, linting, formatting, and TypeScript compilation must pass
 
 ## Architecture
 
@@ -159,6 +169,13 @@ This project uses a modern testing approach combining unit tests and E2E tests f
 - Custom mocks for Vanilla Extract CSS-in-JS (unit tests only)
 - Real browser APIs and Shadow DOM in E2E tests
 
+### CI/E2E Testing Specifics
+
+- **Environment Detection**: Tests automatically switch to headless mode in CI (`process.env.CI === 'true'`)
+- **Browser Extension Loading**: Custom Playwright fixtures load WXT-built extension from `.output/chrome-mv3`
+- **Service Worker Integration**: Extension ID extraction from background service worker URL
+- **ESLint Configuration**: E2E tests have access to Node.js `process` global for environment detection
+
 ## Development Patterns
 
 - **Pure Functions**: Core logic separated into testable, side-effect-free functions
@@ -217,3 +234,12 @@ ESLint is configured with WXT-specific globals:
 - `defineBackground`: For background script entry points
 - `defineContentScript`: For content script entry points
 - `createShadowRootUi`: For shadow DOM UI creation
+
+## Important Implementation Notes
+
+- **Japanese Localization**: User-facing error messages and comments are in Japanese
+- **Security**: All content extraction uses DOMPurify sanitization to prevent XSS attacks
+- **State Persistence**: Reader view state persists across page reloads using sessionStorage
+- **Shadow DOM Isolation**: UI components render in isolated Shadow DOM to avoid CSS conflicts
+- **Extension Permissions**: Minimal permissions approach with content script injection only when needed
+- **Browser Compatibility**: Chrome MV3 focused with Firefox support available via separate build commands
