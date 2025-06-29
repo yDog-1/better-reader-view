@@ -8,7 +8,7 @@ import type { FullConfig } from '@playwright/test';
  * @see https://wxt.dev/guide/essentials/e2e-testing.html
  */
 async function globalSetup(_config: FullConfig) {
-  console.log('Building extension for E2E tests...');
+  console.log('Building extensions for E2E tests...');
 
   try {
     // WXT拡張機能をChrome用にビルド
@@ -16,9 +16,16 @@ async function globalSetup(_config: FullConfig) {
       stdio: 'inherit',
       cwd: globalThis.process?.cwd() || '',
     });
-    console.log('Extension build completed successfully');
+    console.log('Chrome extension build completed successfully');
+
+    // WXT拡張機能をFirefox用にビルド
+    execSync('bun run build:firefox', {
+      stdio: 'inherit',
+      cwd: globalThis.process?.cwd() || '',
+    });
+    console.log('Firefox extension build completed successfully');
   } catch (error) {
-    console.error('Failed to build extension:', error);
+    console.error('Failed to build extensions:', error);
     throw error;
   }
 }

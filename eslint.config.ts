@@ -97,6 +97,7 @@ export default [
       ...playwright.configs['flat/recommended'].rules,
       'react-hooks/rules-of-hooks': 'off', // Playwright fixtures use() conflicts with React hooks
       'no-empty-pattern': 'off', // Allow empty destructuring in fixtures
+      'playwright/no-standalone-expect': 'off', // Allow expect outside test blocks for fixtures
     },
   },
 ];

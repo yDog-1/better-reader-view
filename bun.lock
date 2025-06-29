@@ -9,6 +9,7 @@
         "@vanilla-extract/dynamic": "^2.1.5",
         "dompurify": "^3.2.6",
         "happy-dom": "^18.0.1",
+        "playwright-firefox": "^1.53.1",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
       },
@@ -1136,6 +1137,8 @@
     "playwright": ["playwright@1.53.1", "", { "dependencies": { "playwright-core": "1.53.1" }, "optionalDependencies": { "fsevents": "2.3.2" }, "bin": { "playwright": "cli.js" } }, "sha512-LJ13YLr/ocweuwxyGf1XNFWIU4M2zUSo149Qbp+A4cpwDjsxRPj7k6H25LBrEHiEwxvRbD8HdwvQmRMSvquhYw=="],
 
     "playwright-core": ["playwright-core@1.53.1", "", { "bin": { "playwright-core": "cli.js" } }, "sha512-Z46Oq7tLAyT0lGoFx4DOuB1IA9D1TPj0QkYxpPVUnGDqHHvDpCftu1J2hM2PiWsNMoZh8+LQaarAWcDfPBc6zg=="],
+
+    "playwright-firefox": ["playwright-firefox@1.53.1", "", { "dependencies": { "playwright-core": "1.53.1" }, "bin": { "playwright": "cli.js" } }, "sha512-o6wPZssDmVPMX6ew2SIzqq1bfSzfSZhfcR8FlypFa1FJf9f0e0moTJPc9olUSCGhahHJoLOSQVoC3fn149qZxQ=="],
 
     "possible-typed-array-names": ["possible-typed-array-names@1.1.0", "", {}, "sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg=="],
 

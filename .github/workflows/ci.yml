@@ -28,6 +28,9 @@ jobs:
       - name: Run CI
         run: bun run ci
 
+      - name: Run Firefox E2E Tests
+        run: bun run test:e2e:firefox
+
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

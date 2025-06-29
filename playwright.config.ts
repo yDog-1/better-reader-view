@@ -35,6 +35,38 @@ export default defineConfig({
         /* Use Chromium for extension testing */
         channel: 'chromium',
       },
+      testIgnore: [
+        '**/firefox-integration.spec.ts',
+        '**/firefox-contract.spec.ts',
+        '**/visual-regression.spec.ts',
+      ],
+    },
+    {
+      name: 'firefox-extension',
+      use: {
+        ...devices['Desktop Firefox'],
+        /* Use Firefox for extension testing */
+        browserName: 'firefox',
+        /* Increase navigation timeout for Firefox */
+        navigationTimeout: 30000,
+      },
+      timeout: 60000,
+      expect: { timeout: 15000 },
+      testMatch: [
+        '**/firefox-integration.spec.ts',
+        '**/firefox-contract.spec.ts',
+      ],
+    },
+    {
+      name: 'visual-regression',
+      use: {
+        ...devices['Desktop Chrome'],
+        /* Use Chromium for stable visual testing */
+        channel: 'chromium',
+        /* Visual testing specific settings */
+        viewport: { width: 1280, height: 720 },
+      },
+      testMatch: ['**/visual-regression.spec.ts'],
     },
   ],
 

@@ -1,6 +1,6 @@
 {
-  "name": "wxt-react-starter",
-  "description": "manifest.json description",
+  "name": "better-reader-view",
+  "description": "Better Reader View - Clean reading experience for web articles",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -19,8 +19,15 @@
     "test:e2e": "bun run build && bunx playwright test",
     "test:e2e:headed": "bun run build && bunx playwright test --headed",
     "test:e2e:debug": "bun run build && bunx playwright test --debug",
+    "test:e2e:firefox": "bun run build:firefox && bunx playwright test --project=firefox-extension",
+    "test:e2e:firefox:headed": "bun run build:firefox && bunx playwright test --project=firefox-extension --headed",
+    "test:e2e:chrome": "bun run build && bunx playwright test --project=chrome-extension",
+    "test:e2e:visual": "bun run build && bunx playwright test --project=visual-regression",
+    "test:e2e:visual:update": "bun run build && bunx playwright test --project=visual-regression --update-snapshots",
+    "test:e2e:all": "bun run build && bun run build:firefox && bunx playwright test",
     "fix": "bun --bun run eslint . --fix && bun --bun run prettier --write .",
-    "ci": "bun run fix && bun run test && bun run compile && bun run test:e2e"
+    "ci": "bun run fix && bun run test && bun run compile && bun run test:e2e:chrome && bun run test:e2e:visual",
+    "ci:full": "bun run fix && bun run test && bun run compile && bun run test:e2e:all"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
@@ -52,6 +59,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "jsdom": "^26.1.0",
     "playwright": "^1.53.1",
+    "playwright-firefox": "^1.53.1",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4",

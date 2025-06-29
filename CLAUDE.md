@@ -17,10 +17,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing
 
 - `bun test` - Run unit tests in watch mode (uses Vitest)
-- `bun run test:e2e` - Run E2E tests with Playwright
+- `bun run test:e2e` - Run E2E tests with Playwright (Chrome by default)
 - `bun run test:e2e:headed` - Run E2E tests in headed mode (visible browser)
 - `bun run test:e2e:debug` - Run E2E tests in debug mode with Playwright inspector
+- `bun run test:e2e:firefox` - Run Firefox-specific E2E tests
+- `bun run test:e2e:firefox:headed` - Run Firefox E2E tests in headed mode
+- `bun run test:e2e:chrome` - Run Chrome-specific E2E tests only
+- `bun run test:e2e:visual` - Run visual regression tests
+- `bun run test:e2e:visual:update` - Update visual regression baseline screenshots
+- `bun run test:e2e:all` - Run E2E tests on both Chrome and Firefox
 - Run single test: `bunx vitest tests/specific-test.test.ts`
+
+#### Visual Regression Testing
+
+The project includes a comprehensive visual regression testing foundation using Playwright's screenshot comparison:
+
+- **Configuration**: Dedicated `visual-regression` project in `playwright.config.ts` with stable viewport and disabled animations
+- **Test Coverage**: Reader View states (active/inactive), themes (light/dark), error states, and mobile responsiveness
+- **Baseline Management**: Screenshots stored in `tests/e2e/visual-regression.spec.ts-snapshots/`
+- **Cross-platform**: Platform-specific baselines (e.g., `-linux.png`, `-darwin.png`)
+- **Extension**: Foundation designed for easy addition of new UI state tests
 
 ### Code Quality
 
@@ -172,8 +188,11 @@ This project uses a modern testing approach combining unit tests and E2E tests f
 ### CI/E2E Testing Specifics
 
 - **Environment Detection**: Tests automatically switch to headless mode in CI (`process.env.CI === 'true'`)
-- **Browser Extension Loading**: Custom Playwright fixtures load WXT-built extension from `.output/chrome-mv3`
-- **Service Worker Integration**: Extension ID extraction from background service worker URL
+- **Multi-Browser Support**: Both Chrome and Firefox extension testing with separate fixtures
+- **Chrome Extension Loading**: Custom Playwright fixtures load WXT-built extension from `.output/chrome-mv3`
+- **Firefox Extension Loading**: Firefox-specific fixtures load from `.output/firefox-mv2` (Manifest V2)
+- **Service Worker Integration**: Extension ID extraction from background service worker URL (Chrome)
+- **Firefox Integration**: Alternative extension ID detection for Firefox Manifest V2 format
 - **ESLint Configuration**: E2E tests have access to Node.js `process` global for environment detection
 
 ## Development Patterns

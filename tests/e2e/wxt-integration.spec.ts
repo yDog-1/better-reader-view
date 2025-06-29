@@ -10,107 +10,111 @@
  * @see https://playwright.dev/docs/chrome-extensions
  */
 
-import { test, expect } from './fixtures';
+import { expect, chromeTest } from './fixtures';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-test.describe('WXT Better Reader View Extension', () => {
-  test('拡張機能が正常にロードされること', async ({ context, extensionId }) => {
-    // Given: WXTでビルドされた拡張機能がロードされている
-    expect(extensionId).toBeDefined();
-    expect(extensionId).toMatch(/^[a-z]{32}$/);
+// Chrome拡張機能の統合テスト
+chromeTest.describe('WXT Better Reader View Extension - Chrome', () => {
+  chromeTest(
+    '拡張機能が正常にロードされること',
+    async ({ context, extensionId }) => {
+      // Given: WXTでビルドされた拡張機能がロードされている
+      expect(extensionId).toBeDefined();
+      expect(extensionId).toMatch(/^[a-z]{32}$/);
 
-    // Service Worker（background script）が動作していることを確認
-    const serviceWorkers = context.serviceWorkers();
-    expect(serviceWorkers.length).toBeGreaterThan(0);
+      // Service Worker（background script）が動作していることを確認
+      const serviceWorkers = context.serviceWorkers();
+      expect(serviceWorkers.length).toBeGreaterThan(0);
 
-    const backgroundScript = serviceWorkers[0];
-    expect(backgroundScript.url()).toContain(extensionId);
-    console.log('Extension loaded successfully with ID:', extensionId);
-  });
+      const backgroundScript = serviceWorkers[0];
+      expect(backgroundScript.url()).toContain(extensionId);
+      console.log('Extension loaded successfully with ID:', extensionId);
+    }
+  );
 
-  test('記事ページでBrowser Actionが動作すること', async ({
-    context,
-    extensionId,
-  }) => {
-    const page = await context.newPage();
+  chromeTest(
+    '記事ページでBrowser Actionが動作すること',
+    async ({ context, extensionId }) => {
+      const page = await context.newPage();
 
-    // Given: 記事が含まれるテストページを開く
-    const testPagePath = 'file://' + path.join(__dirname, 'test-page.html');
-    await page.goto(testPagePath);
+      // Given: 記事が含まれるテストページを開く
+      const testPagePath = 'file://' + path.join(__dirname, 'test-page.html');
+      await page.goto(testPagePath);
 
-    // ページが正常に読み込まれることを確認
-    await expect(page.locator('article h1')).toContainText('ReactNext');
-    await expect(page.locator('article')).toBeVisible();
-    await expect(page.locator('nav')).toBeVisible();
-    await expect(page.locator('aside')).toBeVisible();
+      // ページが正常に読み込まれることを確認
+      await expect(page.locator('article h1')).toContainText('ReactNext');
+      await expect(page.locator('article')).toBeVisible();
+      await expect(page.locator('nav')).toBeVisible();
+      await expect(page.locator('aside')).toBeVisible();
 
-    console.log('Test page loaded successfully');
+      console.log('Test page loaded successfully');
 
-    // When: Browser Action（拡張機能のアイコンクリック）をシミュレート
-    // 実際のテストでは chrome.action.onClicked を発火させることで
-    // background script が content script を注入する
+      // When: Browser Action（拡張機能のアイコンクリック）をシミュレート
+      // 実際のテストでは chrome.action.onClicked を発火させることで
+      // background script が content script を注入する
 
-    // Content scriptの注入をシミュレート
-    await page.evaluate(async (extensionId) => {
-      // 実際の拡張機能では、background scriptがtabsAPIを使用して
-      // content scriptを注入し、リーダービュー機能を実行
-      console.log(
-        'Simulating browser action click for extension:',
-        extensionId
-      );
+      // Content scriptの注入をシミュレート
+      await page.evaluate(async (extensionId) => {
+        // 実際の拡張機能では、background scriptがtabsAPIを使用して
+        // content scriptを注入し、リーダービュー機能を実行
+        console.log(
+          'Simulating browser action click for extension:',
+          extensionId
+        );
 
-      // リーダービュー機能のトリガーをシミュレート
-      const event = new CustomEvent('readerViewToggle', {
-        detail: { source: 'browserAction' },
-      });
-      document.dispatchEvent(event);
-    }, extensionId);
+        // リーダービュー機能のトリガーをシミュレート
+        const event = new CustomEvent('readerViewToggle', {
+          detail: { source: 'browserAction' },
+        });
+        document.dispatchEvent(event);
+      }, extensionId);
 
-    // Then: 何らかの変化が起こることを確認
-    // 実際の拡張機能では、content scriptによってページが変更される
-    await page.waitForFunction(() => document.readyState === 'complete');
+      // Then: 何らかの変化が起こることを確認
+      // 実際の拡張機能では、content scriptによってページが変更される
+      await page.waitForFunction(() => document.readyState === 'complete');
 
-    // ページが初期状態のまま（実際の実装が必要）
-    await expect(page.locator('article')).toBeVisible();
-  });
+      // ページが初期状態のまま（実際の実装が必要）
+      await expect(page.locator('article')).toBeVisible();
+    }
+  );
 
-  test('Extension Pagesが正常にアクセスできること', async ({
-    context,
-    extensionId,
-  }) => {
-    // Given: 拡張機能の内部ページにアクセス
-    const page = await context.newPage();
-
-    try {
-      // When: options.htmlページにアクセス（存在する場合）
-      await page.goto(`chrome-extension://${extensionId}/options.html`);
-
-      // Then: ページが正常に表示される
-      await expect(page.locator('body')).toBeVisible();
-      console.log('Options page loaded successfully');
-    } catch {
-      // options.htmlが存在しない場合は、代替として
-      // popup.htmlやその他のページをテスト
-      console.log('Options page not found, trying alternative pages');
+  chromeTest(
+    'Extension Pagesが正常にアクセスできること',
+    async ({ context, extensionId }) => {
+      // Given: 拡張機能の内部ページにアクセス
+      const page = await context.newPage();
 
       try {
-        await page.goto(`chrome-extension://${extensionId}/popup.html`);
-        const bodyLocator = page.locator('body');
-        await bodyLocator.waitFor({ state: 'visible' });
-        console.log('Popup page loaded successfully');
+        // When: options.htmlページにアクセス（存在する場合）
+        await page.goto(`chrome-extension://${extensionId}/options.html`);
+
+        // Then: ページが正常に表示される
+        await expect(page.locator('body')).toBeVisible();
+        console.log('Options page loaded successfully');
       } catch {
-        console.log(
-          'No extension pages found - this is normal for content-script-only extensions'
-        );
+        // options.htmlが存在しない場合は、代替として
+        // popup.htmlやその他のページをテスト
+        console.log('Options page not found, trying alternative pages');
+
+        try {
+          await page.goto(`chrome-extension://${extensionId}/popup.html`);
+          const bodyLocator = page.locator('body');
+          await bodyLocator.waitFor({ state: 'visible' });
+          console.log('Popup page loaded successfully');
+        } catch {
+          console.log(
+            'No extension pages found - this is normal for content-script-only extensions'
+          );
+        }
       }
     }
-  });
+  );
 
-  test('Content Script機能の動作テスト', async ({ context }) => {
+  chromeTest('Content Script機能の動作テスト', async ({ context }) => {
     const page = await context.newPage();
 
     // Given: シンプルなテストページ
@@ -149,7 +153,7 @@ test.describe('WXT Better Reader View Extension', () => {
     await expect(page.locator('h1')).toContainText('Test Article Title');
   });
 
-  test('Mozilla Readability統合テスト', async ({ context }) => {
+  chromeTest('Mozilla Readability統合テスト', async ({ context }) => {
     const page = await context.newPage();
 
     // Given: 複雑な記事構造を持つページ
@@ -180,8 +184,9 @@ test.describe('WXT Better Reader View Extension', () => {
   });
 });
 
-test.describe('Reader View機能の統合シナリオ', () => {
-  test('完全なリーダービューワークフロー', async ({ context }) => {
+// Chrome専用のReader View統合シナリオ
+chromeTest.describe('Reader View機能の統合シナリオ - Chrome', () => {
+  chromeTest('完全なリーダービューワークフロー', async ({ context }) => {
     const page = await context.newPage();
 
     // Given: リッチな記事ページ
@@ -236,7 +241,7 @@ test.describe('Reader View機能の統合シナリオ', () => {
     await expect(page.locator('article h1')).toContainText('ReactNext');
   });
 
-  test('エラーケースのハンドリング', async ({ context }) => {
+  chromeTest('エラーケースのハンドリング', async ({ context }) => {
     const page = await context.newPage();
 
     // Given: 記事コンテンツが存在しないページ
