@@ -3,7 +3,13 @@ import '@testing-library/jest-dom';
 // vanilla-extractのCSSファイルをモック
 import { vi } from 'vitest';
 
-// グローバルなCSSモック
+// 最小限のモック - フロントエンドレンダリング関連のみ
+// CSS-in-JSライブラリのモック（ビルド時の制約対応）
+vi.mock('@vanilla-extract/dynamic', () => ({
+  assignInlineVars: vi.fn((vars: Record<string, string>) => vars),
+}));
+
+// テーマCSS変数のモック（vanilla-extractの制約対応）
 vi.mock('../utils/theme.css.ts', () => ({
   themeVars: {
     color: {
@@ -40,12 +46,7 @@ vi.mock('../utils/theme.css.ts', () => ({
   sepiaTheme: 'sepia-theme-class',
 }));
 
-// assignInlineVarsのモック
-vi.mock('@vanilla-extract/dynamic', () => ({
-  assignInlineVars: vi.fn((vars: Record<string, string>) => vars),
-}));
-
-// コンポーネントCSSファイルのモック
+// コンポーネントCSSファイルのモック（ビルド時の制約対応）
 vi.mock('../components/ReaderView.css.ts', () => ({
   readerContainer: 'mocked-reader-container',
   contentContainer: 'mocked-content-container',

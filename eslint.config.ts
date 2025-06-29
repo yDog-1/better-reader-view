@@ -3,6 +3,7 @@ import typescript from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import playwright from 'eslint-plugin-playwright';
 import { includeIgnoreFile } from '@eslint/compat';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -81,6 +82,22 @@ export default [
       globals: {
         global: 'writable',
       },
+    },
+  },
+  // Playwright E2E tests configuration
+  {
+    files: ['tests/e2e/**/*.{js,jsx,ts,tsx}'],
+    ...playwright.configs['flat/recommended'],
+    languageOptions: {
+      globals: {
+        process: 'readonly', // Node.js process global for CI environment detection
+      },
+    },
+    rules: {
+      ...playwright.configs['flat/recommended'].rules,
+      'react-hooks/rules-of-hooks': 'off', // Playwright fixtures use() conflicts with React hooks
+      'no-empty-pattern': 'off', // Allow empty destructuring in fixtures
+      'playwright/no-standalone-expect': 'off', // Allow expect outside test blocks for fixtures
     },
   },
 ];

@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
+### Core Development
+
 - `bun dev` - Start development server for Chrome
 - `bun run dev:firefox` - Start development server for Firefox
 - `bun run build` - Build extension for production (Chrome)
@@ -11,15 +13,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run zip` - Create distributable zip for Chrome
 - `bun run zip:firefox` - Create distributable zip for Firefox
 - `bun run compile` - Type check without emitting files
-- `bun test` - Run tests in watch mode (uses `bunx vitest`)
+
+### Testing
+
+- `bun test` - Run unit tests in watch mode (uses Vitest)
+- `bun run test:e2e` - Run E2E tests with Playwright (Chrome by default)
+- `bun run test:e2e:headed` - Run E2E tests in headed mode (visible browser)
+- `bun run test:e2e:debug` - Run E2E tests in debug mode with Playwright inspector
+- `bun run test:e2e:firefox` - Run Firefox-specific E2E tests
+- `bun run test:e2e:firefox:headed` - Run Firefox E2E tests in headed mode
+- `bun run test:e2e:chrome` - Run Chrome-specific E2E tests only
+- `bun run test:e2e:visual` - Run visual regression tests
+- `bun run test:e2e:visual:update` - Update visual regression baseline screenshots
+- `bun run test:e2e:all` - Run E2E tests on both Chrome and Firefox
+- Run single test: `bunx vitest tests/specific-test.test.ts`
+
+#### Visual Regression Testing
+
+The project includes a comprehensive visual regression testing foundation using Playwright's screenshot comparison:
+
+- **Configuration**: Dedicated `visual-regression` project in `playwright.config.ts` with stable viewport and disabled animations
+- **Test Coverage**: Reader View states (active/inactive), themes (light/dark), error states, and mobile responsiveness
+- **Baseline Management**: Screenshots stored in `tests/e2e/visual-regression.spec.ts-snapshots/`
+- **Cross-platform**: Platform-specific baselines (e.g., `-linux.png`, `-darwin.png`)
+- **Extension**: Foundation designed for easy addition of new UI state tests
+
+### Code Quality
+
 - `bun run lint` - Run ESLint on codebase
-- `bun fmt` - Format code with Prettier (`prettier --write .`)
-- `bun run fix` - Auto-fix issues (lint + format): `eslint . --fix && prettier --write .`
+- `bun fmt` - Format code with Prettier
+- `bun run fix` - Auto-fix issues (lint + format combined)
+- `bun run ci` - Complete quality check (fix + test + test:e2e + compile)
 
 ## Git Workflow
 
 - Do not commit without explicit permission from the user
-- Before committing, always run: `bun run fix && bun run test && bun run compile`
+- Before committing, always run: `bun run ci`
+
+## CI/CD
+
+The project uses GitHub Actions with Playwright's official workflow pattern:
+
+- **CI Environment**: Automatically detects CI via `process.env.CI` for headless browser testing
+- **Playwright Setup**: Uses `bunx playwright install --with-deps` for browser dependencies
+- **Test Reports**: Uploaded as artifacts with 30-day retention
+- **Quality Gates**: All tests, linting, formatting, and TypeScript compilation must pass
 
 ## Architecture
 
@@ -34,7 +72,8 @@ This is a WXT-based browser extension that implements a reader view using a func
 
 #### Content Script (`entrypoints/content/index.tsx`)
 
-- Main logic for toggling reader view
+- Main logic for toggling reader view using React components
+- Renders ReaderView component in isolated Shadow DOM
 - Uses sessionStorage for state persistence with keys:
   - `readerViewActive`: Boolean state
   - `originalPageHTML`: Backup of original page
@@ -65,8 +104,9 @@ This is a WXT-based browser extension that implements a reader view using a func
 
 #### Shared Components (`components/`)
 
+- `ReaderView.tsx`: Main reader view component with extracted content display
+- `StylePanel.tsx`: Customizable style controls for theme, font size, and layout
 - `popupMsg.tsx`: Toast-style error notifications
-- `ui.tsx`: Placeholder UI component (currently unused)
 
 ### Reader View Flow
 
@@ -75,18 +115,21 @@ This is a WXT-based browser extension that implements a reader view using a func
 3. **If inactive**:
    - Extract content using pure functions
    - Store original HTML in sessionStorage
-   - Replace page with reader view HTML
+   - Create Shadow DOM with React ReaderView component
+   - StyleController manages theme and user preferences
 4. **If active**:
    - Restore original HTML from sessionStorage
    - Clear sessionStorage keys
+   - Remove Shadow DOM
 
 ### Tech Stack
 
 - **Framework**: WXT (Web Extension Toolkit) with React 19
 - **Content Parsing**: @mozilla/readability for article extraction
 - **HTML Sanitization**: DOMPurify for XSS prevention
-- **State Management**: SessionStorage for toggle state and page backup
-- **Testing**: Vitest with WXT testing utilities
+- **Styling**: Vanilla Extract for type-safe CSS-in-JS
+- **State Management**: SessionStorage for toggle state and StyleController for theme management
+- **Testing**: Vitest with WXT testing utilities, dual testing approach (standard + integration)
 - **Type Safety**: Full TypeScript with strict configuration
 - **Build Tool**: Bun as package manager and task runner
 
@@ -98,43 +141,124 @@ WXT follows a convention-over-configuration approach:
 - **`components/`**: React components (auto-imported project-wide)
 - **`utils/`**: Generic utilities (auto-imported project-wide) - **contains core reader logic**
 - **`public/`**: Static files (extension icons)
-- **`tests/`**: Vitest test files (`*.test.ts`, `*.spec.ts`)
+- **`tests/`**: Comprehensive test suite with dual approach (standard + integration tests)
 
 **Auto-Import System:**
 WXT automatically imports from `components/`, `utils/`, `hooks/`, and `composables/` directories.
 
 ## Testing
 
-This project uses Vitest with WXT's testing utilities for unit testing browser extension functionality.
+This project uses a modern testing approach combining unit tests and E2E tests for comprehensive coverage.
 
-### WXT Testing Setup
+### Testing Strategy
 
-- WXT provides `WxtVitest` plugin with polyfills for extension APIs
-- Uses `@webext-core/fake-browser` for mocking browser APIs
-- Key utilities: `import { fakeBrowser } from 'wxt/testing'`
-- Test files: `*.test.ts` or `*.spec.ts`
+1. **Unit Tests** (`vitest.config.ts`)
 
-### Testing Focus
+   - Uses `happy-dom` environment for fast execution
+   - Component and utility function testing
+   - Setup file: `tests/setup.ts`
+   - Patterns: `*.test.ts`, `*.test.tsx`
 
-Current tests focus on pure functions in `utils/reader-utils.ts`:
+2. **E2E Tests** (`playwright.config.ts`)
 
-- HTML generation and structure validation
-- XSS prevention through DOMPurify sanitization
-- CSS styling inclusion
-- Edge cases (empty content, special characters)
+   - Real browser testing with Playwright
+   - Complete user workflows and browser extension behavior
+   - Setup file: `tests/e2e/`
+   - Patterns: `tests/e2e/*.spec.ts`
+
+3. **Error Scenario Tests** (`tests/error-scenarios.test.tsx`)
+   - Comprehensive error handling validation
+   - Edge cases and failure recovery testing
+   - Browser compatibility and permission errors
+
+### Test Coverage
+
+- **Component Tests**: ReaderView, StylePanel with user interactions
+- **Unit Tests**: StyleController, reader utilities, pure functions
+- **E2E Tests**: Complete browser extension workflows
+- **Error Handling**: DOM manipulation, storage, and component errors
+
+### Key Testing Utilities
+
+- `@testing-library/react` and `@testing-library/jest-dom` for component testing
+- `@playwright/test` for E2E browser automation
+- Custom mocks for Vanilla Extract CSS-in-JS (unit tests only)
+- Real browser APIs and Shadow DOM in E2E tests
+
+### CI/E2E Testing Specifics
+
+- **Environment Detection**: Tests automatically switch to headless mode in CI (`process.env.CI === 'true'`)
+- **Multi-Browser Support**: Both Chrome and Firefox extension testing with separate fixtures
+- **Chrome Extension Loading**: Custom Playwright fixtures load WXT-built extension from `.output/chrome-mv3`
+- **Firefox Extension Loading**: Firefox-specific fixtures load from `.output/firefox-mv2` (Manifest V2)
+- **Service Worker Integration**: Extension ID extraction from background service worker URL (Chrome)
+- **Firefox Integration**: Alternative extension ID detection for Firefox Manifest V2 format
+- **ESLint Configuration**: E2E tests have access to Node.js `process` global for environment detection
 
 ## Development Patterns
 
 - **Pure Functions**: Core logic separated into testable, side-effect-free functions
 - **Type Safety**: Full TypeScript with strict configuration and type guards
 - **Functional Programming**: Emphasis on immutability and pure function composition
+- **Component Architecture**: Modern React patterns with Shadow DOM isolation
+- **CSS-in-JS**: Vanilla Extract for type-safe styling with theme management
 - **Error Handling**: Graceful fallbacks with user-friendly Japanese error messages
 - **HTML Security**: DOMPurify sanitization to prevent XSS vulnerabilities
+- **Browser Extension Best Practices**: Minimal permissions, isolated execution context
 
-## Extension Globals
+## Key Utilities and Classes
+
+### StyleController (`utils/StyleController.ts`)
+
+Manages theme and styling preferences:
+
+- Theme management (light/dark/auto)
+- Font size and family customization
+- Column width and line height controls
+- Immutable configuration updates
+- Persistence via localStorage
+
+### Error Handling (`utils/errors.ts`)
+
+Custom error types with Japanese user messages:
+
+- `ReaderViewError`: Base error class
+- `ContentExtractionError`: Content parsing failures
+- `RenderingError`: UI rendering issues
+
+### Theme System (`utils/theme.css.ts`)
+
+Vanilla Extract theme definitions:
+
+- Color schemes for light/dark modes
+- Typography scales and font families
+- Layout spacing and breakpoints
+- Japanese font support
+
+## WXT-Specific Features
+
+### Auto-Import System
+
+WXT automatically imports from:
+
+- `components/` - React components
+- `utils/` - Utilities and business logic
+- `hooks/` - Custom React hooks
+- `composables/` - Composition functions
+
+### Extension Globals
 
 ESLint is configured with WXT-specific globals:
 
 - `defineBackground`: For background script entry points
 - `defineContentScript`: For content script entry points
-- `createShadowRootUi`: For shadow DOM UI creation (currently unused)
+- `createShadowRootUi`: For shadow DOM UI creation
+
+## Important Implementation Notes
+
+- **Japanese Localization**: User-facing error messages and comments are in Japanese
+- **Security**: All content extraction uses DOMPurify sanitization to prevent XSS attacks
+- **State Persistence**: Reader view state persists across page reloads using sessionStorage
+- **Shadow DOM Isolation**: UI components render in isolated Shadow DOM to avoid CSS conflicts
+- **Extension Permissions**: Minimal permissions approach with content script injection only when needed
+- **Browser Compatibility**: Chrome MV3 focused with Firefox support available via separate build commands

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { StyleController, type StyleConfig } from '../utils/StyleController';
+import { ReaderViewError } from '../utils/errors';
 
 describe('StyleController', () => {
   let styleController: StyleController;
@@ -8,6 +9,8 @@ describe('StyleController', () => {
   beforeEach(() => {
     // fakeBrowserの状態をリセット
     fakeBrowser.reset();
+    // sessionStorageを明示的にクリア
+    sessionStorage.removeItem('readerViewStyleConfig');
     styleController = new StyleController();
   });
 
@@ -154,11 +157,16 @@ describe('StyleController', () => {
       expect(styleController.getConfig()).toEqual(savedConfig);
     });
 
-    it('無効なストレージデータの場合はfalseを返す', () => {
+    it('無効なストレージデータの場合はエラーをthrowする', () => {
       sessionStorage.setItem('readerViewStyleConfig', 'invalid json');
 
-      const result = styleController.loadFromStorage();
-      expect(result).toBe(false);
+      expect(() => {
+        styleController.loadFromStorage();
+      }).toThrow(ReaderViewError);
+
+      expect(() => {
+        styleController.loadFromStorage();
+      }).toThrow('スタイル設定の読み込みに失敗しました');
     });
 
     it('ストレージにデータがない場合はfalseを返す', () => {
@@ -208,7 +216,7 @@ describe('StyleController', () => {
   });
 
   describe('エラーハンドリング', () => {
-    it('ストレージ保存でエラーが発生してもクラッシュしない', () => {
+    it('ストレージ保存でエラーが発生するとReaderViewErrorをthrowする', () => {
       // sessionStorageを無効化してエラーを誘発
       Object.defineProperty(window, 'sessionStorage', {
         value: {
@@ -223,13 +231,17 @@ describe('StyleController', () => {
 
       expect(() => {
         styleController.saveToStorage();
-      }).not.toThrow();
+      }).toThrow(ReaderViewError);
+
+      expect(() => {
+        styleController.saveToStorage();
+      }).toThrow('スタイル設定の保存に失敗しました');
 
       // テスト後にfakeBrowserのsessionStorageを復元
       fakeBrowser.reset();
     });
 
-    it('ストレージ読み込みでエラーが発生してもクラッシュしない', () => {
+    it('ストレージ読み込みでエラーが発生するとReaderViewErrorをthrowする', () => {
       Object.defineProperty(window, 'sessionStorage', {
         value: {
           getItem: () => {
@@ -242,9 +254,12 @@ describe('StyleController', () => {
       });
 
       expect(() => {
-        const result = styleController.loadFromStorage();
-        expect(result).toBe(false);
-      }).not.toThrow();
+        styleController.loadFromStorage();
+      }).toThrow(ReaderViewError);
+
+      expect(() => {
+        styleController.loadFromStorage();
+      }).toThrow('スタイル設定の読み込みに失敗しました');
 
       fakeBrowser.reset();
     });

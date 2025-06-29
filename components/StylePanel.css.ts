@@ -1,6 +1,9 @@
 import { style } from '@vanilla-extract/css';
 import { themeVars } from '../utils/theme.css';
 
+// WXTフレームワークの制約: エントリーポイント名'content'に対応する変数が必要
+// Vanilla ExtractプラグインがWXTのcontentエントリーポイントを処理する際に参照する
+// この変数はVanilla Extract内部のビルドプロセスで使用され、削除するとビルドエラーが発生する
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const content = undefined;
 

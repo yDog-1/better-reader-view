@@ -4,6 +4,8 @@ import ReactDOM from 'react-dom/client';
 import React from 'react';
 import ReaderView from '~/components/ReaderView';
 import { StyleController } from './StyleController';
+import { createReactUnmountError } from './errors';
+// 定数はインポートしているが、将来的な拡張で使用予定
 
 /**
  * Article type for reader view content
@@ -24,7 +26,7 @@ export interface Article {
 /**
  * 純粋関数: documentから抽出し、DOMPurifyでサニタイズして{title, content}を返す
  */
-const extractContent = (
+export const extractContent = (
   document: Document
 ): { title: string; content: string } | null => {
   const documentClone = document.cloneNode(true) as Document;
@@ -117,7 +119,7 @@ class ReaderViewManager {
       try {
         this.reactRoot.unmount();
       } catch (e) {
-        console.warn('Failed to unmount React root:', e);
+        throw createReactUnmountError(e);
       }
       this.reactRoot = null;
     }
