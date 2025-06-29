@@ -15,7 +15,6 @@ stats-*.json
 web-ext.config.ts
 playwright-report
 test-results
-tests/e2e/**/?*.png
 
 # Editor directories and files
 .vscode/*

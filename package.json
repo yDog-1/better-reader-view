@@ -26,7 +26,7 @@
     "test:e2e:visual:update": "bun run build && bunx playwright test --project=visual-regression --update-snapshots",
     "test:e2e:all": "bun run build && bun run build:firefox && bunx playwright test",
     "fix": "bun --bun run eslint . --fix && bun --bun run prettier --write .",
-    "ci": "bun run fix && bun run test && bun run compile && bun run test:e2e:chrome && bun run test:e2e:visual",
+    "ci": "bun run fix && bun run test && bun run compile && bun run test:e2e:chrome",
     "ci:full": "bun run fix && bun run test && bun run compile && bun run test:e2e:all"
   },
   "dependencies": {
