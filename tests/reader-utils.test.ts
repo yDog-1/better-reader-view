@@ -13,66 +13,9 @@ vi.mock('@vanilla-extract/dynamic', () => ({
   assignInlineVars: vi.fn((vars: Record<string, string>) => vars),
 }));
 
-vi.mock('../utils/theme.css', () => ({
-  themeVars: {
-    color: {
-      text: '--text-color',
-      background: '--bg-color',
-      accent: '--accent-color',
-      border: '--border-color',
-    },
-    font: {
-      family: '--font-family',
-      size: {
-        small: '--font-size-small',
-        medium: '--font-size-medium',
-        large: '--font-size-large',
-        xlarge: '--font-size-xlarge',
-      },
-      weight: {
-        normal: '--font-weight-normal',
-        bold: '--font-weight-bold',
-      },
-    },
-    spacing: {
-      small: '--spacing-small',
-      medium: '--spacing-medium',
-      large: '--spacing-large',
-    },
-    borderRadius: {
-      small: '--border-radius-small',
-      medium: '--border-radius-medium',
-    },
-  },
-  lightTheme: 'light-theme-class',
-  darkTheme: 'dark-theme-class',
-  sepiaTheme: 'sepia-theme-class',
-}));
 
-// ReaderViewのCSSファイルもモック
-vi.mock('../components/ReaderView.css', () => ({
-  readerContainer: 'mocked-reader-container',
-  contentContainer: 'mocked-content-container',
-  title: 'mocked-title',
-  contentArea: 'mocked-content-area',
-  styleButton: 'mocked-style-button',
-}));
 
-// StylePanelのCSSファイルもモック
-vi.mock('../components/StylePanel.css', () => ({
-  panel: 'mocked-panel',
-  panelTitle: 'mocked-panel-title',
-  controlGroup: 'mocked-control-group',
-  label: 'mocked-label',
-  select: 'mocked-select',
-  button: 'mocked-button',
-  closeButton: 'mocked-close-button',
-}));
 
-// ReaderViewコンポーネントのモック
-vi.mock('~/components/ReaderView', () => ({
-  default: () => 'mocked-reader-view',
-}));
 
 describe('activateReader with Shadow DOM', () => {
   beforeEach(() => {
