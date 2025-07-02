@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { JSDOM } from 'jsdom';
 import {
@@ -7,15 +7,6 @@ import {
   initializeReaderViewManager,
 } from '@/utils/reader-utils';
 import { StyleController } from '@/utils/StyleController';
-
-// vanilla-extractのimportをモック
-vi.mock('@vanilla-extract/dynamic', () => ({
-  assignInlineVars: vi.fn((vars: Record<string, string>) => vars),
-}));
-
-
-
-
 
 describe('activateReader with Shadow DOM', () => {
   beforeEach(() => {
@@ -58,9 +49,12 @@ describe('activateReader with Shadow DOM', () => {
     const result = activateReader(doc);
 
     expect(result).toBe(true);
-    expect(doc.body.style.display).toBe('none');
+    // リーダービューコンテナが作成されている
     expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
+    // タイトルが正しく設定されている
     expect(doc.title).toBe('Test Article');
+    // 元のボディコンテンツが保存されている（非表示になっている）
+    expect(doc.body.style.display).toBe('none');
   });
 
   it('should return false for empty document', () => {
@@ -104,10 +98,12 @@ describe('activateReader with Shadow DOM', () => {
     const result = activateReader(doc);
 
     expect(result).toBe(true);
-    expect(doc.body.style.display).toBe('none');
+    // リーダービューが正常に作成されている
     expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
-    // Original content should still be in the hidden body
+    // 元のコンテンツが保存されている（ナビゲーション要素の存在確認）
     expect(doc.body.innerHTML).toContain('<nav>');
+    // 元のボディが非表示になっている
+    expect(doc.body.style.display).toBe('none');
   });
 
   it('should handle document with mixed content types', () => {
@@ -133,11 +129,13 @@ describe('activateReader with Shadow DOM', () => {
     const result = activateReader(doc);
 
     expect(result).toBe(true);
-    expect(doc.body.style.display).toBe('none');
+    // リーダービューが正常に作成されている
     expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
-    // Original content should still be in the hidden body
+    // 元のコンテンツ構造が保存されている
     expect(doc.body.innerHTML).toContain('<header>');
     expect(doc.body.innerHTML).toContain('<footer>');
+    // リーダービューが有効化されている
+    expect(doc.body.style.display).toBe('none');
   });
 
   it('should handle deactivateReader correctly', () => {
@@ -151,14 +149,15 @@ describe('activateReader with Shadow DOM', () => {
 
     const doc = createTestDocument(htmlContent, 'Deactivation Test');
 
-    // Activate reader
+    // リーダービューを有効化
     const activateResult = activateReader(doc);
     expect(activateResult).toBe(true);
-    expect(doc.body.style.display).toBe('none');
     expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
+    expect(doc.body.style.display).toBe('none');
 
-    // Deactivate reader
+    // リーダービューを無効化
     deactivateReader(doc);
+    // 元の状態に復元されている
     expect(doc.body.style.display).toBe('');
     expect(doc.getElementById('better-reader-view-container')).toBeFalsy();
   });
