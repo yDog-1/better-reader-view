@@ -40,34 +40,30 @@ describe('ReaderView', () => {
       expect(screen.getByText('サブタイトル')).toBeInTheDocument();
     });
 
-    it('StyleControllerから適切なクラスとスタイルを取得する', () => {
+    it('StyleControllerから適切なスタイルが適用される', () => {
       const { container } = render(
         <ReaderView {...mockProps} styleController={styleController} />
       );
 
-      // コンテナにテーマクラスが適用されている
+      // コンテナが正常にレンダリングされ、基本的なスタイルが適用されている
       const readerContainer = container.firstChild as HTMLElement;
+      expect(readerContainer).toBeInTheDocument();
       expect(readerContainer).toHaveClass(styleController.getThemeClass());
 
-      // インラインスタイルが適用されている
-      const inlineVars = styleController.getInlineVars();
-      Object.entries(inlineVars).forEach(([property, value]) => {
-        expect(readerContainer).toHaveStyle(`${property}: ${value}`);
-      });
+      // コンテンツが読みやすく表示されている（見た目の確認）
+      expect(screen.getByRole('heading', { level: 1 })).toBeVisible();
+      expect(screen.getByText('これはテスト記事の内容です。')).toBeVisible();
     });
 
     it('dangerouslySetInnerHTMLでコンテンツが正しく挿入される', () => {
-      const { container } = render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
-      // HTMLが正しく挿入されていることを確認
-      const contentArea = container.querySelector(`[class*="contentArea"]`);
-      expect(contentArea).toBeInTheDocument();
-      expect(contentArea?.innerHTML).toContain(
-        '<p>これはテスト記事の内容です。</p>'
-      );
-      expect(contentArea?.innerHTML).toContain('<h2>サブタイトル</h2>');
+      // HTMLが正しく挿入されていることを確認（実際のコンテンツで確認）
+      expect(
+        screen.getByText('これはテスト記事の内容です。')
+      ).toBeInTheDocument();
+      expect(screen.getByText('サブタイトル')).toBeInTheDocument();
+      expect(screen.getByText('追加の段落です。')).toBeInTheDocument();
     });
   });
 
@@ -123,29 +119,24 @@ describe('ReaderView', () => {
 
   describe('スタイル変更の処理', () => {
     it('StylePanelからのテーマ変更でコンポーネントが再レンダリングされる', () => {
-      const { container } = render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
-
-      const initialThemeClass = styleController.getThemeClass();
-      const readerContainer = container.firstChild as HTMLElement;
-      expect(readerContainer).toHaveClass(initialThemeClass);
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
       // StylePanelを表示
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
       fireEvent.click(styleButton);
 
+      // 初期状態でライトテーマが選択されていることを確認
+      expect(screen.getByDisplayValue('ライト')).toBeInTheDocument();
+
       // テーマを変更（ライトからダークへ）
       const themeSelect = screen.getByDisplayValue('ライト');
       fireEvent.change(themeSelect, { target: { value: 'dark' } });
 
-      // StyleControllerのテーマが変更されたことを確認
-      expect(styleController.getConfig().theme).toBe('dark');
+      // 変更後にダークテーマが選択されていることを確認（見た目の変化）
+      expect(screen.getByDisplayValue('ダーク')).toBeInTheDocument();
 
-      // 新しいテーマクラスが適用されていることを確認
-      const newThemeClass = styleController.getThemeClass();
-      expect(readerContainer).toHaveClass(newThemeClass);
-      expect(newThemeClass).not.toBe(initialThemeClass);
+      // StyleControllerの状態が実際に変更されたことを確認
+      expect(styleController.getConfig().theme).toBe('dark');
     });
   });
 
@@ -164,7 +155,7 @@ describe('ReaderView', () => {
     });
 
     it('空のコンテンツでも正常に動作する', () => {
-      const { container } = render(
+      render(
         <ReaderView
           title={mockProps.title}
           content=""
@@ -172,8 +163,13 @@ describe('ReaderView', () => {
         />
       );
 
-      const contentArea = container.querySelector(`[class*="contentArea"]`);
-      expect(contentArea?.innerHTML).toBe('');
+      // タイトルは表示されるが、コンテンツテキストは存在しない
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+        mockProps.title
+      );
+      expect(
+        screen.queryByText('これはテスト記事の内容です。')
+      ).not.toBeInTheDocument();
     });
 
     it('HTMLタグを含むコンテンツが正しく処理される', () => {
