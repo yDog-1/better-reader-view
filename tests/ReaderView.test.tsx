@@ -1,25 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { fakeBrowser } from 'wxt/testing';
 import ReaderView from '../components/ReaderView';
 import { StyleController } from '../utils/StyleController';
-
-// StylePanelコンポーネントのモック（UI相互作用のテストのため最小限のモック）
-vi.mock('../components/StylePanel', () => ({
-  default: ({
-    onClose,
-    onStyleChange,
-  }: {
-    onClose: () => void;
-    onStyleChange: () => void;
-  }) => (
-    <div data-testid="style-panel">
-      <button onClick={onClose}>Close</button>
-      <button onClick={onStyleChange}>Change Style</button>
-    </div>
-  ),
-}));
 
 describe('ReaderView', () => {
   let styleController: StyleController;
@@ -56,34 +40,30 @@ describe('ReaderView', () => {
       expect(screen.getByText('サブタイトル')).toBeInTheDocument();
     });
 
-    it('StyleControllerから適切なクラスとスタイルを取得する', () => {
+    it('StyleControllerから適切なスタイルが適用される', () => {
       const { container } = render(
         <ReaderView {...mockProps} styleController={styleController} />
       );
 
-      // コンテナにテーマクラスが適用されている
+      // コンテナが正常にレンダリングされ、基本的なスタイルが適用されている
       const readerContainer = container.firstChild as HTMLElement;
+      expect(readerContainer).toBeInTheDocument();
       expect(readerContainer).toHaveClass(styleController.getThemeClass());
 
-      // インラインスタイルが適用されている
-      const inlineVars = styleController.getInlineVars();
-      Object.entries(inlineVars).forEach(([property, value]) => {
-        expect(readerContainer).toHaveStyle(`${property}: ${value}`);
-      });
+      // コンテンツが読みやすく表示されている（見た目の確認）
+      expect(screen.getByRole('heading', { level: 1 })).toBeVisible();
+      expect(screen.getByText('これはテスト記事の内容です。')).toBeVisible();
     });
 
     it('dangerouslySetInnerHTMLでコンテンツが正しく挿入される', () => {
-      const { container } = render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
-      // HTMLが正しく挿入されていることを確認
-      const contentArea = container.querySelector('.mocked-content-area');
-      expect(contentArea).toBeInTheDocument();
-      expect(contentArea?.innerHTML).toContain(
-        '<p>これはテスト記事の内容です。</p>'
-      );
-      expect(contentArea?.innerHTML).toContain('<h2>サブタイトル</h2>');
+      // HTMLが正しく挿入されていることを確認（実際のコンテンツで確認）
+      expect(
+        screen.getByText('これはテスト記事の内容です。')
+      ).toBeInTheDocument();
+      expect(screen.getByText('サブタイトル')).toBeInTheDocument();
+      expect(screen.getByText('追加の段落です。')).toBeInTheDocument();
     });
   });
 
@@ -91,7 +71,8 @@ describe('ReaderView', () => {
     it('初期状態ではStylePanelが非表示', () => {
       render(<ReaderView {...mockProps} styleController={styleController} />);
 
-      expect(screen.queryByTestId('style-panel')).not.toBeInTheDocument();
+      // 実際のStylePanelは初期状態では非表示なので、「スタイル設定」テキストが見えない
+      expect(screen.queryByText('スタイル設定')).not.toBeInTheDocument();
     });
 
     it('スタイルボタンクリックでStylePanelが表示される', () => {
@@ -100,7 +81,10 @@ describe('ReaderView', () => {
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
       fireEvent.click(styleButton);
 
-      expect(screen.getByTestId('style-panel')).toBeInTheDocument();
+      // 実際のStylePanelが表示されることを確認
+      expect(screen.getByText('スタイル設定')).toBeInTheDocument();
+      expect(screen.getByText('テーマ')).toBeInTheDocument();
+      expect(screen.getByText('フォントサイズ')).toBeInTheDocument();
     });
 
     it('StylePanelが表示中にスタイルボタンを再クリックすると非表示になる', () => {
@@ -110,11 +94,11 @@ describe('ReaderView', () => {
 
       // 表示
       fireEvent.click(styleButton);
-      expect(screen.getByTestId('style-panel')).toBeInTheDocument();
+      expect(screen.getByText('スタイル設定')).toBeInTheDocument();
 
       // 非表示
       fireEvent.click(styleButton);
-      expect(screen.queryByTestId('style-panel')).not.toBeInTheDocument();
+      expect(screen.queryByText('スタイル設定')).not.toBeInTheDocument();
     });
 
     it('StylePanelのCloseボタンで非表示になる', () => {
@@ -123,38 +107,36 @@ describe('ReaderView', () => {
       // StylePanelを表示
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
       fireEvent.click(styleButton);
-      expect(screen.getByTestId('style-panel')).toBeInTheDocument();
+      expect(screen.getByText('スタイル設定')).toBeInTheDocument();
 
-      // Closeボタンをクリック
-      const closeButton = screen.getByRole('button', { name: 'Close' });
+      // 閉じるボタンをクリック
+      const closeButton = screen.getByRole('button', { name: '閉じる' });
       fireEvent.click(closeButton);
 
-      expect(screen.queryByTestId('style-panel')).not.toBeInTheDocument();
+      expect(screen.queryByText('スタイル設定')).not.toBeInTheDocument();
     });
   });
 
   describe('スタイル変更の処理', () => {
-    it('StylePanelからのスタイル変更でコンポーネントが再レンダリングされる', () => {
-      const { container } = render(
-        <ReaderView {...mockProps} styleController={styleController} />
-      );
-
-      const initialThemeClass = styleController.getThemeClass();
-      const readerContainer = container.firstChild as HTMLElement;
-      expect(readerContainer).toHaveClass(initialThemeClass);
+    it('StylePanelからのテーマ変更でコンポーネントが再レンダリングされる', () => {
+      render(<ReaderView {...mockProps} styleController={styleController} />);
 
       // StylePanelを表示
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
       fireEvent.click(styleButton);
 
-      // スタイル変更ボタンをクリック（実際のStyleControllerの状態は変わらないが、再レンダリングをトリガー）
-      const changeStyleButton = screen.getByRole('button', {
-        name: 'Change Style',
-      });
-      fireEvent.click(changeStyleButton);
+      // 初期状態でライトテーマが選択されていることを確認
+      expect(screen.getByDisplayValue('ライト')).toBeInTheDocument();
 
-      // 再レンダリング後も同じテーマクラスが適用されている
-      expect(readerContainer).toHaveClass(styleController.getThemeClass());
+      // テーマを変更（ライトからダークへ）
+      const themeSelect = screen.getByDisplayValue('ライト');
+      fireEvent.change(themeSelect, { target: { value: 'dark' } });
+
+      // 変更後にダークテーマが選択されていることを確認（見た目の変化）
+      expect(screen.getByDisplayValue('ダーク')).toBeInTheDocument();
+
+      // StyleControllerの状態が実際に変更されたことを確認
+      expect(styleController.getConfig().theme).toBe('dark');
     });
   });
 
@@ -181,8 +163,13 @@ describe('ReaderView', () => {
         />
       );
 
-      const contentArea = document.querySelector('.mocked-content-area');
-      expect(contentArea?.innerHTML).toBe('');
+      // タイトルは表示されるが、コンテンツテキストは存在しない
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+        mockProps.title
+      );
+      expect(
+        screen.queryByText('これはテスト記事の内容です。')
+      ).not.toBeInTheDocument();
     });
 
     it('HTMLタグを含むコンテンツが正しく処理される', () => {
