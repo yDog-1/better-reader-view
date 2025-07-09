@@ -34,7 +34,7 @@ describe('activateReader with Shadow DOM', () => {
     return jsdom.window.document;
   }
 
-  it('should return true and add reader view container for valid article content', () => {
+  it('should return true and add reader view container for valid article content', async () => {
     const htmlContent = `
       <article>
         <h1>Test Article Title</h1>
@@ -49,13 +49,17 @@ describe('activateReader with Shadow DOM', () => {
     const result = activateReader(doc);
 
     expect(result).toBe(true);
+    
+    // React renderingの完了を待つ
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     // リーダービューコンテナが作成されている
     expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
     // タイトルが正しく設定されている
     expect(doc.title).toBe('Test Article');
     // 元のボディコンテンツが保存されている（非表示になっている）
     expect(doc.body.style.display).toBe('none');
-  });
+  }, 10000);
 
   it('should return false for empty document', () => {
     const htmlContent = '';
