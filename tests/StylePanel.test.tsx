@@ -75,11 +75,11 @@ describe('StylePanel', () => {
       expect(styleController.getConfig().theme).toBe('dark');
       expect(mockOnStyleChange).toHaveBeenCalled();
 
-      // sessionStorageに保存されたことを確認
-      const saved = sessionStorage.getItem('readerViewStyleConfig');
-      expect(saved).toBeTruthy();
-      const config = JSON.parse(saved!);
-      expect(config.theme).toBe('dark');
+      // 設定が保存され、新しいStyleControllerインスタンスで復元できることを確認
+      const newStyleController = new StyleController();
+      const loaded = newStyleController.loadFromStorage();
+      expect(loaded).toBe(true);
+      expect(newStyleController.getConfig().theme).toBe('dark');
     });
 
     it('全てのテーマオプションが表示される', () => {
