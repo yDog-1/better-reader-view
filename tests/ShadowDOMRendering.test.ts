@@ -18,7 +18,7 @@ describe('Shadow DOM Rendering Tests (TDD RED Phase)', () => {
       </html>`);
     document = dom.window.document;
     global.document = document;
-    // @ts-ignore - JSDOM window compatibility
+    // @ts-expect-error - JSDOM window compatibility
     global.window = dom.window;
   });
 

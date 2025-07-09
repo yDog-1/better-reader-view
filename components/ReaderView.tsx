@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { StyleController } from '../utils/StyleController';
 import StylePanel from './StylePanel';
 
@@ -6,6 +6,7 @@ export interface ReaderViewProps {
   title: string;
   content: string;
   styleController: StyleController;
+  shadowRoot: ShadowRoot;
 }
 
 /**
@@ -60,7 +61,7 @@ function generateShadowDOMStyles(styleController: StyleController): string {
   const currentFontFamily = fontFamilies[config.fontFamily];
 
   return `
-    /* CSS Reset and Base Styles */
+    /* Complete CSS Reset for Shadow DOM */
     :host {
       all: initial;
       position: fixed;
@@ -72,15 +73,23 @@ function generateShadowDOMStyles(styleController: StyleController): string {
       z-index: 2147483647;
       overflow: auto;
       box-sizing: border-box;
+      font-family: ${currentFontFamily};
+      font-size: ${currentFontSize};
+      line-height: 1.7;
+      color: ${colors.text};
     }
 
-    * {
+    /* Complete reset for all elements in Shadow DOM */
+    *,
+    *::before,
+    *::after {
+      all: unset;
       box-sizing: border-box;
     }
 
     /* Reader Container */
     .reader-container {
-      all: initial;
+      display: block;
       position: fixed;
       top: 0;
       left: 0;
@@ -90,11 +99,15 @@ function generateShadowDOMStyles(styleController: StyleController): string {
       z-index: 2147483647;
       overflow: auto;
       box-sizing: border-box;
-      font-family: "Hiragino Sans", "Yu Gothic UI", sans-serif;
+      font-family: ${currentFontFamily};
+      font-size: ${currentFontSize};
+      line-height: 1.7;
+      color: ${colors.text};
     }
 
     /* Content Container - Fixed margins and max-width */
     .content-container {
+      display: block;
       font-family: ${currentFontFamily};
       line-height: 1.7;
       max-width: 70ch;
@@ -107,6 +120,7 @@ function generateShadowDOMStyles(styleController: StyleController): string {
 
     /* Title Styles */
     .title {
+      display: block;
       font-size: calc(${currentFontSize} * 1.5);
       margin-bottom: 1em;
       color: ${colors.text};
@@ -117,12 +131,16 @@ function generateShadowDOMStyles(styleController: StyleController): string {
 
     /* Content Area */
     .content-area {
+      display: block;
       font-size: ${currentFontSize};
       color: ${colors.text};
+      font-family: ${currentFontFamily};
+      line-height: 1.7;
     }
 
     /* Style Button */
     .style-button {
+      display: inline-block;
       position: fixed;
       top: 16px;
       right: 16px;
@@ -132,7 +150,7 @@ function generateShadowDOMStyles(styleController: StyleController): string {
       border: none;
       border-radius: 4px;
       font-size: 14px;
-      font-family: inherit;
+      font-family: ${currentFontFamily};
       cursor: pointer;
       z-index: 2147483648;
     }
@@ -141,18 +159,32 @@ function generateShadowDOMStyles(styleController: StyleController): string {
       opacity: 0.8;
     }
 
-    /* Content Element Styles */
-    .content-area * {
-      all: unset;
-      display: revert;
-      box-sizing: border-box;
-    }
-
-    .content-area p,
-    .content-area li,
-    .content-area blockquote {
+    /* Content Element Styles with proper display and inheritance */
+    .content-area p {
+      display: block;
       font-size: ${currentFontSize};
       margin-bottom: 1em;
+      line-height: 1.7;
+      font-family: ${currentFontFamily};
+      color: ${colors.text};
+    }
+
+    .content-area li {
+      display: list-item;
+      font-size: ${currentFontSize};
+      margin-bottom: 0.5em;
+      line-height: 1.7;
+      font-family: ${currentFontFamily};
+      color: ${colors.text};
+    }
+
+    .content-area blockquote {
+      display: block;
+      font-size: ${currentFontSize};
+      margin: 1.5em 0;
+      padding-left: 1em;
+      border-left: 4px solid ${colors.border};
+      font-style: italic;
       line-height: 1.7;
       font-family: ${currentFontFamily};
       color: ${colors.text};
@@ -161,50 +193,61 @@ function generateShadowDOMStyles(styleController: StyleController): string {
     .content-area a {
       color: ${colors.accent};
       text-decoration: underline;
+      font-family: ${currentFontFamily};
+      font-size: inherit;
     }
 
     .content-area img,
     .content-area video,
     .content-area figure {
+      display: block;
       max-width: 100%;
       height: auto;
       margin: 1.5em 0;
-      display: block;
     }
 
     .content-area pre {
+      display: block;
       background-color: ${colors.border};
       padding: 1em;
       overflow-x: auto;
       border-radius: 4px;
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
       font-size: 14px;
+      color: ${colors.text};
     }
 
     .content-area code {
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
       font-size: 14px;
+      color: ${colors.text};
     }
 
     .content-area ul,
     .content-area ol {
+      display: block;
       margin: 1em 0;
       padding-left: 2em;
     }
 
-    .content-area blockquote {
-      margin: 1.5em 0;
-      padding-left: 1em;
-      border-left: 4px solid ${colors.border};
-      font-style: italic;
+    .content-area ul {
+      list-style-type: disc;
+    }
+
+    .content-area ol {
+      list-style-type: decimal;
     }
 
     .content-area strong {
       font-weight: 600;
+      font-family: ${currentFontFamily};
+      color: ${colors.text};
     }
 
     .content-area em {
       font-style: italic;
+      font-family: ${currentFontFamily};
+      color: ${colors.text};
     }
 
     .content-area h1,
@@ -213,10 +256,12 @@ function generateShadowDOMStyles(styleController: StyleController): string {
     .content-area h4,
     .content-area h5,
     .content-area h6 {
+      display: block;
       font-weight: 600;
       margin-bottom: 0.8em;
       margin-top: 1.2em;
       color: ${colors.text};
+      font-family: ${currentFontFamily};
     }
 
     .content-area h1 {
@@ -233,6 +278,14 @@ function generateShadowDOMStyles(styleController: StyleController): string {
     .content-area h6 {
       font-size: calc(${currentFontSize} * 1.1);
     }
+
+    /* Ensure no external styles can interfere */
+    .content-area * {
+      font-family: inherit !important;
+      font-size: inherit !important;
+      color: inherit !important;
+      line-height: inherit !important;
+    }
   `;
 }
 
@@ -240,15 +293,16 @@ const ReaderView: React.FC<ReaderViewProps> = ({
   title: articleTitle,
   content: articleContent,
   styleController,
+  shadowRoot,
 }) => {
   const [showStylePanel, setShowStylePanel] = useState(false);
   const [styleVersion, setStyleVersion] = useState(0);
 
-  // Re-compute vars when styleVersion changes to ensure fresh values
-  const inlineVars = styleController.getInlineVars();
-
-  // Use styleVersion to ensure re-render dependency tracking
-  void styleVersion;
+  // Get CSS variables from StyleController - recalculate when styleVersion changes
+  const inlineVars = useMemo(() => {
+    return styleController.getInlineVars();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [styleController, styleVersion]);
 
   const handleStyleChange = () => {
     // Increment styleVersion to trigger re-render
@@ -257,23 +311,22 @@ const ReaderView: React.FC<ReaderViewProps> = ({
 
   // Inject CSS into Shadow DOM
   useEffect(() => {
-    const shadowRoot = document.querySelector(
-      '#better-reader-view-container'
-    )?.shadowRoot;
-    if (shadowRoot) {
-      // Remove existing style elements to avoid duplicates
-      const existingStyles = shadowRoot.querySelectorAll(
-        'style[data-reader-view]'
-      );
-      existingStyles.forEach((style) => style.remove());
-
-      // Inject base styles with CSS variables
-      const style = document.createElement('style');
-      style.setAttribute('data-reader-view', 'true');
-      style.textContent = generateShadowDOMStyles(styleController);
-      shadowRoot.insertBefore(style, shadowRoot.firstChild);
+    if (!shadowRoot || typeof document === 'undefined') {
+      return;
     }
-  }, [styleController, styleVersion]);
+
+    // Remove existing style elements to avoid duplicates
+    const existingStyles = shadowRoot.querySelectorAll(
+      'style[data-reader-view]'
+    );
+    existingStyles.forEach((style) => style.remove());
+
+    // Inject base styles with CSS variables
+    const style = document.createElement('style');
+    style.setAttribute('data-reader-view', 'true');
+    style.textContent = generateShadowDOMStyles(styleController);
+    shadowRoot.insertBefore(style, shadowRoot.firstChild);
+  }, [shadowRoot, styleController, styleVersion]);
 
   return (
     <div className="reader-container" style={inlineVars}>

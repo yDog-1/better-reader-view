@@ -49,10 +49,10 @@ describe('activateReader with Shadow DOM', () => {
     const result = activateReader(doc);
 
     expect(result).toBe(true);
-    
+
     // React renderingの完了を待つ
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     // リーダービューコンテナが作成されている
     expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
     // タイトルが正しく設定されている
