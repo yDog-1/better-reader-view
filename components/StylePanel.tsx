@@ -6,6 +6,9 @@ import {
   FontFamily,
 } from '../utils/StyleController';
 
+// Z-index constant for style panel to ensure it appears above other content
+const STYLE_PANEL_Z_INDEX = 2147483649;
+
 export interface StylePanelProps {
   styleController: StyleController;
   onClose: () => void;

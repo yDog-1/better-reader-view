@@ -64,19 +64,7 @@ function generateShadowDOMStyles(styleController: StyleController): string {
     /* Complete CSS Reset for Shadow DOM */
     :host {
       all: initial;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: ${colors.background};
-      z-index: 2147483647;
-      overflow: auto;
-      box-sizing: border-box;
-      font-family: ${currentFontFamily};
-      font-size: ${currentFontSize};
-      line-height: 1.7;
-      color: ${colors.text};
+      display: block;
     }
 
     /* Complete reset for all elements in Shadow DOM */
@@ -322,14 +310,21 @@ const ReaderView: React.FC<ReaderViewProps> = ({
     existingStyles.forEach((style) => style.remove());
 
     // Inject base styles with CSS variables
-    const style = document.createElement('style');
-    style.setAttribute('data-reader-view', 'true');
-    style.textContent = generateShadowDOMStyles(styleController);
-    shadowRoot.insertBefore(style, shadowRoot.firstChild);
+    try {
+      const style = shadowRoot.ownerDocument?.createElement('style') || document.createElement('style');
+      style.setAttribute('data-reader-view', 'true');
+      style.textContent = generateShadowDOMStyles(styleController);
+      shadowRoot.appendChild(style);
+    } catch (error) {
+      console.warn('Failed to inject styles into shadow root:', error);
+    }
   }, [shadowRoot, styleController, styleVersion]);
 
   return (
-    <div className="reader-container" style={inlineVars}>
+    <div
+      className={`reader-container ${styleController.getThemeClass()}`}
+      style={inlineVars}
+    >
       <button
         className="style-button"
         onClick={() => setShowStylePanel(!showStylePanel)}

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { JSDOM } from 'jsdom';
+import { waitFor, act } from '@testing-library/react';
 import {
   activateReader,
   deactivateReader,
@@ -46,15 +47,17 @@ describe('activateReader with Shadow DOM', () => {
 
     const doc = createTestDocument(htmlContent, 'Test Article');
 
-    const result = activateReader(doc);
+    let result: boolean;
+    act(() => {
+      result = activateReader(doc);
+    });
 
     expect(result).toBe(true);
 
     // React renderingの完了を待つ
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // リーダービューコンテナが作成されている
-    expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
+    await waitFor(() => {
+      expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
+    });
     // タイトルが正しく設定されている
     expect(doc.title).toBe('Test Article');
     // 元のボディコンテンツが保存されている（非表示になっている）
@@ -66,7 +69,10 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, '');
     const originalDisplay = doc.body.style.display;
 
-    const result = activateReader(doc);
+    let result: boolean;
+    act(() => {
+      result = activateReader(doc);
+    });
 
     expect(result).toBe(false);
     expect(doc.body.style.display).toBe(originalDisplay);
@@ -99,7 +105,10 @@ describe('activateReader with Shadow DOM', () => {
     `;
 
     const doc = createTestDocument(htmlContent, 'Complex Page');
-    const result = activateReader(doc);
+    let result: boolean;
+    act(() => {
+      result = activateReader(doc);
+    });
 
     expect(result).toBe(true);
     // リーダービューが正常に作成されている
@@ -130,7 +139,10 @@ describe('activateReader with Shadow DOM', () => {
     `;
 
     const doc = createTestDocument(htmlContent, 'Mixed Content Page');
-    const result = activateReader(doc);
+    let result: boolean;
+    act(() => {
+      result = activateReader(doc);
+    });
 
     expect(result).toBe(true);
     // リーダービューが正常に作成されている
@@ -154,13 +166,16 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, 'Deactivation Test');
 
     // リーダービューを有効化
-    const activateResult = activateReader(doc);
+    let activateResult: boolean;
+    act(() => {
+      activateResult = activateReader(doc);
+    });
     expect(activateResult).toBe(true);
     expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
     expect(doc.body.style.display).toBe('none');
 
     // リーダービューを無効化
-    deactivateReader(doc);
+    act(() => deactivateReader(doc));
     // 元の状態に復元されている
     expect(doc.body.style.display).toBe('');
     expect(doc.getElementById('better-reader-view-container')).toBeFalsy();
@@ -177,7 +192,10 @@ describe('activateReader with Shadow DOM', () => {
     `;
 
     const doc = createTestDocument(htmlContent, '日本語テストページ');
-    const result = activateReader(doc);
+    let result: boolean;
+    act(() => {
+      result = activateReader(doc);
+    });
 
     expect(result).toBe(true);
     expect(doc.body.style.display).toBe('none');
@@ -196,7 +214,10 @@ describe('activateReader with Shadow DOM', () => {
     `;
 
     const doc = createTestDocument(htmlContent, 'Special Characters Test');
-    const result = activateReader(doc);
+    let result: boolean;
+    act(() => {
+      result = activateReader(doc);
+    });
 
     expect(result).toBe(true);
     expect(doc.body.style.display).toBe('none');
@@ -226,7 +247,10 @@ describe('activateReader with Shadow DOM', () => {
     `;
 
     const doc = createTestDocument(htmlContent, 'Media Test');
-    const result = activateReader(doc);
+    let result: boolean;
+    act(() => {
+      result = activateReader(doc);
+    });
 
     expect(result).toBe(true);
     expect(doc.body.style.display).toBe('none');
@@ -250,7 +274,10 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, '');
     const originalDisplay = doc.body.style.display;
 
-    const result = activateReader(doc);
+    let result: boolean;
+    act(() => {
+      result = activateReader(doc);
+    });
 
     expect(result).toBe(false);
     expect(doc.body.style.display).toBe(originalDisplay);

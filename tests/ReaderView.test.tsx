@@ -1,9 +1,31 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { fakeBrowser } from 'wxt/testing';
 import ReaderView from '../components/ReaderView';
 import { StyleController } from '../utils/StyleController';
+
+// Mock vanilla-extract modules
+vi.mock('@vanilla-extract/dynamic', () => ({
+  assignInlineVars: vi.fn((vars) => vars),
+}));
+
+vi.mock('../utils/theme.css', () => ({
+  themeVars: {
+    font: {
+      family: '--font-family',
+      size: {
+        small: '--font-size-small',
+        medium: '--font-size-medium',
+        large: '--font-size-large',
+        xlarge: '--font-size-xlarge',
+      },
+    },
+  },
+  lightTheme: 'theme_lightTheme__test',
+  darkTheme: 'theme_darkTheme__test',
+  sepiaTheme: 'theme_sepiaTheme__test',
+}));
 
 describe('ReaderView', () => {
   let styleController: StyleController;
@@ -63,7 +85,10 @@ describe('ReaderView', () => {
       // コンテナが正常にレンダリングされ、基本的なスタイルが適用されている
       const readerContainer = container.firstChild as HTMLElement;
       expect(readerContainer).toBeInTheDocument();
-      expect(readerContainer).toHaveClass('reader-container', styleController.getThemeClass());
+      expect(readerContainer).toHaveClass(
+        'reader-container',
+        styleController.getThemeClass()
+      );
 
       // コンテンツが読みやすく表示されている（見た目の確認）
       expect(screen.getByRole('heading', { level: 1 })).toBeVisible();

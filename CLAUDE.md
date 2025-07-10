@@ -123,6 +123,55 @@ Current tests focus on pure functions in `utils/reader-utils.ts`:
 - CSS styling inclusion
 - Edge cases (empty content, special characters)
 
+### vanilla-extract Testing Configuration
+
+This project uses vanilla-extract for CSS-in-JS styling, which requires specific testing setup:
+
+#### Core Configuration
+
+**vitest.config.ts** includes the vanilla-extract plugin:
+
+```typescript
+import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
+
+export default defineConfig({
+  plugins: [WxtVitest(), vanillaExtractPlugin()],
+  // ...
+});
+```
+
+**tests/setup.ts** disables runtime styles for performance:
+
+```typescript
+import '@testing-library/jest-dom';
+import '@vanilla-extract/css/disableRuntimeStyles';
+```
+
+#### Testing vanilla-extract Components
+
+- **Theme Classes**: Use `styleController.getThemeClass()` to test actual theme class application
+- **CSS Variables**: Test `assignInlineVars()` output for dynamic styling
+- **Class Names**: Assert on actual generated class names rather than mocked values
+
+#### Important Testing Guidelines
+
+1. **No Manual Mocks**: Do not mock `@vanilla-extract/dynamic` or theme files - let the plugin handle CSS processing
+2. **Real Class Names**: Test actual generated class names for better integration testing
+3. **Performance**: The `disableRuntimeStyles` import prevents actual CSS insertion during tests while preserving class name generation
+4. **Type Safety**: vanilla-extract integration maintains full TypeScript support in tests
+
+#### Example Test Pattern
+
+```typescript
+// ✅ Correct: Test actual vanilla-extract functionality
+expect(component).toHaveClass('reader-container', styleController.getThemeClass());
+
+// ❌ Incorrect: Mock vanilla-extract (maintenance burden, not realistic)
+vi.mock('@vanilla-extract/dynamic', () => ({ ... }));
+```
+
+This configuration ensures tests run against actual vanilla-extract behavior while maintaining performance.
+
 ## Development Patterns
 
 - **Pure Functions**: Core logic separated into testable, side-effect-free functions
