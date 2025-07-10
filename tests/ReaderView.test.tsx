@@ -63,7 +63,7 @@ describe('ReaderView', () => {
       // コンテナが正常にレンダリングされ、基本的なスタイルが適用されている
       const readerContainer = container.firstChild as HTMLElement;
       expect(readerContainer).toBeInTheDocument();
-      expect(readerContainer).toHaveClass('reader-container');
+      expect(readerContainer).toHaveClass('reader-container', styleController.getThemeClass());
 
       // コンテンツが読みやすく表示されている（見た目の確認）
       expect(screen.getByRole('heading', { level: 1 })).toBeVisible();

@@ -57,7 +57,7 @@ const StylePanel: React.FC<StylePanelProps> = ({
     padding: '16px',
     minWidth: '200px',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-    zIndex: 2147483649,
+    zIndex: STYLE_PANEL_Z_INDEX,
     fontFamily: '"Hiragino Sans", "Yu Gothic UI", sans-serif',
     fontSize: '14px',
     color: '#333333',
