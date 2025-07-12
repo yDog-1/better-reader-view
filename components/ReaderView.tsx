@@ -156,6 +156,87 @@ function generateShadowDOMStyles(styleController: StyleController): string {
       opacity: 0.8;
     }
 
+    /* Style Panel - Fixed positioning to right side */
+    .style-panel {
+      position: fixed;
+      top: 60px;
+      right: 16px;
+      background-color: ${colors.background};
+      border: 1px solid ${colors.border};
+      border-radius: 8px;
+      padding: 16px;
+      min-width: 200px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 2147483649; /* Above style button */
+      font-family: ${currentFontFamily};
+      font-size: 14px;
+      color: ${colors.text};
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: ${colors.text};
+    }
+
+    .control-group {
+      margin-bottom: 12px;
+    }
+
+    .control-label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+      font-weight: normal;
+      color: ${colors.text};
+    }
+
+    .control-select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid ${colors.border};
+      border-radius: 4px;
+      background-color: ${colors.background};
+      color: ${colors.text};
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .control-button {
+      padding: 6px 12px;
+      border: 1px solid ${colors.accent};
+      border-radius: 4px;
+      background-color: ${colors.accent};
+      color: ${colors.background};
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-top: 8px;
+    }
+
+    .control-button:hover {
+      opacity: 0.8;
+    }
+
+    .close-button {
+      padding: 6px 12px;
+      border: 1px solid ${colors.border};
+      border-radius: 4px;
+      background-color: transparent;
+      color: ${colors.text};
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-top: 8px;
+    }
+
+    .close-button:hover {
+      opacity: 0.8;
+    }
+
     /* Content Element Styles with proper display and inheritance */
     .content-area p {
       display: block;
