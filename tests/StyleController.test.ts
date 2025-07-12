@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { StyleController, type StyleConfig } from '../utils/StyleController';
+import { ExtensionStyleSheetManager } from '../utils/StyleSheetManager';
 
 describe('StyleController', () => {
   let styleController: StyleController;
@@ -8,7 +9,25 @@ describe('StyleController', () => {
   beforeEach(() => {
     // fakeBrowserの状態をリセット
     fakeBrowser.reset();
-    styleController = new StyleController();
+    
+    // sessionStorageをクリア（テスト環境対応）
+    try {
+      sessionStorage.clear();
+    } catch {
+      // テスト環境でsessionStorageが未実装の場合は無視
+    }
+
+    // モックのStyleSheetManagerを作成
+    const mockStyleSheetManager = {
+      isSupported: true,
+      initialize: vi.fn().mockResolvedValue(undefined),
+      cleanup: vi.fn(),
+      applyTheme: vi.fn(),
+      isReady: vi.fn().mockReturnValue(true),
+      getDebugInfo: vi.fn().mockReturnValue({}),
+    } as any;
+
+    styleController = new StyleController(undefined, mockStyleSheetManager);
   });
 
   describe('初期化', () => {

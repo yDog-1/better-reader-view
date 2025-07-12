@@ -306,27 +306,41 @@ const ReaderView: React.FC<ReaderViewProps> = ({
 
   // Inject CSS into Shadow DOM
   useEffect(() => {
-    if (!shadowRoot || typeof document === 'undefined') {
-      return;
-    }
+    const initStyles = async () => {
+      try {
+        // 新しいスタイルシステムの初期化を試行
+        if (!styleController.isReady()) {
+          await styleController.initializeStyles();
+        }
+      } catch (error) {
+        console.warn('スタイルシステムの初期化に失敗しました:', error);
+      }
 
-    // Remove existing style elements to avoid duplicates
-    const existingStyles = shadowRoot.querySelectorAll(
-      'style[data-reader-view]'
-    );
-    existingStyles.forEach((style) => style.remove());
+      // Shadow DOM用のフォールバックスタイル適用
+      if (!shadowRoot || typeof document === 'undefined') {
+        return;
+      }
 
-    // Inject base styles with CSS variables
-    try {
-      const style =
-        shadowRoot.ownerDocument?.createElement('style') ||
-        document.createElement('style');
-      style.setAttribute('data-reader-view', 'true');
-      style.textContent = generateShadowDOMStyles(styleController);
-      shadowRoot.appendChild(style);
-    } catch (error) {
-      console.warn('Failed to inject styles into shadow root:', error);
-    }
+      // Remove existing style elements to avoid duplicates
+      const existingStyles = shadowRoot.querySelectorAll(
+        'style[data-reader-view]'
+      );
+      existingStyles.forEach((style) => style.remove());
+
+      // Inject base styles with CSS variables
+      try {
+        const style =
+          shadowRoot.ownerDocument?.createElement('style') ||
+          document.createElement('style');
+        style.setAttribute('data-reader-view', 'true');
+        style.textContent = generateShadowDOMStyles(styleController);
+        shadowRoot.appendChild(style);
+      } catch (error) {
+        console.warn('Failed to inject styles into shadow root:', error);
+      }
+    };
+
+    initStyles();
   }, [shadowRoot, styleController, styleVersion]);
 
   return (

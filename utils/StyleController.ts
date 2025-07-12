@@ -1,3 +1,6 @@
+import { ThemeClassName, FontFamilyClassName } from './types';
+import { ExtensionStyleSheetManager } from './StyleSheetManager';
+
 export type ThemeType = 'light' | 'dark' | 'sepia';
 export type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
 export type FontFamily = 'sans-serif' | 'serif' | 'monospace';
@@ -9,17 +12,21 @@ export interface StyleConfig {
   customFontSize?: number;
 }
 
+/**
+ * 型安全なスタイル管理システム
+ * 責務を明確に分離し、テスタブルな設計に変更
+ */
 export class StyleController {
   private config: StyleConfig;
-  private styleSheet: unknown | null = null;
+  private styleSheetManager: ExtensionStyleSheetManager;
   
-  private readonly themeClasses = {
+  private readonly themeClasses: Record<ThemeType, ThemeClassName> = {
     light: 'theme-light',
     dark: 'theme-dark',
     sepia: 'theme-sepia',
   };
 
-  private readonly fontFamilyClasses = {
+  private readonly fontFamilyClasses: Record<FontFamily, FontFamilyClassName> = {
     'sans-serif': 'font-sans',
     serif: 'font-serif',
     monospace: 'font-mono',
@@ -30,72 +37,44 @@ export class StyleController {
       theme: 'light',
       fontSize: 'medium',
       fontFamily: 'sans-serif',
-    }
+    },
+    styleSheetManager?: ExtensionStyleSheetManager
   ) {
     this.config = initialConfig;
+    this.styleSheetManager = styleSheetManager || new ExtensionStyleSheetManager();
   }
 
+  /**
+   * スタイルシステムの初期化
+   * 非同期処理を適切に処理
+   */
   async initializeStyles(): Promise<void> {
     try {
-      // CSSファイルを動的にインポート
-      const themeCSS = await import('/utils/theme.css?raw');
-      const readerViewCSS = await import('/components/ReaderView.css?raw');
-      const stylePanelCSS = await import('/components/StylePanel.css?raw');
-      
-      // CSSルールを結合
-      const combinedCSS = [
-        themeCSS.default,
-        readerViewCSS.default,
-        stylePanelCSS.default,
-      ].join('\n');
-      
-      // Document.adoptedStyleSheetsに対応している場合
-      if ('adoptedStyleSheets' in document && 'CSSStyleSheet' in window) {
-        // 新しいスタイルシートを作成
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.styleSheet = new (window as any).CSSStyleSheet();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (this.styleSheet as any).replace(combinedCSS);
-        
-        // Document.adoptedStyleSheetsに追加
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (document as any).adoptedStyleSheets = [...(document as any).adoptedStyleSheets, this.styleSheet];
-      } else {
-        // フォールバック: <style>タグを使用
-        const styleElement = document.createElement('style');
-        styleElement.textContent = combinedCSS;
-        document.head.appendChild(styleElement);
-        this.styleSheet = styleElement;
-      }
+      await this.styleSheetManager.initialize();
     } catch (error) {
-      console.warn('スタイルシートの初期化に失敗しました:', error);
-      // フォールバック: インラインCSSを使用
-      this.fallbackToInlineStyles();
+      console.warn('スタイルシステムの初期化に失敗しました:', error);
+      throw error;
     }
   }
 
-  private fallbackToInlineStyles(): void {
-    // 基本的なスタイルをインラインで追加
-    const style = document.createElement('style');
-    style.textContent = `
-      .theme-light { --color-text: #333; --color-background: #fff; --color-accent: #0066cc; --color-border: #e0e0e0; }
-      .theme-dark { --color-text: #e0e0e0; --color-background: #1a1a1a; --color-accent: #4da6ff; --color-border: #404040; }
-      .theme-sepia { --color-text: #5c4b37; --color-background: #f4f1ea; --color-accent: #8b4513; --color-border: #d4c4a8; }
-      .font-sans { --font-family: "Hiragino Sans", "Yu Gothic UI", sans-serif; }
-      .font-serif { --font-family: "Times New Roman", "Yu Mincho", serif; }
-      .font-mono { --font-family: "Consolas", "Monaco", monospace; }
-    `;
-    document.head.appendChild(style);
-  }
-
-  getThemeClass(): string {
+  /**
+   * 型安全なテーマクラス名の取得
+   */
+  getThemeClass(): ThemeClassName {
     return this.themeClasses[this.config.theme];
   }
 
-  getFontFamilyClass(): string {
+  /**
+   * 型安全なフォントファミリークラス名の取得
+   */
+  getFontFamilyClass(): FontFamilyClassName {
     return this.fontFamilyClasses[this.config.fontFamily];
   }
 
+  /**
+   * カスタムスタイルプロパティの取得
+   * CSS変数のオーバーライド用
+   */
   getCustomStyles(): Record<string, string> {
     const styles: Record<string, string> = {};
 
@@ -107,11 +86,23 @@ export class StyleController {
     return styles;
   }
 
+  /**
+   * DOM要素にスタイルクラスを適用
+   * 型安全性を確保
+   */
   applyStylesToElement(element: HTMLElement): void {
-    // テーマクラスを適用
-    element.classList.add(this.getThemeClass());
+    // 既存のテーマクラスを削除
+    Object.values(this.themeClasses).forEach(className => {
+      element.classList.remove(className);
+    });
     
-    // フォントファミリークラスを適用
+    // 既存のフォントファミリークラスを削除
+    Object.values(this.fontFamilyClasses).forEach(className => {
+      element.classList.remove(className);
+    });
+
+    // 新しいクラスを適用
+    element.classList.add(this.getThemeClass());
     element.classList.add(this.getFontFamilyClass());
 
     // カスタムスタイルを適用
@@ -121,31 +112,53 @@ export class StyleController {
     });
   }
 
+  /**
+   * テーマの変更
+   */
   setTheme(theme: ThemeType): void {
     this.config.theme = theme;
+    this.styleSheetManager.applyTheme(this.getThemeClass());
   }
 
+  /**
+   * フォントサイズの変更
+   */
   setFontSize(fontSize: FontSize): void {
     this.config.fontSize = fontSize;
     this.config.customFontSize = undefined;
   }
 
+  /**
+   * カスタムフォントサイズの設定
+   */
   setCustomFontSize(size: number): void {
     this.config.customFontSize = size;
   }
 
+  /**
+   * フォントファミリーの変更
+   */
   setFontFamily(fontFamily: FontFamily): void {
     this.config.fontFamily = fontFamily;
   }
 
+  /**
+   * 現在の設定の取得
+   */
   getConfig(): StyleConfig {
     return { ...this.config };
   }
 
+  /**
+   * 設定の部分更新
+   */
   updateConfig(newConfig: Partial<StyleConfig>): void {
     this.config = { ...this.config, ...newConfig };
   }
 
+  /**
+   * 設定のセッションストレージへの保存
+   */
   saveToStorage(): void {
     try {
       sessionStorage.setItem(
@@ -157,11 +170,14 @@ export class StyleController {
     }
   }
 
+  /**
+   * セッションストレージからの設定読み込み
+   */
   loadFromStorage(): boolean {
     try {
       const saved = sessionStorage.getItem('readerViewStyleConfig');
       if (saved) {
-        const parsedConfig = JSON.parse(saved) as StyleConfig;
+        const parsedConfig = JSON.parse(saved) as Partial<StyleConfig>;
         this.config = {
           theme: parsedConfig.theme || 'light',
           fontSize: parsedConfig.fontSize || 'medium',
@@ -176,6 +192,9 @@ export class StyleController {
     return false;
   }
 
+  /**
+   * 設定のリセット
+   */
   reset(): void {
     this.config = {
       theme: 'light',
@@ -185,23 +204,30 @@ export class StyleController {
     sessionStorage.removeItem('readerViewStyleConfig');
   }
 
+  /**
+   * クリーンアップ処理
+   */
   cleanup(): void {
-    // adoptedStyleSheetsから削除またはstyleタグの削除
-    if (this.styleSheet) {
-      if ('adoptedStyleSheets' in document) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const adoptedSheets = (document as any).adoptedStyleSheets as unknown[];
-        const index = adoptedSheets.indexOf(this.styleSheet);
-        if (index !== -1) {
-          const newSheets = Array.from(adoptedSheets);
-          newSheets.splice(index, 1);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (document as any).adoptedStyleSheets = newSheets;
-        }
-      } else if (this.styleSheet instanceof HTMLStyleElement) {
-        // styleタグの場合は削除
-        this.styleSheet.remove();
-      }
-    }
+    this.styleSheetManager.cleanup();
+  }
+
+  /**
+   * デバッグ情報の取得
+   */
+  getDebugInfo(): object {
+    return {
+      config: this.config,
+      themeClass: this.getThemeClass(),
+      fontFamilyClass: this.getFontFamilyClass(),
+      customStyles: this.getCustomStyles(),
+      styleSheetManager: this.styleSheetManager.getDebugInfo(),
+    };
+  }
+
+  /**
+   * スタイルシステムが準備完了かチェック
+   */
+  isReady(): boolean {
+    return this.styleSheetManager.isReady();
   }
 }
