@@ -80,39 +80,58 @@ function generateShadowDOMStyles(styleController: StyleController): string {
       color: ${colors.text};
     }
 
-    /* Complete reset for all elements in Shadow DOM */
+    /* Selective reset for all elements in Shadow DOM - preserve font inheritance */
     *,
     *::before,
     *::after {
-      all: unset;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      vertical-align: baseline;
       box-sizing: border-box;
     }
 
-    /* Reader Container - Layout only */
+    /* Reader Container - Layout with proper background and scroll */
     .reader-container {
       display: block;
       width: 100%;
       height: 100%;
+      background-color: ${colors.background};
+      overflow: auto;
     }
 
-    /* Content Container - Layout specific styles only */
+    /* Content Container - Layout with inherited styles */
     .content-container {
+      display: block;
       max-width: 70ch;
       margin: 24px auto;
       padding: 24px;
+      background-color: ${colors.background};
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      color: inherit;
     }
 
     /* Title Styles - Override font-size and line-height only */
     .title {
+      display: block;
       font-size: calc(${currentFontSize} * 1.5);
       margin-bottom: 1em;
       font-weight: 600;
       line-height: 1.2;
+      font-family: inherit;
+      color: ${colors.text};
     }
 
     /* Content Area - Inherits all styles from :host */
     .content-area {
-      /* No additional styles needed - inherits from :host */
+      display: block;
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      color: inherit;
     }
 
     /* Style Button */
@@ -256,12 +275,10 @@ function generateShadowDOMStyles(styleController: StyleController): string {
       font-size: calc(${currentFontSize} * 1.1);
     }
 
-    /* Ensure no external styles can interfere */
+    /* Ensure proper inheritance for content elements */
     .content-area * {
-      font-family: inherit !important;
-      font-size: inherit !important;
-      color: inherit !important;
-      line-height: inherit !important;
+      font-family: inherit;
+      color: inherit;
     }
   `;
 }
