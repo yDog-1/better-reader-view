@@ -7,6 +7,7 @@ import { StyleController } from '../utils/StyleController';
 
 describe('ReaderView + StylePanel 統合テスト', () => {
   let styleController: StyleController;
+  let mockShadowRoot: ShadowRoot;
   const mockProps = {
     title: 'リーダービュー統合テスト',
     content:
@@ -16,11 +17,21 @@ describe('ReaderView + StylePanel 統合テスト', () => {
   beforeEach(() => {
     fakeBrowser.reset();
     styleController = new StyleController();
+
+    // Mock Shadow DOM
+    const mockContainer = document.createElement('div');
+    mockShadowRoot = mockContainer.attachShadow({ mode: 'open' });
   });
 
   describe('コンポーネント間の相互作用', () => {
     it('ReaderViewからStylePanelを開いてテーマを変更し、結果が反映される', () => {
-      render(<ReaderView {...mockProps} styleController={styleController} />);
+      render(
+        <ReaderView
+          {...mockProps}
+          styleController={styleController}
+          shadowRoot={mockShadowRoot}
+        />
+      );
 
       // 初期状態の確認
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
@@ -62,7 +73,13 @@ describe('ReaderView + StylePanel 統合テスト', () => {
     });
 
     it('フォントサイズとフォントファミリーの連続変更が正しく動作する', () => {
-      render(<ReaderView {...mockProps} styleController={styleController} />);
+      render(
+        <ReaderView
+          {...mockProps}
+          styleController={styleController}
+          shadowRoot={mockShadowRoot}
+        />
+      );
 
       // StylePanelを開く
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
@@ -88,7 +105,13 @@ describe('ReaderView + StylePanel 統合テスト', () => {
     });
 
     it('設定のリセット機能が正しく動作する', () => {
-      render(<ReaderView {...mockProps} styleController={styleController} />);
+      render(
+        <ReaderView
+          {...mockProps}
+          styleController={styleController}
+          shadowRoot={mockShadowRoot}
+        />
+      );
 
       // StylePanelを開いて設定を変更
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
@@ -118,7 +141,13 @@ describe('ReaderView + StylePanel 統合テスト', () => {
     });
 
     it('設定変更後の状態が新しいStyleControllerインスタンスで復元できる', () => {
-      render(<ReaderView {...mockProps} styleController={styleController} />);
+      render(
+        <ReaderView
+          {...mockProps}
+          styleController={styleController}
+          shadowRoot={mockShadowRoot}
+        />
+      );
 
       // StylePanelでテーマとフォントサイズを変更
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
@@ -146,7 +175,13 @@ describe('ReaderView + StylePanel 統合テスト', () => {
 
   describe('ユーザビリティテスト', () => {
     it('StylePanelの開閉がスムーズに動作する', () => {
-      render(<ReaderView {...mockProps} styleController={styleController} />);
+      render(
+        <ReaderView
+          {...mockProps}
+          styleController={styleController}
+          shadowRoot={mockShadowRoot}
+        />
+      );
 
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
 
@@ -169,7 +204,13 @@ describe('ReaderView + StylePanel 統合テスト', () => {
     });
 
     it('全ての設定オプションが選択可能である', () => {
-      render(<ReaderView {...mockProps} styleController={styleController} />);
+      render(
+        <ReaderView
+          {...mockProps}
+          styleController={styleController}
+          shadowRoot={mockShadowRoot}
+        />
+      );
 
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
       fireEvent.click(styleButton);
@@ -206,7 +247,13 @@ describe('ReaderView + StylePanel 統合テスト', () => {
 
   describe('エラーハンドリング', () => {
     it('不正な設定値でも安全に動作する', () => {
-      render(<ReaderView {...mockProps} styleController={styleController} />);
+      render(
+        <ReaderView
+          {...mockProps}
+          styleController={styleController}
+          shadowRoot={mockShadowRoot}
+        />
+      );
 
       const styleButton = screen.getByRole('button', { name: 'スタイル' });
       fireEvent.click(styleButton);

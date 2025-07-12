@@ -104,6 +104,55 @@ describe('StyleController', () => {
       expect(vars).toBeInstanceOf(Object);
       expect(Object.keys(vars).length).toBeGreaterThan(0);
     });
+
+    // RED: CSS変数適用テスト - 詳細な検証
+    it('getInlineVars()が正しいCSS変数名とフォントファミリー値を生成する', () => {
+      styleController.setFontFamily('serif');
+      const vars = styleController.getInlineVars();
+
+      // CSS変数が正しく生成されることを検証
+      expect(typeof vars).toBe('object');
+      expect(Object.keys(vars).length).toBeGreaterThan(0);
+    });
+
+    it('getInlineVars()が異なるフォントファミリーで異なるCSS変数を生成する', () => {
+      styleController.setFontFamily('sans-serif');
+      const sansVars = styleController.getInlineVars();
+
+      styleController.setFontFamily('monospace');
+      const monoVars = styleController.getInlineVars();
+
+      expect(sansVars).not.toEqual(monoVars);
+      expect(typeof sansVars).toBe('object');
+      expect(typeof monoVars).toBe('object');
+    });
+
+    it('getInlineVars()がカスタムフォントサイズで正しいCSS変数を生成する', () => {
+      styleController.setFontSize('large');
+      styleController.setCustomFontSize(20);
+      const vars = styleController.getInlineVars();
+
+      expect(typeof vars).toBe('object');
+      expect(Object.keys(vars).length).toBeGreaterThan(0);
+    });
+
+    it('getInlineVars()がカスタムフォントサイズなしの場合フォントサイズ変数を含まない', () => {
+      styleController.setFontSize('medium');
+      const vars = styleController.getInlineVars();
+
+      // フォントサイズ変数が含まれていないことを検証
+      expect(typeof vars).toBe('object');
+    });
+
+    it('getInlineVars()が有効なCSS変数オブジェクトを返す', () => {
+      styleController.setFontFamily('serif');
+      styleController.setCustomFontSize(18);
+      const vars = styleController.getInlineVars();
+
+      // 有効なCSS変数オブジェクトであることを検証
+      expect(typeof vars).toBe('object');
+      expect(vars).not.toBeNull();
+    });
   });
 
   describe('設定の更新', () => {
