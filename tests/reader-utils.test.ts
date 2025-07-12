@@ -47,7 +47,7 @@ describe('activateReader with Shadow DOM', () => {
 
     const doc = createTestDocument(htmlContent, 'Test Article');
 
-    let result: boolean;
+    let result!: boolean;
     act(() => {
       result = activateReader(doc);
     });
@@ -69,7 +69,7 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, '');
     const originalDisplay = doc.body.style.display;
 
-    let result: boolean;
+    let result!: boolean;
     act(() => {
       result = activateReader(doc);
     });
@@ -105,7 +105,7 @@ describe('activateReader with Shadow DOM', () => {
     `;
 
     const doc = createTestDocument(htmlContent, 'Complex Page');
-    let result: boolean;
+    let result!: boolean;
     act(() => {
       result = activateReader(doc);
     });
@@ -139,7 +139,7 @@ describe('activateReader with Shadow DOM', () => {
     `;
 
     const doc = createTestDocument(htmlContent, 'Mixed Content Page');
-    let result: boolean;
+    let result!: boolean;
     act(() => {
       result = activateReader(doc);
     });
@@ -166,7 +166,7 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, 'Deactivation Test');
 
     // リーダービューを有効化
-    let activateResult: boolean;
+    let activateResult!: boolean;
     act(() => {
       activateResult = activateReader(doc);
     });
@@ -192,7 +192,7 @@ describe('activateReader with Shadow DOM', () => {
     `;
 
     const doc = createTestDocument(htmlContent, '日本語テストページ');
-    let result: boolean;
+    let result!: boolean;
     act(() => {
       result = activateReader(doc);
     });
@@ -214,7 +214,7 @@ describe('activateReader with Shadow DOM', () => {
     `;
 
     const doc = createTestDocument(htmlContent, 'Special Characters Test');
-    let result: boolean;
+    let result!: boolean;
     act(() => {
       result = activateReader(doc);
     });
@@ -247,7 +247,7 @@ describe('activateReader with Shadow DOM', () => {
     `;
 
     const doc = createTestDocument(htmlContent, 'Media Test');
-    let result: boolean;
+    let result!: boolean;
     act(() => {
       result = activateReader(doc);
     });
@@ -274,7 +274,7 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, '');
     const originalDisplay = doc.body.style.display;
 
-    let result: boolean;
+    let result!: boolean;
     act(() => {
       result = activateReader(doc);
     });

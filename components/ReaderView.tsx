@@ -311,7 +311,9 @@ const ReaderView: React.FC<ReaderViewProps> = ({
 
     // Inject base styles with CSS variables
     try {
-      const style = shadowRoot.ownerDocument?.createElement('style') || document.createElement('style');
+      const style =
+        shadowRoot.ownerDocument?.createElement('style') ||
+        document.createElement('style');
       style.setAttribute('data-reader-view', 'true');
       style.textContent = generateShadowDOMStyles(styleController);
       shadowRoot.appendChild(style);
