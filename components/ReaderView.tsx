@@ -292,9 +292,9 @@ const ReaderView: React.FC<ReaderViewProps> = ({
   const [showStylePanel, setShowStylePanel] = useState(false);
   const [styleVersion, setStyleVersion] = useState(0);
 
-  // Get CSS variables from StyleController - recalculate when styleVersion changes
-  const inlineVars = useMemo(() => {
-    return styleController.getInlineVars();
+  // Get custom styles from StyleController - recalculate when styleVersion changes
+  const customStyles = useMemo(() => {
+    return styleController.getCustomStyles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleController, styleVersion]);
 
@@ -331,7 +331,7 @@ const ReaderView: React.FC<ReaderViewProps> = ({
   return (
     <div
       className={`reader-container ${styleController.getThemeClass()}`}
-      style={inlineVars}
+      style={customStyles}
     >
       <button
         className="style-button"

@@ -1,0 +1,79 @@
+/* テーマ変数定義 */
+:root {
+  /* Light Theme */
+  --color-text-light: #333333;
+  --color-background-light: #ffffff;
+  --color-accent-light: #0066cc;
+  --color-border-light: #e0e0e0;
+
+  /* Dark Theme */
+  --color-text-dark: #e0e0e0;
+  --color-background-dark: #1a1a1a;
+  --color-accent-dark: #4da6ff;
+  --color-border-dark: #404040;
+
+  /* Sepia Theme */
+  --color-text-sepia: #5c4b37;
+  --color-background-sepia: #f4f1ea;
+  --color-accent-sepia: #8b4513;
+  --color-border-sepia: #d4c4a8;
+
+  /* Font sizes */
+  --font-size-small: 14px;
+  --font-size-medium: 16px;
+  --font-size-large: 18px;
+  --font-size-xlarge: 24px;
+
+  /* Font weights */
+  --font-weight-normal: 400;
+  --font-weight-bold: 600;
+
+  /* Font families */
+  --font-family-sans: "Hiragino Sans", "Yu Gothic UI", sans-serif;
+  --font-family-serif: "Times New Roman", "Yu Mincho", serif;
+  --font-family-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+
+  /* Spacing */
+  --spacing-small: 8px;
+  --spacing-medium: 16px;
+  --spacing-large: 24px;
+
+  /* Border radius */
+  --border-radius-small: 4px;
+  --border-radius-medium: 8px;
+}
+
+/* テーマ適用クラス */
+.theme-light {
+  --color-text: var(--color-text-light);
+  --color-background: var(--color-background-light);
+  --color-accent: var(--color-accent-light);
+  --color-border: var(--color-border-light);
+}
+
+.theme-dark {
+  --color-text: var(--color-text-dark);
+  --color-background: var(--color-background-dark);
+  --color-accent: var(--color-accent-dark);
+  --color-border: var(--color-border-dark);
+}
+
+.theme-sepia {
+  --color-text: var(--color-text-sepia);
+  --color-background: var(--color-background-sepia);
+  --color-accent: var(--color-accent-sepia);
+  --color-border: var(--color-border-sepia);
+}
+
+/* フォントファミリークラス */
+.font-sans {
+  --font-family: var(--font-family-sans);
+}
+
+.font-serif {
+  --font-family: var(--font-family-serif);
+}
+
+.font-mono {
+  --font-family: var(--font-family-mono);
+}
