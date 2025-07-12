@@ -61,22 +61,9 @@ function generateShadowDOMStyles(styleController: StyleController): string {
   const currentFontFamily = fontFamilies[config.fontFamily];
 
   return `
-    /* Complete CSS Reset for Shadow DOM */
+    /* Shadow DOM Root - Contains all shared styles */
     :host {
       all: initial;
-      display: block;
-    }
-
-    /* Complete reset for all elements in Shadow DOM */
-    *,
-    *::before,
-    *::after {
-      all: unset;
-      box-sizing: border-box;
-    }
-
-    /* Reader Container */
-    .reader-container {
       display: block;
       position: fixed;
       top: 0;
@@ -93,37 +80,39 @@ function generateShadowDOMStyles(styleController: StyleController): string {
       color: ${colors.text};
     }
 
-    /* Content Container - Fixed margins and max-width */
-    .content-container {
-      display: block;
-      font-family: ${currentFontFamily};
-      line-height: 1.7;
-      max-width: 70ch;
-      margin: 24px auto;
-      padding: 24px;
-      color: ${colors.text};
-      font-size: ${currentFontSize};
+    /* Complete reset for all elements in Shadow DOM */
+    *,
+    *::before,
+    *::after {
+      all: unset;
       box-sizing: border-box;
     }
 
-    /* Title Styles */
-    .title {
+    /* Reader Container - Layout only */
+    .reader-container {
       display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Content Container - Layout specific styles only */
+    .content-container {
+      max-width: 70ch;
+      margin: 24px auto;
+      padding: 24px;
+    }
+
+    /* Title Styles - Override font-size and line-height only */
+    .title {
       font-size: calc(${currentFontSize} * 1.5);
       margin-bottom: 1em;
-      color: ${colors.text};
       font-weight: 600;
-      font-family: ${currentFontFamily};
       line-height: 1.2;
     }
 
-    /* Content Area */
+    /* Content Area - Inherits all styles from :host */
     .content-area {
-      display: block;
-      font-size: ${currentFontSize};
-      color: ${colors.text};
-      font-family: ${currentFontFamily};
-      line-height: 1.7;
+      /* No additional styles needed - inherits from :host */
     }
 
     /* Style Button */

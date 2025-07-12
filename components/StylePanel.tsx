@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   StyleController,
   ThemeType,
@@ -49,76 +49,86 @@ const StylePanel: React.FC<StylePanelProps> = ({
     onStyleChange();
   };
 
-  // Inline styles for Shadow DOM compatibility
-  const panelStyles: React.CSSProperties = {
-    position: 'fixed',
-    top: '60px',
-    right: '16px',
-    backgroundColor: '#ffffff',
-    border: '1px solid #e0e0e0',
-    borderRadius: '8px',
-    padding: '16px',
-    minWidth: '200px',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-    zIndex: STYLE_PANEL_Z_INDEX,
-    fontFamily: '"Hiragino Sans", "Yu Gothic UI", sans-serif',
-    fontSize: '14px',
-    color: '#333333',
-  };
+  // Inline styles for Shadow DOM compatibility (memoized to prevent re-renders)
+  const styles = useMemo(
+    () => ({
+      panel: {
+        position: 'fixed',
+        top: '60px',
+        right: '16px',
+        backgroundColor: '#ffffff',
+        border: '1px solid #e0e0e0',
+        borderRadius: '8px',
+        padding: '16px',
+        minWidth: '200px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        zIndex: STYLE_PANEL_Z_INDEX,
+        fontFamily: '"Hiragino Sans", "Yu Gothic UI", sans-serif',
+        fontSize: '14px',
+        color: '#333333',
+      } as React.CSSProperties,
 
-  const titleStyles: React.CSSProperties = {
-    fontSize: '16px',
-    fontWeight: '600',
-    marginBottom: '12px',
-    borderBottom: '1px solid #e0e0e0',
-    paddingBottom: '8px',
-  };
+      title: {
+        fontSize: '16px',
+        fontWeight: '600',
+        marginBottom: '12px',
+        borderBottom: '1px solid #e0e0e0',
+        paddingBottom: '8px',
+      } as React.CSSProperties,
 
-  const controlGroupStyles: React.CSSProperties = {
-    marginBottom: '12px',
-  };
+      controlGroup: {
+        marginBottom: '12px',
+      } as React.CSSProperties,
 
-  const labelStyles: React.CSSProperties = {
-    display: 'block',
-    marginBottom: '4px',
-    fontWeight: '500',
-  };
+      label: {
+        display: 'block',
+        marginBottom: '4px',
+        fontWeight: '500',
+      } as React.CSSProperties,
 
-  const selectStyles: React.CSSProperties = {
-    width: '100%',
-    padding: '4px 8px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-  };
+      select: {
+        width: '100%',
+        padding: '4px 8px',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+        fontSize: '14px',
+        fontFamily: 'inherit',
+      } as React.CSSProperties,
 
-  const buttonStyles: React.CSSProperties = {
-    padding: '6px 12px',
-    marginRight: '8px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    backgroundColor: '#f5f5f5',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-  };
+      button: {
+        padding: '6px 12px',
+        marginRight: '8px',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+        backgroundColor: '#f5f5f5',
+        fontSize: '14px',
+        fontFamily: 'inherit',
+        cursor: 'pointer',
+      } as React.CSSProperties,
 
-  const closeButtonStyles: React.CSSProperties = {
-    ...buttonStyles,
-    backgroundColor: '#0066cc',
-    color: '#ffffff',
-    border: '1px solid #0066cc',
-  };
+      closeButton: {
+        padding: '6px 12px',
+        marginRight: '8px',
+        border: '1px solid #0066cc',
+        borderRadius: '4px',
+        backgroundColor: '#0066cc',
+        color: '#ffffff',
+        fontSize: '14px',
+        fontFamily: 'inherit',
+        cursor: 'pointer',
+      } as React.CSSProperties,
+    }),
+    []
+  );
 
   return (
-    <div style={panelStyles}>
-      <div style={titleStyles}>スタイル設定</div>
+    <div style={styles.panel}>
+      <div style={styles.title}>スタイル設定</div>
 
-      <div style={controlGroupStyles}>
-        <label style={labelStyles}>テーマ</label>
+      <div style={styles.controlGroup}>
+        <label style={styles.label}>テーマ</label>
         <select
-          style={selectStyles}
+          style={styles.select}
           value={config.theme}
           onChange={(e) => handleThemeChange(e.target.value as ThemeType)}
         >
@@ -128,10 +138,10 @@ const StylePanel: React.FC<StylePanelProps> = ({
         </select>
       </div>
 
-      <div style={controlGroupStyles}>
-        <label style={labelStyles}>フォントサイズ</label>
+      <div style={styles.controlGroup}>
+        <label style={styles.label}>フォントサイズ</label>
         <select
-          style={selectStyles}
+          style={styles.select}
           value={config.fontSize}
           onChange={(e) => handleFontSizeChange(e.target.value as FontSize)}
         >
@@ -142,10 +152,10 @@ const StylePanel: React.FC<StylePanelProps> = ({
         </select>
       </div>
 
-      <div style={controlGroupStyles}>
-        <label style={labelStyles}>フォント種類</label>
+      <div style={styles.controlGroup}>
+        <label style={styles.label}>フォント種類</label>
         <select
-          style={selectStyles}
+          style={styles.select}
           value={config.fontFamily}
           onChange={(e) => handleFontFamilyChange(e.target.value as FontFamily)}
         >
@@ -156,10 +166,10 @@ const StylePanel: React.FC<StylePanelProps> = ({
       </div>
 
       <div>
-        <button style={buttonStyles} onClick={handleReset}>
+        <button style={styles.button} onClick={handleReset}>
           リセット
         </button>
-        <button style={closeButtonStyles} onClick={onClose}>
+        <button style={styles.closeButton} onClick={onClose}>
           閉じる
         </button>
       </div>
