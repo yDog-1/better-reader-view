@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { StyleController } from '../utils/StyleController';
 import StylePanel from './StylePanel';
+import './ReaderView.css';
 
 export interface ReaderViewProps {
   title: string;
@@ -155,6 +156,87 @@ function generateShadowDOMStyles(styleController: StyleController): string {
       opacity: 0.8;
     }
 
+    /* Style Panel - Fixed positioning to right side */
+    .style-panel {
+      position: fixed;
+      top: 60px;
+      right: 16px;
+      background-color: ${colors.background};
+      border: 1px solid ${colors.border};
+      border-radius: 8px;
+      padding: 16px;
+      min-width: 200px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 2147483649; /* Above style button */
+      font-family: ${currentFontFamily};
+      font-size: 14px;
+      color: ${colors.text};
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: ${colors.text};
+    }
+
+    .control-group {
+      margin-bottom: 12px;
+    }
+
+    .control-label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+      font-weight: normal;
+      color: ${colors.text};
+    }
+
+    .control-select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid ${colors.border};
+      border-radius: 4px;
+      background-color: ${colors.background};
+      color: ${colors.text};
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .control-button {
+      padding: 6px 12px;
+      border: 1px solid ${colors.accent};
+      border-radius: 4px;
+      background-color: ${colors.accent};
+      color: ${colors.background};
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-top: 8px;
+    }
+
+    .control-button:hover {
+      opacity: 0.8;
+    }
+
+    .close-button {
+      padding: 6px 12px;
+      border: 1px solid ${colors.border};
+      border-radius: 4px;
+      background-color: transparent;
+      color: ${colors.text};
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-top: 8px;
+    }
+
+    .close-button:hover {
+      opacity: 0.8;
+    }
+
     /* Content Element Styles with proper display and inheritance */
     .content-area p {
       display: block;
@@ -292,9 +374,9 @@ const ReaderView: React.FC<ReaderViewProps> = ({
   const [showStylePanel, setShowStylePanel] = useState(false);
   const [styleVersion, setStyleVersion] = useState(0);
 
-  // Get CSS variables from StyleController - recalculate when styleVersion changes
-  const inlineVars = useMemo(() => {
-    return styleController.getInlineVars();
+  // Get custom styles from StyleController - recalculate when styleVersion changes
+  const customStyles = useMemo(() => {
+    return styleController.getCustomStyles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleController, styleVersion]);
 
@@ -305,33 +387,47 @@ const ReaderView: React.FC<ReaderViewProps> = ({
 
   // Inject CSS into Shadow DOM
   useEffect(() => {
-    if (!shadowRoot || typeof document === 'undefined') {
-      return;
-    }
+    const initStyles = async () => {
+      try {
+        // 新しいスタイルシステムの初期化を試行
+        if (!styleController.isReady()) {
+          await styleController.initializeStyles();
+        }
+      } catch (error) {
+        console.warn('スタイルシステムの初期化に失敗しました:', error);
+      }
 
-    // Remove existing style elements to avoid duplicates
-    const existingStyles = shadowRoot.querySelectorAll(
-      'style[data-reader-view]'
-    );
-    existingStyles.forEach((style) => style.remove());
+      // Shadow DOM用のフォールバックスタイル適用
+      if (!shadowRoot || typeof document === 'undefined') {
+        return;
+      }
 
-    // Inject base styles with CSS variables
-    try {
-      const style =
-        shadowRoot.ownerDocument?.createElement('style') ||
-        document.createElement('style');
-      style.setAttribute('data-reader-view', 'true');
-      style.textContent = generateShadowDOMStyles(styleController);
-      shadowRoot.appendChild(style);
-    } catch (error) {
-      console.warn('Failed to inject styles into shadow root:', error);
-    }
+      // Remove existing style elements to avoid duplicates
+      const existingStyles = shadowRoot.querySelectorAll(
+        'style[data-reader-view]'
+      );
+      existingStyles.forEach((style) => style.remove());
+
+      // Inject base styles with CSS variables
+      try {
+        const style =
+          shadowRoot.ownerDocument?.createElement('style') ||
+          document.createElement('style');
+        style.setAttribute('data-reader-view', 'true');
+        style.textContent = generateShadowDOMStyles(styleController);
+        shadowRoot.appendChild(style);
+      } catch (error) {
+        console.warn('Failed to inject styles into shadow root:', error);
+      }
+    };
+
+    initStyles();
   }, [shadowRoot, styleController, styleVersion]);
 
   return (
     <div
-      className={`reader-container ${styleController.getThemeClass()}`}
-      style={inlineVars}
+      className={`reader-container ${styleController.getThemeClass()} ${styleController.getFontFamilyClass()}`}
+      style={customStyles}
     >
       <button
         className="style-button"
@@ -349,7 +445,7 @@ const ReaderView: React.FC<ReaderViewProps> = ({
       )}
 
       <div className="content-container">
-        <h1 className="title">{articleTitle}</h1>
+        <h1 className="reader-title">{articleTitle}</h1>
         <div
           className="content-area"
           dangerouslySetInnerHTML={{ __html: articleContent }}
