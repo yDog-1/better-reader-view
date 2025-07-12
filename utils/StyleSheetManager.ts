@@ -1,4 +1,4 @@
-import { StyleSheetManager, ThemeClassName } from './types';
+import { StyleSheetManager, ThemeClassName, DebugInfo } from './types';
 import { getCombinedCSS } from './CSSLoader';
 
 /**
@@ -6,14 +6,14 @@ import { getCombinedCSS } from './CSSLoader';
  * Document.adoptedStyleSheetsとフォールバックを適切に処理
  */
 export class ExtensionStyleSheetManager implements StyleSheetManager {
-  private styleSheet: CSSStyleSheet | HTMLStyleElement | null = null;
+  private styleSheet: globalThis.CSSStyleSheet | HTMLElement | null = null;
   private isInitialized = false;
 
   /**
    * adoptedStyleSheetsがサポートされているかチェック
    */
   get isSupported(): boolean {
-    return 'adoptedStyleSheets' in document && 'CSSStyleSheet' in window;
+    return 'adoptedStyleSheets' in document && 'CSSStyleSheet' in globalThis;
   }
 
   /**
@@ -48,13 +48,17 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
    * Document.adoptedStyleSheetsを使用した初期化
    */
   private async initializeWithAdoptedStyleSheets(cssContent: string): Promise<void> {
-    const styleSheet = new CSSStyleSheet();
+    const styleSheet = new globalThis.CSSStyleSheet();
     await styleSheet.replace(cssContent);
     
     // 現在のadoptedStyleSheetsに追加
     const currentSheets = Array.from(document.adoptedStyleSheets || []);
     currentSheets.push(styleSheet);
-    (document as any).adoptedStyleSheets = currentSheets;
+    Object.defineProperty(document, 'adoptedStyleSheets', {
+      value: currentSheets,
+      writable: true,
+      configurable: true,
+    });
     
     this.styleSheet = styleSheet;
   }
@@ -90,15 +94,19 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
       return;
     }
 
-    if (this.styleSheet instanceof CSSStyleSheet && this.isSupported) {
+    if (this.styleSheet instanceof globalThis.CSSStyleSheet && this.isSupported) {
       // adoptedStyleSheetsから削除
       const currentSheets = Array.from(document.adoptedStyleSheets || []);
       const index = currentSheets.indexOf(this.styleSheet);
       if (index !== -1) {
         currentSheets.splice(index, 1);
-        (document as any).adoptedStyleSheets = currentSheets;
+        Object.defineProperty(document, 'adoptedStyleSheets', {
+          value: currentSheets,
+          writable: true,
+          configurable: true,
+        });
       }
-    } else if (this.styleSheet instanceof HTMLStyleElement) {
+    } else if (this.styleSheet instanceof HTMLElement) {
       // styleタグを削除
       this.styleSheet.remove();
     }
@@ -117,7 +125,7 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
   /**
    * 現在のスタイルシートの情報を取得（デバッグ用）
    */
-  getDebugInfo(): object {
+  getDebugInfo(): DebugInfo {
     return {
       isSupported: this.isSupported,
       isInitialized: this.isInitialized,

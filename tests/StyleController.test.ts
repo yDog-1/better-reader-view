@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { StyleController, type StyleConfig } from '../utils/StyleController';
-import { ExtensionStyleSheetManager } from '../utils/StyleSheetManager';
+import type { StyleSheetManager } from '../utils/types';
 
 describe('StyleController', () => {
   let styleController: StyleController;
@@ -18,16 +18,21 @@ describe('StyleController', () => {
     }
 
     // モックのStyleSheetManagerを作成
-    const mockStyleSheetManager = {
+    const mockStyleSheetManager: StyleSheetManager = {
       isSupported: true,
       initialize: vi.fn().mockResolvedValue(undefined),
       cleanup: vi.fn(),
       applyTheme: vi.fn(),
       isReady: vi.fn().mockReturnValue(true),
-      getDebugInfo: vi.fn().mockReturnValue({}),
-    } as any;
+      getDebugInfo: vi.fn().mockReturnValue({
+        isSupported: true,
+        isInitialized: true,
+        styleSheetType: 'Mock',
+        adoptedStyleSheetsCount: 0,
+      }),
+    };
 
-    styleController = new StyleController(undefined, mockStyleSheetManager);
+    styleController = new StyleController(undefined, mockStyleSheetManager as any);
   });
 
   describe('初期化', () => {

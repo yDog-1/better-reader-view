@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ExtensionStyleSheetManager } from '../utils/StyleSheetManager';
+import type { DebugInfo } from '../utils/types';
 
 describe('StyleSheetManager', () => {
   let styleSheetManager: ExtensionStyleSheetManager;
@@ -8,7 +9,11 @@ describe('StyleSheetManager', () => {
     styleSheetManager = new ExtensionStyleSheetManager();
     
     // adoptedStyleSheetsを初期化
-    (document as any).adoptedStyleSheets = [];
+    Object.defineProperty(document, 'adoptedStyleSheets', {
+      value: [],
+      writable: true,
+      configurable: true,
+    });
     
     // 既存のスタイルタグを削除
     const existingStyles = document.querySelectorAll('style[data-extension-styles]');
@@ -54,7 +59,7 @@ describe('StyleSheetManager', () => {
       const styleElements = document.querySelectorAll('style[data-extension-styles="reader-view"]');
       expect(styleElements.length).toBe(1);
       
-      const styleElement = styleElements[0] as HTMLStyleElement;
+      const styleElement = styleElements[0] as HTMLElement;
       expect(styleElement.textContent).toContain('/* theme.css */');
       expect(styleElement.textContent).toContain('.theme-light');
       
@@ -131,8 +136,9 @@ describe('StyleSheetManager', () => {
       expect(debugInfo).toHaveProperty('styleSheetType');
       expect(debugInfo).toHaveProperty('adoptedStyleSheetsCount');
       
-      expect(typeof (debugInfo as any).isSupported).toBe('boolean');
-      expect(typeof (debugInfo as any).isInitialized).toBe('boolean');
+      const typedDebugInfo = debugInfo as DebugInfo;
+      expect(typeof typedDebugInfo.isSupported).toBe('boolean');
+      expect(typeof typedDebugInfo.isInitialized).toBe('boolean');
     });
   });
 
@@ -142,7 +148,7 @@ describe('StyleSheetManager', () => {
 
       await styleSheetManager.initialize();
 
-      const styleElement = document.querySelector('style[data-extension-styles="reader-view"]') as HTMLStyleElement;
+      const styleElement = document.querySelector('style[data-extension-styles="reader-view"]') as HTMLElement;
       const cssContent = styleElement.textContent || '';
 
       // テーマクラスの存在を確認

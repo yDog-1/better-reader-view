@@ -20,7 +20,7 @@ describe('StyleController Integration Tests', () => {
         styleSheetType: 'CSSStyleSheet',
         adoptedStyleSheetsCount: 1,
       }),
-    } as any;
+    } as unknown as ExtensionStyleSheetManager;
 
     styleController = new StyleController(undefined, mockStyleSheetManager);
   });

@@ -36,4 +36,13 @@ export interface StyleSheetManager {
   initialize(): Promise<void>;
   cleanup(): void;
   applyTheme(theme: ThemeClassName): void;
+  isReady(): boolean;
+  getDebugInfo(): DebugInfo;
+}
+
+export interface DebugInfo {
+  isSupported: boolean;
+  isInitialized: boolean;
+  styleSheetType: string | null;
+  adoptedStyleSheetsCount: number;
 }
