@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { StyleController } from '../utils/StyleController';
 import StylePanel from './StylePanel';
+import './ReaderView.css';
 
 export interface ReaderViewProps {
   title: string;
@@ -330,7 +331,7 @@ const ReaderView: React.FC<ReaderViewProps> = ({
 
   return (
     <div
-      className={`reader-container ${styleController.getThemeClass()}`}
+      className={`reader-container ${styleController.getThemeClass()} ${styleController.getFontFamilyClass()}`}
       style={customStyles}
     >
       <button
@@ -349,7 +350,7 @@ const ReaderView: React.FC<ReaderViewProps> = ({
       )}
 
       <div className="content-container">
-        <h1 className="title">{articleTitle}</h1>
+        <h1 className="reader-title">{articleTitle}</h1>
         <div
           className="content-area"
           dangerouslySetInnerHTML={{ __html: articleContent }}
