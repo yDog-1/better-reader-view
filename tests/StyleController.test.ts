@@ -32,7 +32,7 @@ describe('StyleController', () => {
       }),
     };
 
-    styleController = new StyleController(undefined, mockStyleSheetManager as any);
+    styleController = new StyleController(undefined, mockStyleSheetManager);
   });
 
   describe('初期化', () => {

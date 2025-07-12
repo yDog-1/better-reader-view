@@ -1,4 +1,4 @@
-import { ThemeClassName, FontFamilyClassName } from './types';
+import { ThemeClassName, FontFamilyClassName, StyleSheetManager } from './types';
 import { ExtensionStyleSheetManager } from './StyleSheetManager';
 
 export type ThemeType = 'light' | 'dark' | 'sepia';
@@ -18,7 +18,7 @@ export interface StyleConfig {
  */
 export class StyleController {
   private config: StyleConfig;
-  private styleSheetManager: ExtensionStyleSheetManager;
+  private styleSheetManager: ExtensionStyleSheetManager | StyleSheetManager;
   
   private readonly themeClasses: Record<ThemeType, ThemeClassName> = {
     light: 'theme-light',
@@ -38,10 +38,10 @@ export class StyleController {
       fontSize: 'medium',
       fontFamily: 'sans-serif',
     },
-    styleSheetManager?: ExtensionStyleSheetManager
+    styleSheetManager?: ExtensionStyleSheetManager | StyleSheetManager
   ) {
     this.config = initialConfig;
-    this.styleSheetManager = styleSheetManager || new ExtensionStyleSheetManager();
+    this.styleSheetManager = (styleSheetManager as ExtensionStyleSheetManager) || new ExtensionStyleSheetManager();
   }
 
   /**
