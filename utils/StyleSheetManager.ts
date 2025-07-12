@@ -54,11 +54,7 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
     // 現在のadoptedStyleSheetsに追加
     const currentSheets = Array.from(document.adoptedStyleSheets || []);
     currentSheets.push(styleSheet);
-    Object.defineProperty(document, 'adoptedStyleSheets', {
-      value: currentSheets,
-      writable: true,
-      configurable: true,
-    });
+    document.adoptedStyleSheets = currentSheets;
     
     this.styleSheet = styleSheet;
   }
@@ -100,11 +96,7 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
       const index = currentSheets.indexOf(this.styleSheet);
       if (index !== -1) {
         currentSheets.splice(index, 1);
-        Object.defineProperty(document, 'adoptedStyleSheets', {
-          value: currentSheets,
-          writable: true,
-          configurable: true,
-        });
+        document.adoptedStyleSheets = currentSheets;
       }
     } else if (this.styleSheet instanceof HTMLElement) {
       // styleタグを削除

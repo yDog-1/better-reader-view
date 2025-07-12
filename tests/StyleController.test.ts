@@ -69,15 +69,13 @@ describe('StyleController', () => {
 
     it('正しいテーマクラスを返す', () => {
       styleController.setTheme('light');
-      const lightClass = styleController.getThemeClass();
-      expect(typeof lightClass).toBe('string');
-      expect(lightClass).toBeTruthy();
+      expect(styleController.getThemeClass()).toBe('theme-light');
 
       styleController.setTheme('dark');
-      const darkClass = styleController.getThemeClass();
-      expect(typeof darkClass).toBe('string');
-      expect(darkClass).toBeTruthy();
-      expect(darkClass).not.toBe(lightClass);
+      expect(styleController.getThemeClass()).toBe('theme-dark');
+      
+      styleController.setTheme('sepia');
+      expect(styleController.getThemeClass()).toBe('theme-sepia');
     });
   });
 
@@ -149,6 +147,52 @@ describe('StyleController', () => {
 
       styleController.setFontFamily('sans-serif');
       expect(styleController.getFontFamilyClass()).toBe('font-sans');
+    });
+  });
+
+  describe('DOM要素へのスタイル適用', () => {
+    it('要素にテーマとフォントファミリークラスを適用する', () => {
+      const element = document.createElement('div');
+      
+      styleController.setTheme('dark');
+      styleController.setFontFamily('serif');
+      styleController.applyStylesToElement(element);
+
+      expect(element.classList.contains('theme-dark')).toBe(true);
+      expect(element.classList.contains('font-serif')).toBe(true);
+    });
+
+    it('既存のクラスを削除して新しいクラスを適用する', () => {
+      const element = document.createElement('div');
+      element.classList.add('theme-light', 'font-sans', 'existing-class');
+      
+      styleController.setTheme('sepia');
+      styleController.setFontFamily('monospace');
+      styleController.applyStylesToElement(element);
+
+      expect(element.classList.contains('theme-light')).toBe(false);
+      expect(element.classList.contains('font-sans')).toBe(false);
+      expect(element.classList.contains('theme-sepia')).toBe(true);
+      expect(element.classList.contains('font-mono')).toBe(true);
+      expect(element.classList.contains('existing-class')).toBe(true);
+    });
+
+    it('カスタムフォントサイズをCSS変数として適用する', () => {
+      const element = document.createElement('div');
+      
+      styleController.setCustomFontSize(20);
+      styleController.applyStylesToElement(element);
+
+      expect(element.style.getPropertyValue('--font-size-medium')).toBe('20px');
+    });
+
+    it('カスタムフォントサイズなしの場合はCSS変数を設定しない', () => {
+      const element = document.createElement('div');
+      
+      styleController.setFontSize('medium'); // カスタムサイズをクリア
+      styleController.applyStylesToElement(element);
+
+      expect(element.style.getPropertyValue('--font-size-medium')).toBe('');
     });
   });
 
