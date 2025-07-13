@@ -1,4 +1,8 @@
-import { ThemeClassName, FontFamilyClassName, StyleSheetManager } from './types';
+import {
+  ThemeClassName,
+  FontFamilyClassName,
+  StyleSheetManager,
+} from './types';
 import { ExtensionStyleSheetManager } from './StyleSheetManager';
 
 export type ThemeType = 'light' | 'dark' | 'sepia';
@@ -19,18 +23,19 @@ export interface StyleConfig {
 export class StyleController {
   private config: StyleConfig;
   private styleSheetManager: ExtensionStyleSheetManager | StyleSheetManager;
-  
+
   private readonly themeClasses: Record<ThemeType, ThemeClassName> = {
     light: 'theme-light',
     dark: 'theme-dark',
     sepia: 'theme-sepia',
   };
 
-  private readonly fontFamilyClasses: Record<FontFamily, FontFamilyClassName> = {
-    'sans-serif': 'font-sans',
-    serif: 'font-serif',
-    monospace: 'font-mono',
-  };
+  private readonly fontFamilyClasses: Record<FontFamily, FontFamilyClassName> =
+    {
+      'sans-serif': 'font-sans',
+      serif: 'font-serif',
+      monospace: 'font-mono',
+    };
 
   constructor(
     initialConfig: StyleConfig = {
@@ -41,7 +46,9 @@ export class StyleController {
     styleSheetManager?: ExtensionStyleSheetManager | StyleSheetManager
   ) {
     this.config = initialConfig;
-    this.styleSheetManager = (styleSheetManager as ExtensionStyleSheetManager) || new ExtensionStyleSheetManager();
+    this.styleSheetManager =
+      (styleSheetManager as ExtensionStyleSheetManager) ||
+      new ExtensionStyleSheetManager();
   }
 
   /**
@@ -78,10 +85,26 @@ export class StyleController {
   getCustomStyles(): Record<string, string> {
     const styles: Record<string, string> = {};
 
-    // カスタムフォントサイズがある場合のみ設定
-    if (this.config.customFontSize) {
-      styles['--font-size-medium'] = `${this.config.customFontSize}px`;
-    }
+    // フォントサイズマッピング
+    const fontSizeMap = {
+      small: '14px',
+      medium: '16px',
+      large: '18px',
+      xlarge: '24px',
+    };
+
+    // ベースフォントサイズの設定
+    const baseFontSize = this.config.customFontSize
+      ? `${this.config.customFontSize}px`
+      : fontSizeMap[this.config.fontSize];
+
+    styles['--font-size'] = baseFontSize;
+
+    // 要素別フォントサイズの計算
+    const baseSizeNum = parseFloat(baseFontSize);
+    styles['--title-font-size'] = `${baseSizeNum * 1.5}px`;
+    styles['--heading-font-size'] = `${baseSizeNum * 1.125}px`;
+    styles['--button-font-size'] = `${Math.max(baseSizeNum * 0.875, 12)}px`;
 
     return styles;
   }
@@ -92,12 +115,12 @@ export class StyleController {
    */
   applyStylesToElement(element: HTMLElement): void {
     // 既存のテーマクラスを削除
-    Object.values(this.themeClasses).forEach(className => {
+    Object.values(this.themeClasses).forEach((className) => {
       element.classList.remove(className);
     });
-    
+
     // 既存のフォントファミリークラスを削除
-    Object.values(this.fontFamilyClasses).forEach(className => {
+    Object.values(this.fontFamilyClasses).forEach((className) => {
       element.classList.remove(className);
     });
 

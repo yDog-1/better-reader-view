@@ -17,23 +17,23 @@
   max-width: 70ch;
   margin: var(--spacing-large) auto;
   padding: var(--spacing-large);
-  color: var(--color-text);
-  font-size: var(--font-size-medium);
+  color: var(--color);
+  font-size: var(--font-size);
   box-sizing: border-box;
 }
 
 .reader-title {
-  font-size: var(--font-size-xlarge);
+  font-size: var(--title-font-size);
   margin-bottom: 1em;
-  color: var(--color-text);
+  color: var(--color);
   font-weight: var(--font-weight-bold);
   font-family: inherit;
   line-height: 1.2;
 }
 
 .content-area {
-  font-size: var(--font-size-medium);
-  color: var(--color-text);
+  font-size: var(--font-size);
+  color: var(--color);
 }
 
 .style-button {
@@ -45,7 +45,7 @@
   color: var(--color-background);
   border: none;
   border-radius: var(--border-radius-small);
-  font-size: var(--font-size-small);
+  font-size: var(--button-font-size);
   font-family: var(--font-family, var(--font-family-sans));
   cursor: pointer;
   z-index: 2147483648;
@@ -65,11 +65,11 @@
 .content-area p,
 .content-area li,
 .content-area blockquote {
-  font-size: var(--font-size-medium);
+  font-size: var(--font-size);
   margin-bottom: 1em;
   line-height: 1.7;
   font-family: inherit;
-  color: var(--color-text);
+  color: var(--color);
 }
 
 .content-area a {
@@ -92,12 +92,12 @@
   overflow-x: auto;
   border-radius: var(--border-radius-small);
   font-family: var(--font-family-mono);
-  font-size: var(--font-size-small);
+  font-size: var(--button-font-size);
 }
 
 .content-area code {
   font-family: var(--font-family-mono);
-  font-size: var(--font-size-small);
+  font-size: var(--button-font-size);
 }
 
 .content-area ul,
@@ -130,20 +130,20 @@
   font-weight: var(--font-weight-bold);
   margin-bottom: 0.8em;
   margin-top: 1.2em;
-  color: var(--color-text);
+  color: var(--color);
 }
 
 .content-area h1 {
-  font-size: var(--font-size-xlarge);
+  font-size: var(--title-font-size);
 }
 
 .content-area h2 {
-  font-size: var(--font-size-large);
+  font-size: var(--heading-font-size);
 }
 
 .content-area h3,
 .content-area h4,
 .content-area h5,
 .content-area h6 {
-  font-size: var(--font-size-medium);
+  font-size: var(--font-size);
 }

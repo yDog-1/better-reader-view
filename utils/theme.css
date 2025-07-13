@@ -18,20 +18,25 @@
   --color-accent-sepia: #8b4513;
   --color-border-sepia: #d4c4a8;
 
-  /* Font sizes */
-  --font-size-small: 14px;
-  --font-size-medium: 16px;
-  --font-size-large: 18px;
-  --font-size-xlarge: 24px;
+  /* Base variables - managed by JavaScript */
+  --font-size: 16px;
+  --color: #333333;
+  --font-family: 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+
+  /* Element-specific font sizes */
+  --button-font-size: 14px;
+  --title-font-size: 24px;
+  --heading-font-size: 18px;
 
   /* Font weights */
   --font-weight-normal: 400;
   --font-weight-bold: 600;
 
   /* Font families */
-  --font-family-sans: "Hiragino Sans", "Yu Gothic UI", sans-serif;
-  --font-family-serif: "Times New Roman", "Yu Mincho", serif;
-  --font-family-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  --font-family-sans: 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  --font-family-serif: 'Times New Roman', 'Yu Mincho', serif;
+  --font-family-mono:
+    'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
 
   /* Spacing */
   --spacing-small: 8px;
@@ -45,21 +50,21 @@
 
 /* テーマ適用クラス */
 .theme-light {
-  --color-text: var(--color-text-light);
+  --color: var(--color-text-light);
   --color-background: var(--color-background-light);
   --color-accent: var(--color-accent-light);
   --color-border: var(--color-border-light);
 }
 
 .theme-dark {
-  --color-text: var(--color-text-dark);
+  --color: var(--color-text-dark);
   --color-background: var(--color-background-dark);
   --color-accent: var(--color-accent-dark);
   --color-border: var(--color-border-dark);
 }
 
 .theme-sepia {
-  --color-text: var(--color-text-sepia);
+  --color: var(--color-text-sepia);
   --color-background: var(--color-background-sepia);
   --color-accent: var(--color-accent-sepia);
   --color-border: var(--color-border-sepia);

@@ -340,6 +340,6 @@ export function getAllCSSModules(): CSSModuleContent[] {
  */
 export function getCombinedCSS(): string {
   return getAllCSSModules()
-    .map(module => `/* ${module.filename} */\n${module.content}`)
+    .map((module) => `/* ${module.filename} */\n${module.content}`)
     .join('\n\n');
 }

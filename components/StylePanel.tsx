@@ -7,7 +7,6 @@ import {
 } from '../utils/StyleController';
 import './StylePanel.css';
 
-
 export interface StylePanelProps {
   styleController: StyleController;
   onClose: () => void;
@@ -47,7 +46,6 @@ const StylePanel: React.FC<StylePanelProps> = ({
     setConfig(styleController.getConfig());
     onStyleChange();
   };
-
 
   return (
     <div className="style-panel">

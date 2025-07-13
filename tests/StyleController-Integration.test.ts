@@ -42,7 +42,9 @@ describe('StyleController Integration Tests', () => {
         new Error('Initialization failed')
       );
 
-      await expect(styleController.initializeStyles()).rejects.toThrow('Initialization failed');
+      await expect(styleController.initializeStyles()).rejects.toThrow(
+        'Initialization failed'
+      );
     });
   });
 
@@ -50,10 +52,10 @@ describe('StyleController Integration Tests', () => {
     it('正しいテーマクラス名を返す', () => {
       styleController.setTheme('light');
       expect(styleController.getThemeClass()).toBe('theme-light');
-      
+
       styleController.setTheme('dark');
       expect(styleController.getThemeClass()).toBe('theme-dark');
-      
+
       styleController.setTheme('sepia');
       expect(styleController.getThemeClass()).toBe('theme-sepia');
     });
@@ -61,10 +63,10 @@ describe('StyleController Integration Tests', () => {
     it('正しいフォントファミリークラス名を返す', () => {
       styleController.setFontFamily('sans-serif');
       expect(styleController.getFontFamilyClass()).toBe('font-sans');
-      
+
       styleController.setFontFamily('serif');
       expect(styleController.getFontFamilyClass()).toBe('font-serif');
-      
+
       styleController.setFontFamily('monospace');
       expect(styleController.getFontFamilyClass()).toBe('font-mono');
     });
@@ -82,30 +84,31 @@ describe('StyleController Integration Tests', () => {
       // 古いテーマクラスが削除され、新しいクラスが適用される
       expect(element.classList.contains('theme-dark')).toBe(false);
       expect(element.classList.contains('theme-light')).toBe(true);
-      
+
       expect(element.classList.contains('font-serif')).toBe(false);
       expect(element.classList.contains('font-sans')).toBe(true);
-      
+
       // 既存クラスは保持される
       expect(element.classList.contains('existing-class')).toBe(true);
     });
 
     it('カスタムスタイルをCSS変数として適用する', () => {
       const element = document.createElement('div');
-      
+
       styleController.setCustomFontSize(20);
       styleController.applyStylesToElement(element);
 
-      expect(element.style.getPropertyValue('--font-size-medium')).toBe('20px');
+      expect(element.style.getPropertyValue('--font-size')).toBe('20px');
     });
 
     it('カスタムフォントサイズなしの場合CSS変数を設定しない', () => {
       const element = document.createElement('div');
-      
+
       styleController.setFontSize('medium'); // カスタムサイズをクリア
       styleController.applyStylesToElement(element);
 
-      expect(element.style.getPropertyValue('--font-size-medium')).toBe('');
+      // デフォルトサイズが設定される
+      expect(element.style.getPropertyValue('--font-size')).toBe('16px');
     });
   });
 
@@ -113,7 +116,9 @@ describe('StyleController Integration Tests', () => {
     it('テーマ変更時にStyleSheetManagerに通知する', () => {
       styleController.setTheme('dark');
 
-      expect(mockStyleSheetManager.applyTheme).toHaveBeenCalledWith('theme-dark');
+      expect(mockStyleSheetManager.applyTheme).toHaveBeenCalledWith(
+        'theme-dark'
+      );
     });
   });
 
@@ -135,7 +140,10 @@ describe('StyleController Integration Tests', () => {
         themeClass: 'theme-dark',
         fontFamilyClass: 'font-serif',
         customStyles: {
-          '--font-size-medium': '18px',
+          '--font-size': '18px',
+          '--title-font-size': '27px',
+          '--heading-font-size': '20.25px',
+          '--button-font-size': '15.75px',
         },
         styleSheetManager: {
           isSupported: true,

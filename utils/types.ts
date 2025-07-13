@@ -1,6 +1,6 @@
 // 型安全なCSS管理のための型定義
 
-export type CSSClassName = 
+export type CSSClassName =
   // ReaderView関連
   | 'reader-container'
   | 'content-container'
@@ -16,15 +16,9 @@ export type CSSClassName =
   | 'control-button'
   | 'close-button';
 
-export type ThemeClassName = 
-  | 'theme-light'
-  | 'theme-dark'
-  | 'theme-sepia';
+export type ThemeClassName = 'theme-light' | 'theme-dark' | 'theme-sepia';
 
-export type FontFamilyClassName =
-  | 'font-sans'
-  | 'font-serif'
-  | 'font-mono';
+export type FontFamilyClassName = 'font-sans' | 'font-serif' | 'font-mono';
 
 export interface CSSModuleContent {
   content: string;

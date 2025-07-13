@@ -9,7 +9,7 @@ describe('StyleController', () => {
   beforeEach(() => {
     // fakeBrowserの状態をリセット
     fakeBrowser.reset();
-    
+
     // sessionStorageをクリア（テスト環境対応）
     try {
       sessionStorage.clear();
@@ -73,7 +73,7 @@ describe('StyleController', () => {
 
       styleController.setTheme('dark');
       expect(styleController.getThemeClass()).toBe('theme-dark');
-      
+
       styleController.setTheme('sepia');
       expect(styleController.getThemeClass()).toBe('theme-sepia');
     });
@@ -116,25 +116,31 @@ describe('StyleController', () => {
       const styles = styleController.getCustomStyles();
 
       expect(styles).toBeInstanceOf(Object);
-      expect(styles['--font-size-medium']).toBe('22px');
+      expect(styles['--font-size']).toBe('22px');
+      expect(styles['--title-font-size']).toBe('33px'); // 22 * 1.5
+      expect(styles['--heading-font-size']).toBe('24.75px'); // 22 * 1.125
+      expect(styles['--button-font-size']).toBe('19.25px'); // 22 * 0.875
     });
 
-    it('カスタムフォントサイズなしの場合は空のオブジェクトを返す', () => {
+    it('カスタムフォントサイズなしの場合はデフォルトスタイルを返す', () => {
       styleController.setFontSize('medium'); // カスタムサイズをリセット
       const styles = styleController.getCustomStyles();
 
-      expect(styles).toEqual({});
+      expect(styles['--font-size']).toBe('16px');
+      expect(styles['--title-font-size']).toBe('24px'); // 16 * 1.5
+      expect(styles['--heading-font-size']).toBe('18px'); // 16 * 1.125
+      expect(styles['--button-font-size']).toBe('14px'); // 16 * 0.875
     });
 
     it('異なるカスタムフォントサイズで異なるスタイルを生成する', () => {
       styleController.setCustomFontSize(18);
       const styles18 = styleController.getCustomStyles();
-      
+
       styleController.setCustomFontSize(24);
       const styles24 = styleController.getCustomStyles();
 
-      expect(styles18['--font-size-medium']).toBe('18px');
-      expect(styles24['--font-size-medium']).toBe('24px');
+      expect(styles18['--font-size']).toBe('18px');
+      expect(styles24['--font-size']).toBe('24px');
       expect(styles18).not.toEqual(styles24);
     });
 
@@ -153,7 +159,7 @@ describe('StyleController', () => {
   describe('DOM要素へのスタイル適用', () => {
     it('要素にテーマとフォントファミリークラスを適用する', () => {
       const element = document.createElement('div');
-      
+
       styleController.setTheme('dark');
       styleController.setFontFamily('serif');
       styleController.applyStylesToElement(element);
@@ -165,7 +171,7 @@ describe('StyleController', () => {
     it('既存のクラスを削除して新しいクラスを適用する', () => {
       const element = document.createElement('div');
       element.classList.add('theme-light', 'font-sans', 'existing-class');
-      
+
       styleController.setTheme('sepia');
       styleController.setFontFamily('monospace');
       styleController.applyStylesToElement(element);
@@ -179,20 +185,22 @@ describe('StyleController', () => {
 
     it('カスタムフォントサイズをCSS変数として適用する', () => {
       const element = document.createElement('div');
-      
+
       styleController.setCustomFontSize(20);
       styleController.applyStylesToElement(element);
 
-      expect(element.style.getPropertyValue('--font-size-medium')).toBe('20px');
+      expect(element.style.getPropertyValue('--font-size')).toBe('20px');
+      expect(element.style.getPropertyValue('--title-font-size')).toBe('30px');
     });
 
     it('カスタムフォントサイズなしの場合はCSS変数を設定しない', () => {
       const element = document.createElement('div');
-      
+
       styleController.setFontSize('medium'); // カスタムサイズをクリア
       styleController.applyStylesToElement(element);
 
-      expect(element.style.getPropertyValue('--font-size-medium')).toBe('');
+      // デフォルトサイズが設定される
+      expect(element.style.getPropertyValue('--font-size')).toBe('16px');
     });
   });
 

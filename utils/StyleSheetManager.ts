@@ -47,15 +47,17 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
   /**
    * Document.adoptedStyleSheetsを使用した初期化
    */
-  private async initializeWithAdoptedStyleSheets(cssContent: string): Promise<void> {
+  private async initializeWithAdoptedStyleSheets(
+    cssContent: string
+  ): Promise<void> {
     const styleSheet = new globalThis.CSSStyleSheet();
     await styleSheet.replace(cssContent);
-    
+
     // 現在のadoptedStyleSheetsに追加
     const currentSheets = Array.from(document.adoptedStyleSheets || []);
     currentSheets.push(styleSheet);
     document.adoptedStyleSheets = currentSheets;
-    
+
     this.styleSheet = styleSheet;
   }
 
@@ -66,7 +68,7 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
     const styleElement = document.createElement('style');
     styleElement.setAttribute('data-extension-styles', 'reader-view');
     styleElement.textContent = cssContent;
-    
+
     // headに追加
     document.head.appendChild(styleElement);
     this.styleSheet = styleElement;
@@ -90,7 +92,10 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
       return;
     }
 
-    if (this.styleSheet instanceof globalThis.CSSStyleSheet && this.isSupported) {
+    if (
+      this.styleSheet instanceof globalThis.CSSStyleSheet &&
+      this.isSupported
+    ) {
       // adoptedStyleSheetsから削除
       const currentSheets = Array.from(document.adoptedStyleSheets || []);
       const index = currentSheets.indexOf(this.styleSheet);

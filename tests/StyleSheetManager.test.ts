@@ -7,17 +7,19 @@ describe('StyleSheetManager', () => {
 
   beforeEach(() => {
     styleSheetManager = new ExtensionStyleSheetManager();
-    
+
     // adoptedStyleSheetsを初期化
     Object.defineProperty(document, 'adoptedStyleSheets', {
       value: [],
       writable: true,
       configurable: true,
     });
-    
+
     // 既存のスタイルタグを削除
-    const existingStyles = document.querySelectorAll('style[data-extension-styles]');
-    existingStyles.forEach(style => style.remove());
+    const existingStyles = document.querySelectorAll(
+      'style[data-extension-styles]'
+    );
+    existingStyles.forEach((style) => style.remove());
   });
 
   afterEach(() => {
@@ -36,17 +38,19 @@ describe('StyleSheetManager', () => {
     it('adoptedStyleSheets対応環境で正しく初期化される', async () => {
       // モックでサポート状況を偽装
       vi.spyOn(styleSheetManager, 'isSupported', 'get').mockReturnValue(true);
-      
+
       // CSSStyleSheetコンストラクターをモック
       const mockReplace = vi.fn().mockResolvedValue(undefined);
       const mockStyleSheet = { replace: mockReplace };
-      
+
       global.CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
 
       await styleSheetManager.initialize();
 
       expect(styleSheetManager.isReady()).toBe(true);
-      expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('/* theme.css */'));
+      expect(mockReplace).toHaveBeenCalledWith(
+        expect.stringContaining('/* theme.css */')
+      );
     });
 
     it('非対応環境でstyleタグフォールバックが機能する', async () => {
@@ -56,13 +60,15 @@ describe('StyleSheetManager', () => {
       await styleSheetManager.initialize();
 
       // styleタグが作成されることを確認
-      const styleElements = document.querySelectorAll('style[data-extension-styles="reader-view"]');
+      const styleElements = document.querySelectorAll(
+        'style[data-extension-styles="reader-view"]'
+      );
       expect(styleElements.length).toBe(1);
-      
+
       const styleElement = styleElements[0] as HTMLElement;
       expect(styleElement.textContent).toContain('/* theme.css */');
       expect(styleElement.textContent).toContain('.theme-light');
-      
+
       expect(styleSheetManager.isReady()).toBe(true);
     });
 
@@ -80,7 +86,7 @@ describe('StyleSheetManager', () => {
   describe('クリーンアップ処理', () => {
     it('adoptedStyleSheetsから正しく削除される', async () => {
       vi.spyOn(styleSheetManager, 'isSupported', 'get').mockReturnValue(true);
-      
+
       const mockReplace = vi.fn().mockResolvedValue(undefined);
       const mockStyleSheet = { replace: mockReplace };
       global.CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
@@ -96,13 +102,17 @@ describe('StyleSheetManager', () => {
       vi.spyOn(styleSheetManager, 'isSupported', 'get').mockReturnValue(false);
 
       await styleSheetManager.initialize();
-      
-      let styleElements = document.querySelectorAll('style[data-extension-styles="reader-view"]');
+
+      let styleElements = document.querySelectorAll(
+        'style[data-extension-styles="reader-view"]'
+      );
       expect(styleElements.length).toBe(1);
 
       styleSheetManager.cleanup();
-      
-      styleElements = document.querySelectorAll('style[data-extension-styles="reader-view"]');
+
+      styleElements = document.querySelectorAll(
+        'style[data-extension-styles="reader-view"]'
+      );
       expect(styleElements.length).toBe(0);
       expect(styleSheetManager.isReady()).toBe(false);
     });
@@ -111,9 +121,11 @@ describe('StyleSheetManager', () => {
   describe('エラーハンドリング', () => {
     it('adoptedStyleSheetsでエラーが発生してもフォールバックが動作する', async () => {
       vi.spyOn(styleSheetManager, 'isSupported', 'get').mockReturnValue(true);
-      
+
       // CSSStyleSheet.replaceでエラーを発生させる
-      const mockReplace = vi.fn().mockRejectedValue(new Error('replace failed'));
+      const mockReplace = vi
+        .fn()
+        .mockRejectedValue(new Error('replace failed'));
       const mockStyleSheet = { replace: mockReplace };
       global.CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
 
@@ -121,7 +133,9 @@ describe('StyleSheetManager', () => {
       await styleSheetManager.initialize();
 
       // styleタグフォールバックが使用されることを確認
-      const styleElements = document.querySelectorAll('style[data-extension-styles="reader-view"]');
+      const styleElements = document.querySelectorAll(
+        'style[data-extension-styles="reader-view"]'
+      );
       expect(styleElements.length).toBe(1);
       expect(styleSheetManager.isReady()).toBe(true);
     });
@@ -130,12 +144,12 @@ describe('StyleSheetManager', () => {
   describe('デバッグ情報', () => {
     it('正しいデバッグ情報を返す', async () => {
       const debugInfo = styleSheetManager.getDebugInfo();
-      
+
       expect(debugInfo).toHaveProperty('isSupported');
       expect(debugInfo).toHaveProperty('isInitialized');
       expect(debugInfo).toHaveProperty('styleSheetType');
       expect(debugInfo).toHaveProperty('adoptedStyleSheetsCount');
-      
+
       const typedDebugInfo = debugInfo as DebugInfo;
       expect(typeof typedDebugInfo.isSupported).toBe('boolean');
       expect(typeof typedDebugInfo.isInitialized).toBe('boolean');
@@ -148,19 +162,21 @@ describe('StyleSheetManager', () => {
 
       await styleSheetManager.initialize();
 
-      const styleElement = document.querySelector('style[data-extension-styles="reader-view"]') as HTMLElement;
+      const styleElement = document.querySelector(
+        'style[data-extension-styles="reader-view"]'
+      ) as HTMLElement;
       const cssContent = styleElement.textContent || '';
 
       // テーマクラスの存在を確認
       expect(cssContent).toContain('.theme-light');
       expect(cssContent).toContain('.theme-dark');
       expect(cssContent).toContain('.theme-sepia');
-      
+
       // フォントファミリークラスの存在を確認
       expect(cssContent).toContain('.font-sans');
       expect(cssContent).toContain('.font-serif');
       expect(cssContent).toContain('.font-mono');
-      
+
       // CSS変数の存在を確認
       expect(cssContent).toContain('--color-text');
       expect(cssContent).toContain('--font-size-medium');
