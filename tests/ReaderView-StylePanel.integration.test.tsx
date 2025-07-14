@@ -140,7 +140,7 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       expect(styleController.getConfig().fontFamily).toBe('sans-serif');
     });
 
-    it('設定変更後の状態が新しいStyleControllerインスタンスで復元できる', () => {
+    it('設定変更後の状態が新しいStyleControllerインスタンスで復元できる', async () => {
       render(
         <ReaderView
           {...mockProps}
@@ -165,7 +165,7 @@ describe('ReaderView + StylePanel 統合テスト', () => {
 
       // 新しいStyleControllerインスタンスで設定を復元
       const newStyleController = new StyleController();
-      const loaded = newStyleController.loadFromStorage();
+      const loaded = await newStyleController.loadFromStorage();
 
       expect(loaded).toBe(true);
       expect(newStyleController.getConfig().theme).toBe('dark');

@@ -20,29 +20,29 @@ const StylePanel: React.FC<StylePanelProps> = ({
 }) => {
   const [config, setConfig] = useState(styleController.getConfig());
 
-  const handleThemeChange = (theme: ThemeType) => {
+  const handleThemeChange = async (theme: ThemeType) => {
     styleController.setTheme(theme);
     setConfig(styleController.getConfig());
-    styleController.saveToStorage();
+    await styleController.saveToStorage();
     onStyleChange();
   };
 
-  const handleFontSizeChange = (fontSize: FontSize) => {
+  const handleFontSizeChange = async (fontSize: FontSize) => {
     styleController.setFontSize(fontSize);
     setConfig(styleController.getConfig());
-    styleController.saveToStorage();
+    await styleController.saveToStorage();
     onStyleChange();
   };
 
-  const handleFontFamilyChange = (fontFamily: FontFamily) => {
+  const handleFontFamilyChange = async (fontFamily: FontFamily) => {
     styleController.setFontFamily(fontFamily);
     setConfig(styleController.getConfig());
-    styleController.saveToStorage();
+    await styleController.saveToStorage();
     onStyleChange();
   };
 
-  const handleReset = () => {
-    styleController.reset();
+  const handleReset = async () => {
+    await styleController.reset();
     setConfig(styleController.getConfig());
     onStyleChange();
   };

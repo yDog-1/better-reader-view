@@ -59,7 +59,7 @@ describe('StylePanel', () => {
   });
 
   describe('テーマ選択', () => {
-    it('テーマ変更が正しく動作する', () => {
+    it('テーマ変更が正しく動作する', async () => {
       render(
         <StylePanel
           styleController={styleController}
@@ -77,7 +77,7 @@ describe('StylePanel', () => {
 
       // 設定が保存され、新しいStyleControllerインスタンスで復元できることを確認
       const newStyleController = new StyleController();
-      const loaded = newStyleController.loadFromStorage();
+      const loaded = await newStyleController.loadFromStorage();
       expect(loaded).toBe(true);
       expect(newStyleController.getConfig().theme).toBe('dark');
     });
