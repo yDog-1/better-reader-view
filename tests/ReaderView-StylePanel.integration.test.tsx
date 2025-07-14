@@ -104,7 +104,7 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       expect(styleController.getConfig().fontFamily).toBe('serif');
     });
 
-    it('設定のリセット機能が正しく動作する', () => {
+    it('設定のリセット機能が正しく動作する', async () => {
       render(
         <ReaderView
           {...mockProps}
@@ -130,6 +130,9 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       // リセットボタンをクリック
       const resetButton = screen.getByRole('button', { name: 'リセット' });
       fireEvent.click(resetButton);
+
+      // 非同期処理完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       // デフォルト設定に戻ったことを確認
       expect(screen.getByDisplayValue('ライト')).toBeInTheDocument();
@@ -158,6 +161,9 @@ describe('ReaderView + StylePanel 統合テスト', () => {
 
       const fontSizeSelect = screen.getByDisplayValue('中');
       fireEvent.change(fontSizeSelect, { target: { value: 'large' } });
+
+      // 非同期処理完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       // 設定が保存されていることを確認
       expect(styleController.getConfig().theme).toBe('dark');

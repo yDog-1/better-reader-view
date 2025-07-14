@@ -71,6 +71,9 @@ describe('StylePanel', () => {
       const themeSelect = screen.getByDisplayValue('ライト');
       fireEvent.change(themeSelect, { target: { value: 'dark' } });
 
+      // 非同期処理完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0));
+
       // 実際のStyleControllerの状態が変更されたことを確認
       expect(styleController.getConfig().theme).toBe('dark');
       expect(mockOnStyleChange).toHaveBeenCalled();
@@ -104,7 +107,7 @@ describe('StylePanel', () => {
   });
 
   describe('フォントサイズ選択', () => {
-    it('フォントサイズ変更が正しく動作する', () => {
+    it('フォントサイズ変更が正しく動作する', async () => {
       render(
         <StylePanel
           styleController={styleController}
@@ -115,6 +118,9 @@ describe('StylePanel', () => {
 
       const fontSizeSelect = screen.getByDisplayValue('中');
       fireEvent.change(fontSizeSelect, { target: { value: 'large' } });
+
+      // 非同期処理完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(styleController.getConfig().fontSize).toBe('large');
       expect(mockOnStyleChange).toHaveBeenCalled();
@@ -137,7 +143,7 @@ describe('StylePanel', () => {
   });
 
   describe('フォントファミリー選択', () => {
-    it('フォントファミリー変更が正しく動作する', () => {
+    it('フォントファミリー変更が正しく動作する', async () => {
       render(
         <StylePanel
           styleController={styleController}
@@ -148,6 +154,9 @@ describe('StylePanel', () => {
 
       const fontFamilySelect = screen.getByDisplayValue('ゴシック体');
       fireEvent.change(fontFamilySelect, { target: { value: 'serif' } });
+
+      // 非同期処理完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(styleController.getConfig().fontFamily).toBe('serif');
       expect(mockOnStyleChange).toHaveBeenCalled();
@@ -175,7 +184,7 @@ describe('StylePanel', () => {
   });
 
   describe('ボタン操作', () => {
-    it('リセットボタンが正しく動作する', () => {
+    it('リセットボタンが正しく動作する', async () => {
       // まず設定を変更
       styleController.setTheme('dark');
       styleController.setFontSize('large');
@@ -190,6 +199,9 @@ describe('StylePanel', () => {
 
       const resetButton = screen.getByRole('button', { name: 'リセット' });
       fireEvent.click(resetButton);
+
+      // 非同期処理完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       // デフォルト設定に戻ったことを確認
       const config = styleController.getConfig();
@@ -279,7 +291,7 @@ describe('StylePanel', () => {
   });
 
   describe('イベントハンドリング', () => {
-    it('複数の設定変更が順次処理される', () => {
+    it('複数の設定変更が順次処理される', async () => {
       render(
         <StylePanel
           styleController={styleController}
@@ -294,6 +306,9 @@ describe('StylePanel', () => {
 
       fireEvent.change(themeSelect, { target: { value: 'dark' } });
       fireEvent.change(fontSizeSelect, { target: { value: 'large' } });
+
+      // 非同期処理完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       const config = styleController.getConfig();
       expect(config.theme).toBe('dark');
