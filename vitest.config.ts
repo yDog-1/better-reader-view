@@ -1,9 +1,8 @@
 import { defineConfig } from 'vitest/config';
 import { WxtVitest } from 'wxt/testing';
-import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 
 export default defineConfig({
-  plugins: [WxtVitest(), vanillaExtractPlugin()],
+  plugins: [WxtVitest()],
   test: {
     environment: 'happy-dom',
     globals: true,
