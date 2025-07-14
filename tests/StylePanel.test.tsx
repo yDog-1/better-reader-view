@@ -72,7 +72,7 @@ describe('StylePanel', () => {
       fireEvent.change(themeSelect, { target: { value: 'dark' } });
 
       // 非同期処理完了を待つ
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // 実際のStyleControllerの状態が変更されたことを確認
       expect(styleController.getConfig().theme).toBe('dark');
@@ -120,7 +120,7 @@ describe('StylePanel', () => {
       fireEvent.change(fontSizeSelect, { target: { value: 'large' } });
 
       // 非同期処理完了を待つ
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(styleController.getConfig().fontSize).toBe('large');
       expect(mockOnStyleChange).toHaveBeenCalled();
@@ -156,7 +156,7 @@ describe('StylePanel', () => {
       fireEvent.change(fontFamilySelect, { target: { value: 'serif' } });
 
       // 非同期処理完了を待つ
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(styleController.getConfig().fontFamily).toBe('serif');
       expect(mockOnStyleChange).toHaveBeenCalled();
@@ -201,7 +201,7 @@ describe('StylePanel', () => {
       fireEvent.click(resetButton);
 
       // 非同期処理完了を待つ
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // デフォルト設定に戻ったことを確認
       const config = styleController.getConfig();
@@ -308,7 +308,7 @@ describe('StylePanel', () => {
       fireEvent.change(fontSizeSelect, { target: { value: 'large' } });
 
       // 非同期処理完了を待つ
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       const config = styleController.getConfig();
       expect(config.theme).toBe('dark');

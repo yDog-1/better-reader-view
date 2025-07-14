@@ -132,7 +132,7 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       fireEvent.click(resetButton);
 
       // 非同期処理完了を待つ
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // デフォルト設定に戻ったことを確認
       expect(screen.getByDisplayValue('ライト')).toBeInTheDocument();
@@ -163,7 +163,7 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       fireEvent.change(fontSizeSelect, { target: { value: 'large' } });
 
       // 非同期処理完了を待つ
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // 設定が保存されていることを確認
       expect(styleController.getConfig().theme).toBe('dark');

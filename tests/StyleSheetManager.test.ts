@@ -43,7 +43,9 @@ describe('StyleSheetManager', () => {
       const mockReplace = vi.fn().mockResolvedValue(undefined);
       const mockStyleSheet = { replace: mockReplace };
 
-      (globalThis as any).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
+      (
+        globalThis as typeof globalThis & { CSSStyleSheet: new () => unknown }
+      ).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
 
       await styleSheetManager.initialize();
 
@@ -77,7 +79,9 @@ describe('StyleSheetManager', () => {
 
       const mockReplace = vi.fn().mockResolvedValue(undefined);
       const mockStyleSheet = { replace: mockReplace };
-      (globalThis as any).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
+      (
+        globalThis as typeof globalThis & { CSSStyleSheet: new () => unknown }
+      ).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
 
       await styleSheetManager.initialize();
       const firstInitDebugInfo = styleSheetManager.getDebugInfo();
@@ -95,7 +99,9 @@ describe('StyleSheetManager', () => {
 
       const mockReplace = vi.fn().mockResolvedValue(undefined);
       const mockStyleSheet = { replace: mockReplace };
-      (globalThis as any).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
+      (
+        globalThis as typeof globalThis & { CSSStyleSheet: new () => unknown }
+      ).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
 
       await styleSheetManager.initialize();
       expect(styleSheetManager.isReady()).toBe(true);
@@ -133,7 +139,9 @@ describe('StyleSheetManager', () => {
         .fn()
         .mockRejectedValue(new Error('replace failed'));
       const mockStyleSheet = { replace: mockReplace };
-      (globalThis as any).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
+      (
+        globalThis as typeof globalThis & { CSSStyleSheet: new () => unknown }
+      ).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
 
       // エラーでもフォールバックで初期化されることを期待
       await styleSheetManager.initialize();
