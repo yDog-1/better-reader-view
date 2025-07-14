@@ -23,7 +23,7 @@ describe('StyleController', () => {
     (globalThis as unknown as { window: typeof dom.window }).window =
       dom.window;
 
-    // sessionStorageをクリア（テスト環境対応）
+    // テスト環境での既存ストレージをクリア
     try {
       sessionStorage.clear();
     } catch {

@@ -23,26 +23,42 @@ const StylePanel: React.FC<StylePanelProps> = ({
   const handleThemeChange = async (theme: ThemeType) => {
     styleController.setTheme(theme);
     setConfig(styleController.getConfig());
-    await styleController.saveToStorage();
+    try {
+      await styleController.saveToStorage();
+    } catch (error) {
+      console.error('Failed to save theme settings:', error);
+    }
     onStyleChange();
   };
 
   const handleFontSizeChange = async (fontSize: FontSize) => {
     styleController.setFontSize(fontSize);
     setConfig(styleController.getConfig());
-    await styleController.saveToStorage();
+    try {
+      await styleController.saveToStorage();
+    } catch (error) {
+      console.error('Failed to save font size settings:', error);
+    }
     onStyleChange();
   };
 
   const handleFontFamilyChange = async (fontFamily: FontFamily) => {
     styleController.setFontFamily(fontFamily);
     setConfig(styleController.getConfig());
-    await styleController.saveToStorage();
+    try {
+      await styleController.saveToStorage();
+    } catch (error) {
+      console.error('Failed to save font family settings:', error);
+    }
     onStyleChange();
   };
 
   const handleReset = async () => {
-    await styleController.reset();
+    try {
+      await styleController.reset();
+    } catch (error) {
+      console.error('Failed to reset settings:', error);
+    }
     setConfig(styleController.getConfig());
     onStyleChange();
   };

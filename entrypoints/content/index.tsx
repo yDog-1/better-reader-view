@@ -22,7 +22,12 @@ export default defineContentScript({
     const styleController = new StyleController();
 
     // ストレージから設定を読み込み
-    await styleController.loadFromStorage();
+    try {
+      await styleController.loadFromStorage();
+    } catch (error) {
+      console.error('Failed to load settings from storage:', error);
+      // デフォルト設定で続行
+    }
 
     // ReaderViewManagerを初期化
     initializeReaderViewManager(styleController);
