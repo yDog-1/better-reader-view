@@ -52,6 +52,7 @@ export interface Article {
   dir: string | null;
   siteName: string | null;
   lang: string | null;
+  publishedTime: string | null;
 }
 
 // ReaderViewManager リファクタリング用インターフェース

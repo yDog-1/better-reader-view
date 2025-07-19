@@ -37,9 +37,14 @@ export class ReactComponentRenderer implements ReactRenderer {
   /**
    * React root をアンマウント
    */
-  unmount(root: ReactDOM.Root): void {
+  unmount(root: unknown): void {
+    if (!root || typeof root !== 'object' || !('unmount' in root)) {
+      console.warn('無効な React root が渡されました:', root);
+      return;
+    }
+
     try {
-      root.unmount();
+      (root as ReactDOM.Root).unmount();
     } catch (error) {
       console.warn('React root のアンマウントに失敗しました:', error);
     }

@@ -57,7 +57,7 @@ describe('ライフサイクル管理機能', () => {
         container.id = 'better-reader-view-container';
         container.attachShadow({ mode: 'open' });
         return container;
-      }),
+      }) as ReturnType<typeof vi.fn>,
       attachToDocument: vi.fn(),
       removeFromDocument: vi.fn(),
       hideOriginalContent: vi.fn(() => 'block'),
@@ -65,7 +65,7 @@ describe('ライフサイクル管理機能', () => {
     };
 
     mockReactRenderer = {
-      render: vi.fn(() => ({ unmount: vi.fn() })),
+      render: vi.fn(() => ({ unmount: vi.fn() })) as ReturnType<typeof vi.fn>,
       unmount: vi.fn(),
     };
 
@@ -126,7 +126,7 @@ describe('ライフサイクル管理機能', () => {
     });
 
     it('DOM操作でエラーが発生した場合は適切にハンドリングする', () => {
-      mockDOMManager.createShadowContainer.mockImplementation(() => {
+      vi.mocked(mockDOMManager.createShadowContainer).mockImplementation(() => {
         throw new Error('DOM作成エラー');
       });
 
@@ -178,7 +178,7 @@ describe('ライフサイクル管理機能', () => {
     });
 
     it('無効化中にエラーが発生してもクラッシュしない', () => {
-      mockReactRenderer.unmount.mockImplementation(() => {
+      vi.mocked(mockReactRenderer.unmount).mockImplementation(() => {
         throw new Error('アンマウントエラー');
       });
 
@@ -234,6 +234,14 @@ describe('ライフサイクル管理機能', () => {
         parse: vi.fn(() => ({
           title: '', // 空のタイトル
           content: '<p>コンテンツはある</p>',
+          textContent: 'コンテンツはある',
+          length: 100,
+          excerpt: 'コンテンツはある',
+          byline: null,
+          dir: null,
+          siteName: null,
+          lang: null,
+          publishedTime: null,
         })),
       }));
 
@@ -248,6 +256,14 @@ describe('ライフサイクル管理機能', () => {
         parse: vi.fn(() => ({
           title: 'タイトルはある',
           content: '', // 空のコンテンツ
+          textContent: '',
+          length: 0,
+          excerpt: '',
+          byline: null,
+          dir: null,
+          siteName: null,
+          lang: null,
+          publishedTime: null,
         })),
       }));
 
@@ -262,7 +278,9 @@ describe('ライフサイクル管理機能', () => {
     it('DOMManager、ReactRenderer、StyleController が正しく協調する', () => {
       const container = document.createElement('div');
       container.attachShadow({ mode: 'open' });
-      mockDOMManager.createShadowContainer.mockReturnValue(container);
+      vi.mocked(mockDOMManager.createShadowContainer).mockReturnValue(
+        container
+      );
 
       const result = lifecycleManager.activate(document);
 
@@ -291,7 +309,7 @@ describe('ライフサイクル管理機能', () => {
   describe('エラー復旧', () => {
     it('エラー発生時に適切にクリーンアップする', () => {
       // ReactRenderer でエラーを発生させる
-      mockReactRenderer.render.mockImplementation(() => {
+      vi.mocked(mockReactRenderer.render).mockImplementation(() => {
         throw new Error('レンダリングエラー');
       });
 

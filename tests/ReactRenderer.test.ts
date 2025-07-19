@@ -137,7 +137,7 @@ describe('React レンダリング機能', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       expect(() => {
-        reactRenderer.unmount(mockRoot);
+        reactRenderer.unmount(mockRoot as unknown);
       }).not.toThrow();
 
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -151,18 +151,18 @@ describe('React レンダリング機能', () => {
     it('null や undefined を渡した場合はエラーをログ出力する', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      reactRenderer.unmount(null as unknown);
+      reactRenderer.unmount(null);
       expect(consoleSpy).toHaveBeenCalledWith(
-        'React root のアンマウントに失敗しました:',
-        expect.any(TypeError)
+        '無効な React root が渡されました:',
+        null
       );
 
       consoleSpy.mockClear();
 
-      reactRenderer.unmount(undefined as unknown);
+      reactRenderer.unmount(undefined);
       expect(consoleSpy).toHaveBeenCalledWith(
-        'React root のアンマウントに失敗しました:',
-        expect.any(TypeError)
+        '無効な React root が渡されました:',
+        undefined
       );
 
       consoleSpy.mockRestore();
