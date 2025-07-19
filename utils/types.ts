@@ -40,3 +40,41 @@ export interface DebugInfo {
   styleSheetType: string | null;
   adoptedStyleSheetsCount: number;
 }
+
+// Article type for reader view content
+export interface Article {
+  title: string;
+  content: string;
+  textContent: string;
+  length: number;
+  excerpt: string;
+  byline: string | null;
+  dir: string | null;
+  siteName: string | null;
+  lang: string | null;
+  publishedTime: string | null;
+}
+
+// ReaderViewManager リファクタリング用インターフェース
+export interface DOMManager {
+  createShadowContainer(doc: Document): HTMLElement;
+  attachToDocument(container: HTMLElement, doc: Document): void;
+  removeFromDocument(containerId: string, doc: Document): void;
+  hideOriginalContent(doc: Document): string;
+  restoreOriginalContent(doc: Document, originalDisplay: string): void;
+}
+
+export interface ReactRenderer {
+  render(
+    content: { title: string; content: string },
+    shadowRoot: ShadowRoot,
+    styleController: unknown
+  ): unknown;
+  unmount(root: unknown): void;
+}
+
+export interface LifecycleManager {
+  activate(doc: Document): boolean;
+  deactivate(doc: Document): void;
+  isActive(): boolean;
+}
