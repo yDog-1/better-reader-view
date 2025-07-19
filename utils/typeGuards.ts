@@ -22,14 +22,19 @@ export function isValidDocument(
  * オブジェクトがReactDOM.Rootインスタンスかどうかをチェック
  */
 export function isReactRoot(root: unknown): root is ReactDOM.Root {
-  return (
+  if (
     root !== null &&
     typeof root === 'object' &&
     'unmount' in root &&
-    'render' in root &&
-    typeof (root as ReactDOM.Root).unmount === 'function' &&
-    typeof (root as ReactDOM.Root).render === 'function'
-  );
+    'render' in root
+  ) {
+    const reactRoot = root as ReactDOM.Root;
+    return (
+      typeof reactRoot.unmount === 'function' &&
+      typeof reactRoot.render === 'function'
+    );
+  }
+  return false;
 }
 
 /**
@@ -58,5 +63,26 @@ export function isValidHTMLElement(element: unknown): element is HTMLElement {
 export function canAttachShadow(element: unknown): element is HTMLElement {
   return (
     element instanceof HTMLElement && typeof element.attachShadow === 'function'
+  );
+}
+
+/**
+ * Article の型ガード関数
+ */
+export function isValidArticle(article: unknown): article is {
+  title: string;
+  content: string;
+} {
+  if (!article || typeof article !== 'object') {
+    return false;
+  }
+
+  const candidateArticle = article as Record<string, unknown>;
+
+  return (
+    typeof candidateArticle.title === 'string' &&
+    candidateArticle.title.trim() !== '' &&
+    typeof candidateArticle.content === 'string' &&
+    candidateArticle.content.trim() !== ''
   );
 }

@@ -1,12 +1,8 @@
 import DOMPurify from 'dompurify';
 import { Readability } from '@mozilla/readability';
-import type {
-  LifecycleManager,
-  DOMManager,
-  ReactRenderer,
-  Article,
-} from './types';
+import type { LifecycleManager, DOMManager, ReactRenderer } from './types';
 import type { StyleController } from './StyleController';
+import { isValidArticle } from './typeGuards';
 
 // localStorage エラーをフォールバックで処理する関数
 const safeLocalStorageAccess = (callback: () => void) => {
@@ -175,7 +171,7 @@ export class ReaderLifecycleManager implements LifecycleManager {
     const documentClone = document.cloneNode(true) as Document;
     const article = new Readability(documentClone).parse();
 
-    if (!this.isValidArticle(article)) {
+    if (!isValidArticle(article)) {
       return null;
     }
 
@@ -186,24 +182,6 @@ export class ReaderLifecycleManager implements LifecycleManager {
       title: article.title,
       content: sanitizedContent,
     };
-  }
-
-  /**
-   * Article の型ガード関数
-   */
-  private isValidArticle(article: unknown): article is Article {
-    if (!article || typeof article !== 'object') {
-      return false;
-    }
-
-    const candidateArticle = article as Record<string, unknown>;
-
-    return (
-      typeof candidateArticle.title === 'string' &&
-      candidateArticle.title.trim() !== '' &&
-      typeof candidateArticle.content === 'string' &&
-      candidateArticle.content.trim() !== ''
-    );
   }
 
   /**

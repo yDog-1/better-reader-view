@@ -29,7 +29,7 @@ describe('typeGuards', () => {
       expect(isValidDocument(null)).toBe(false);
     });
 
-    it('undefined場合はfalseを返す', () => {
+    it('undefinedの場合はfalseを返す', () => {
       expect(isValidDocument(undefined)).toBe(false);
     });
 
@@ -60,7 +60,7 @@ describe('typeGuards', () => {
       expect(isReactRoot(null)).toBe(false);
     });
 
-    it('undefined場合はfalseを返す', () => {
+    it('undefinedの場合はfalseを返す', () => {
       expect(isReactRoot(undefined)).toBe(false);
     });
 
