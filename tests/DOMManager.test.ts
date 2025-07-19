@@ -65,7 +65,7 @@ describe('DOM管理機能', () => {
 
       expect(() => {
         domManager.attachToDocument(container, testDocument);
-      }).toThrow('ドキュメントに body の親要素が見つかりません');
+      }).toThrow('無効なドキュメントまたは body 要素が見つかりません');
     });
   });
 

@@ -3,6 +3,7 @@ import React from 'react';
 import ReaderView from '~/components/ReaderView';
 import type { ReactRenderer } from './types';
 import type { StyleController } from './StyleController';
+import { isReactRoot } from './typeGuards';
 
 /**
  * React コンポーネントのレンダリングを担当するクラス
@@ -38,13 +39,13 @@ export class ReactComponentRenderer implements ReactRenderer {
    * React root をアンマウント
    */
   unmount(root: unknown): void {
-    if (!root || typeof root !== 'object' || !('unmount' in root)) {
+    if (!isReactRoot(root)) {
       console.warn('無効な React root が渡されました:', root);
       return;
     }
 
     try {
-      (root as ReactDOM.Root).unmount();
+      root.unmount();
     } catch (error) {
       console.warn('React root のアンマウントに失敗しました:', error);
     }

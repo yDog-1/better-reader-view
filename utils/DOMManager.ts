@@ -1,4 +1,5 @@
 import type { DOMManager } from './types';
+import { isValidDocument, hasShadowRoot } from './typeGuards';
 
 /**
  * Shadow DOM の作成・管理を担当するクラス
@@ -34,7 +35,11 @@ export class ShadowDOMManager implements DOMManager {
    * コンテナをドキュメントに追加
    */
   attachToDocument(container: HTMLElement, doc: Document): void {
-    const parent = doc.body?.parentElement;
+    if (!isValidDocument(doc)) {
+      throw new Error('無効なドキュメントまたは body 要素が見つかりません');
+    }
+
+    const parent = doc.body.parentElement;
     if (!parent) {
       throw new Error('ドキュメントに body の親要素が見つかりません');
     }
@@ -49,7 +54,7 @@ export class ShadowDOMManager implements DOMManager {
     const containerById = doc.getElementById(containerId);
     if (containerById) {
       // ShadowRoot があれば先にクリア
-      if (containerById.shadowRoot) {
+      if (hasShadowRoot(containerById)) {
         containerById.shadowRoot.innerHTML = '';
       }
       if (containerById.parentNode) {
@@ -63,6 +68,10 @@ export class ShadowDOMManager implements DOMManager {
    * @returns 元の display 値
    */
   hideOriginalContent(doc: Document): string {
+    if (!isValidDocument(doc)) {
+      throw new Error('無効なドキュメントまたは body 要素が見つかりません');
+    }
+
     const originalDisplay = doc.body.style.display;
     doc.body.style.display = 'none';
     return originalDisplay;
@@ -72,6 +81,10 @@ export class ShadowDOMManager implements DOMManager {
    * 元のページコンテンツを復元する
    */
   restoreOriginalContent(doc: Document, originalDisplay: string): void {
+    if (!isValidDocument(doc)) {
+      throw new Error('無効なドキュメントまたは body 要素が見つかりません');
+    }
+
     doc.body.style.display = originalDisplay;
   }
 }

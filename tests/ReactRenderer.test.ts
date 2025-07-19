@@ -128,6 +128,7 @@ describe('React レンダリング機能', () => {
 
     it('アンマウント時にエラーが発生してもクラッシュしない', () => {
       const mockRoot = {
+        render: vi.fn(),
         unmount: vi.fn(() => {
           throw new Error('アンマウントエラー');
         }),
