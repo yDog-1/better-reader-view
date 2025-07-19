@@ -180,27 +180,29 @@ export class StyleController {
   }
 
   /**
-   * 設定のセッションストレージへの保存
+   * 設定のブラウザストレージへの保存
    */
-  saveToStorage(): void {
+  async saveToStorage(): Promise<void> {
     try {
-      sessionStorage.setItem(
-        'readerViewStyleConfig',
-        JSON.stringify(this.config)
-      );
+      await browser.storage.local.set({
+        globalReaderViewStyleConfig: this.config,
+      });
     } catch (error) {
       console.warn('スタイル設定の保存に失敗しました:', error);
     }
   }
 
   /**
-   * セッションストレージからの設定読み込み
+   * ブラウザストレージからの設定読み込み
    */
-  loadFromStorage(): boolean {
+  async loadFromStorage(): Promise<boolean> {
     try {
-      const saved = sessionStorage.getItem('readerViewStyleConfig');
-      if (saved) {
-        const parsedConfig = JSON.parse(saved) as Partial<StyleConfig>;
+      const result = await browser.storage.local.get(
+        'globalReaderViewStyleConfig'
+      );
+      if (result.globalReaderViewStyleConfig) {
+        const parsedConfig =
+          result.globalReaderViewStyleConfig as Partial<StyleConfig>;
         this.config = {
           theme: parsedConfig.theme || 'light',
           fontSize: parsedConfig.fontSize || 'medium',
@@ -218,13 +220,17 @@ export class StyleController {
   /**
    * 設定のリセット
    */
-  reset(): void {
+  async reset(): Promise<void> {
     this.config = {
       theme: 'light',
       fontSize: 'medium',
       fontFamily: 'sans-serif',
     };
-    sessionStorage.removeItem('readerViewStyleConfig');
+    try {
+      await browser.storage.local.remove('globalReaderViewStyleConfig');
+    } catch (error) {
+      console.warn('設定のリセットに失敗しました:', error);
+    }
   }
 
   /**

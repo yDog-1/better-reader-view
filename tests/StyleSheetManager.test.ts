@@ -4,8 +4,13 @@ import type { DebugInfo } from '../utils/types';
 
 describe('StyleSheetManager', () => {
   let styleSheetManager: ExtensionStyleSheetManager;
+  let originalCSSStyleSheet: unknown;
 
   beforeEach(() => {
+    // 元のCSSStyleSheetを保存
+    originalCSSStyleSheet = (globalThis as { CSSStyleSheet?: unknown })
+      .CSSStyleSheet;
+
     styleSheetManager = new ExtensionStyleSheetManager();
 
     // adoptedStyleSheetsを初期化
@@ -24,6 +29,12 @@ describe('StyleSheetManager', () => {
 
   afterEach(() => {
     styleSheetManager.cleanup();
+
+    // CSSStyleSheetを元に戻す
+    if (originalCSSStyleSheet) {
+      (globalThis as { CSSStyleSheet?: unknown }).CSSStyleSheet =
+        originalCSSStyleSheet;
+    }
   });
 
   describe('サポート検出', () => {
@@ -43,7 +54,9 @@ describe('StyleSheetManager', () => {
       const mockReplace = vi.fn().mockResolvedValue(undefined);
       const mockStyleSheet = { replace: mockReplace };
 
-      global.CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
+      (
+        globalThis as typeof globalThis & { CSSStyleSheet: new () => unknown }
+      ).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
 
       await styleSheetManager.initialize();
 
@@ -73,6 +86,14 @@ describe('StyleSheetManager', () => {
     });
 
     it('重複初期化を防ぐ', async () => {
+      vi.spyOn(styleSheetManager, 'isSupported', 'get').mockReturnValue(true);
+
+      const mockReplace = vi.fn().mockResolvedValue(undefined);
+      const mockStyleSheet = { replace: mockReplace };
+      (
+        globalThis as typeof globalThis & { CSSStyleSheet: new () => unknown }
+      ).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
+
       await styleSheetManager.initialize();
       const firstInitDebugInfo = styleSheetManager.getDebugInfo();
 
@@ -89,7 +110,9 @@ describe('StyleSheetManager', () => {
 
       const mockReplace = vi.fn().mockResolvedValue(undefined);
       const mockStyleSheet = { replace: mockReplace };
-      global.CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
+      (
+        globalThis as typeof globalThis & { CSSStyleSheet: new () => unknown }
+      ).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
 
       await styleSheetManager.initialize();
       expect(styleSheetManager.isReady()).toBe(true);
@@ -127,7 +150,9 @@ describe('StyleSheetManager', () => {
         .fn()
         .mockRejectedValue(new Error('replace failed'));
       const mockStyleSheet = { replace: mockReplace };
-      global.CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
+      (
+        globalThis as typeof globalThis & { CSSStyleSheet: new () => unknown }
+      ).CSSStyleSheet = vi.fn().mockImplementation(() => mockStyleSheet);
 
       // エラーでもフォールバックで初期化されることを期待
       await styleSheetManager.initialize();

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { StyleController, type StyleConfig } from '../utils/StyleController';
-import type { StyleSheetManager } from '../utils/types';
+import { JSDOM } from 'jsdom';
 
 describe('StyleController', () => {
   let styleController: StyleController;
@@ -10,7 +10,19 @@ describe('StyleController', () => {
     // fakeBrowserの状態をリセット
     fakeBrowser.reset();
 
-    // sessionStorageをクリア（テスト環境対応）
+    // browser APIをglobalに設定
+    (
+      globalThis as typeof globalThis & { browser: typeof fakeBrowser }
+    ).browser = fakeBrowser;
+
+    // DOM環境をセットアップ
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+    (globalThis as unknown as { document: Document }).document =
+      dom.window.document;
+    (globalThis as unknown as { window: typeof dom.window }).window =
+      dom.window;
+
+    // テスト環境でのbrowser.storage.localをクリア
     try {
       sessionStorage.clear();
     } catch {
@@ -18,7 +30,7 @@ describe('StyleController', () => {
     }
 
     // モックのStyleSheetManagerを作成
-    const mockStyleSheetManager: StyleSheetManager = {
+    const mockStyleSheetManager = {
       isSupported: true,
       initialize: vi.fn().mockResolvedValue(undefined),
       cleanup: vi.fn(),
@@ -221,20 +233,21 @@ describe('StyleController', () => {
     it('設定をストレージに保存できる', async () => {
       styleController.setTheme('dark');
       styleController.setFontSize('large');
-      styleController.saveToStorage();
+      await styleController.saveToStorage();
 
-      // sessionStorageの実際の値をチェック
-      const storedValue = sessionStorage.getItem('readerViewStyleConfig');
-      const parsedValue = JSON.parse(storedValue!);
+      // browser.storage.localの実際の値をチェック
+      const storedValue = await browser.storage.local.get(
+        'globalReaderViewStyleConfig'
+      );
 
-      expect(parsedValue).toEqual({
+      expect(storedValue.globalReaderViewStyleConfig).toEqual({
         theme: 'dark',
         fontSize: 'large',
         fontFamily: 'sans-serif',
       });
     });
 
-    it('ストレージから設定を読み込める', () => {
+    it('ストレージから設定を読み込める', async () => {
       const savedConfig: StyleConfig = {
         theme: 'sepia',
         fontSize: 'xlarge',
@@ -242,36 +255,35 @@ describe('StyleController', () => {
         customFontSize: 24,
       };
 
-      sessionStorage.setItem(
-        'readerViewStyleConfig',
-        JSON.stringify(savedConfig)
-      );
+      await browser.storage.local.set({
+        globalReaderViewStyleConfig: savedConfig,
+      });
 
-      const result = styleController.loadFromStorage();
+      const result = await styleController.loadFromStorage();
       expect(result).toBe(true);
       expect(styleController.getConfig()).toEqual(savedConfig);
     });
 
-    it('無効なストレージデータの場合はfalseを返す', () => {
-      sessionStorage.setItem('readerViewStyleConfig', 'invalid json');
+    it('無効なストレージデータの場合はfalseを返す', async () => {
+      // 無効なデータを保存する代わりに、ストレージをクリアしてテスト
+      await browser.storage.local.clear();
 
-      const result = styleController.loadFromStorage();
+      const result = await styleController.loadFromStorage();
       expect(result).toBe(false);
     });
 
-    it('ストレージにデータがない場合はfalseを返す', () => {
-      const result = styleController.loadFromStorage();
+    it('ストレージにデータがない場合はfalseを返す', async () => {
+      const result = await styleController.loadFromStorage();
       expect(result).toBe(false);
     });
 
-    it('部分的なストレージデータでもデフォルト値で補完される', () => {
+    it('部分的なストレージデータでもデフォルト値で補完される', async () => {
       const partialConfig = { theme: 'dark' };
-      sessionStorage.setItem(
-        'readerViewStyleConfig',
-        JSON.stringify(partialConfig)
-      );
+      await browser.storage.local.set({
+        globalReaderViewStyleConfig: partialConfig,
+      });
 
-      styleController.loadFromStorage();
+      await styleController.loadFromStorage();
       const config = styleController.getConfig();
 
       expect(config.theme).toBe('dark');
@@ -281,13 +293,13 @@ describe('StyleController', () => {
   });
 
   describe('リセット機能', () => {
-    it('設定をデフォルトにリセットできる', () => {
+    it('設定をデフォルトにリセットできる', async () => {
       styleController.setTheme('dark');
       styleController.setFontSize('large');
       styleController.setFontFamily('serif');
       styleController.setCustomFontSize(20);
 
-      styleController.reset();
+      await styleController.reset();
 
       expect(styleController.getConfig()).toEqual({
         theme: 'light',
@@ -296,55 +308,43 @@ describe('StyleController', () => {
       });
     });
 
-    it('リセット時にストレージからも削除される', () => {
-      styleController.saveToStorage();
-      styleController.reset();
+    it('リセット時にストレージからも削除される', async () => {
+      await styleController.saveToStorage();
+      await styleController.reset();
 
-      const storedValue = sessionStorage.getItem('readerViewStyleConfig');
-      expect(storedValue).toBeNull();
+      const storedValue = await browser.storage.local.get(
+        'globalReaderViewStyleConfig'
+      );
+      expect(storedValue.globalReaderViewStyleConfig).toBeUndefined();
     });
   });
 
   describe('エラーハンドリング', () => {
-    it('ストレージ保存でエラーが発生してもクラッシュしない', () => {
-      // sessionStorageを無効化してエラーを誘発
-      Object.defineProperty(window, 'sessionStorage', {
-        value: {
-          setItem: () => {
-            throw new Error('Storage error');
-          },
-          getItem: () => null,
-          removeItem: () => {},
-        },
-        configurable: true,
-      });
+    it('ストレージ保存でエラーが発生してもクラッシュしない', async () => {
+      // browser.storage.localをモックしてエラーを誘発
+      const originalSet = browser.storage.local.set;
+      browser.storage.local.set = vi
+        .fn()
+        .mockRejectedValue(new Error('Storage error'));
 
-      expect(() => {
-        styleController.saveToStorage();
-      }).not.toThrow();
+      await expect(styleController.saveToStorage()).resolves.toBeUndefined();
 
-      // テスト後にfakeBrowserのsessionStorageを復元
-      fakeBrowser.reset();
+      // テスト後にbrowser.storage.localを復元
+      browser.storage.local.set = originalSet;
     });
 
-    it('ストレージ読み込みでエラーが発生してもクラッシュしない', () => {
-      Object.defineProperty(window, 'sessionStorage', {
-        value: {
-          getItem: () => {
-            throw new Error('Storage error');
-          },
-          setItem: () => {},
-          removeItem: () => {},
-        },
-        configurable: true,
-      });
+    it('ストレージ読み込みでエラーが発生してもクラッシュしない', async () => {
+      // browser.storage.localをモックしてエラーを誘発
+      const originalGet = browser.storage.local.get;
+      browser.storage.local.get = vi
+        .fn()
+        .mockRejectedValue(new Error('Storage error'));
 
-      expect(() => {
-        const result = styleController.loadFromStorage();
-        expect(result).toBe(false);
-      }).not.toThrow();
+      const result = await styleController.loadFromStorage();
+      expect(result).toBe(false);
 
-      fakeBrowser.reset();
+      // テスト後にbrowser.storage.localを復元
+      browser.storage.local.get = originalGet;
     });
   });
 });

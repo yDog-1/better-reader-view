@@ -12,6 +12,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run zip:firefox` - Create distributable zip for Firefox
 - `bun run compile` - Type check without emitting files
 - `bun test` - Run tests in watch mode (uses `bunx vitest`)
+- `bun test run` - Run tests once without watch mode
+- `bun test <pattern>` - Run specific test files (e.g., `bun test ReaderView`)
 - `bun run lint` - Run ESLint on codebase
 - `bun fmt` - Format code with Prettier (`prettier --write .`)
 - `bun run fix` - Auto-fix issues (lint + format): `eslint . --fix && prettier --write .`
@@ -34,59 +36,65 @@ This is a WXT-based browser extension that implements a reader view using a func
 
 #### Content Script (`entrypoints/content/index.tsx`)
 
-- Main logic for toggling reader view
-- Uses sessionStorage for state persistence with keys:
-  - `readerViewActive`: Boolean state
-  - `originalPageHTML`: Backup of original page
-  - `originalPageTitle`: Original page title
+- Main logic for toggling reader view using `ReaderViewManager`
+- Initializes `StyleController` for theme management
 - Japanese error messages for user-facing text
 - React-based popup notifications for errors
 
-#### Pure Functions Library (`utils/reader-utils.ts`)
+#### Core System (`utils/reader-utils.ts`)
 
-**Core pure functions that can be imported and tested independently:**
+**ReaderViewManager Class:**
+
+- Manages reader view lifecycle and Shadow DOM rendering
+- Uses `browser.storage.session` for state persistence
+- Creates isolated Shadow DOM to avoid CSS conflicts with host page
+
+**Key Functions:**
 
 - `extractContent(document: Document)`: Extracts article content using Mozilla Readability
 
-  - Returns `{ title: string, content: string } | null`
+  - Returns `Article` interface with metadata (title, content, byline, etc.)
   - Uses document cloning to avoid side effects
   - Includes DOMPurify sanitization for security
-  - Includes type guards for robust error handling
 
-- `renderReaderView(content: { title: string, content: string })`: Generates reader view HTML
+- `activateReader(document: Document)`: Creates Shadow DOM reader view
 
-  - Returns complete HTML document string
-  - Includes embedded CSS for typography and layout
-
-- `activateReader(document: Document)`: Orchestrates content extraction and rendering
-  - Combines the above pure functions
-  - Modifies `document.documentElement.innerHTML` when successful
+  - Uses `ReaderViewManager` to render React components in Shadow DOM
+  - Preserves original page for restoration
   - Returns boolean indicating success/failure
 
-#### Shared Components (`components/`)
+- `deactivateReader()`: Restores original page content
+  - Removes Shadow DOM reader view
+  - Cleans up storage state
 
+#### React Components (`components/`)
+
+- `ReaderView.tsx`: Main reader view component with article content and style controls
+- `StylePanel.tsx`: Settings panel for theme, font size, and font family selection
 - `popupMsg.tsx`: Toast-style error notifications
 - `ui.tsx`: Placeholder UI component (currently unused)
 
 ### Reader View Flow
 
 1. User clicks extension icon → background script injects content script
-2. Content script checks `sessionStorage.getItem('readerViewActive')`
+2. Content script initializes `StyleController` and checks `browser.storage.session` state
 3. **If inactive**:
-   - Extract content using pure functions
-   - Store original HTML in sessionStorage
-   - Replace page with reader view HTML
+   - Extract content using `extractContent()` with Mozilla Readability
+   - Create Shadow DOM container to isolate styles
+   - Render React `ReaderView` component with `StylePanel` controls
+   - Store state in `browser.storage.session`
 4. **If active**:
-   - Restore original HTML from sessionStorage
-   - Clear sessionStorage keys
+   - Remove Shadow DOM reader view
+   - Clear browser storage state
 
 ### Tech Stack
 
 - **Framework**: WXT (Web Extension Toolkit) with React 19
 - **Content Parsing**: @mozilla/readability for article extraction
 - **HTML Sanitization**: DOMPurify for XSS prevention
-- **State Management**: SessionStorage for toggle state and page backup
-- **Testing**: Vitest with WXT testing utilities
+- **State Management**: Browser storage API (`browser.storage.session`)
+- **Style System**: CSS-in-JS with Shadow DOM isolation and `StyleController`
+- **Testing**: Vitest with WXT testing utilities and JSDOM
 - **Type Safety**: Full TypeScript with strict configuration
 - **Build Tool**: Bun as package manager and task runner
 
@@ -96,7 +104,12 @@ WXT follows a convention-over-configuration approach:
 
 - **`entrypoints/`**: Extension entry points (background, content scripts)
 - **`components/`**: React components (auto-imported project-wide)
-- **`utils/`**: Generic utilities (auto-imported project-wide) - **contains core reader logic**
+- **`utils/`**: Core utilities (auto-imported project-wide):
+  - `reader-utils.ts`: Main reader logic and ReaderViewManager
+  - `StyleController.ts`: Theme and style management
+  - `StyleSheetManager.ts`: CSS injection for Shadow DOM
+  - `types.ts`: TypeScript interfaces and type definitions
+  - `theme.css`: CSS variables for theming
 - **`public/`**: Static files (extension icons)
 - **`tests/`**: Vitest test files (`*.test.ts`, `*.spec.ts`)
 
@@ -109,68 +122,56 @@ This project uses Vitest with WXT's testing utilities for unit testing browser e
 
 ### WXT Testing Setup
 
-- WXT provides `WxtVitest` plugin with polyfills for extension APIs
-- Uses `@webext-core/fake-browser` for mocking browser APIs
-- Key utilities: `import { fakeBrowser } from 'wxt/testing'`
+- **Test Runner**: Vitest with `happy-dom` environment for fast DOM simulation
+- **Extension APIs**: WXT provides `WxtVitest` plugin with `fakeBrowser` for mocking
+- **DOM Testing**: JSDOM for complex document manipulation tests
+- **React Testing**: `@testing-library/react` for component testing
 - Test files: `*.test.ts` or `*.spec.ts`
 
 ### Testing Focus
 
-Current tests focus on pure functions in `utils/reader-utils.ts`:
+Tests cover multiple architectural layers:
 
-- HTML generation and structure validation
-- XSS prevention through DOMPurify sanitization
-- CSS styling inclusion
-- Edge cases (empty content, special characters)
+**Core Functions** (`reader-utils.test.ts`):
 
-### vanilla-extract Testing Configuration
+- Content extraction with Mozilla Readability
+- Shadow DOM rendering and lifecycle management
+- ReaderViewManager state handling
 
-This project uses vanilla-extract for CSS-in-JS styling, which requires specific testing setup:
+**React Components** (`ReaderView.test.tsx`, `StylePanel.test.tsx`):
 
-#### Core Configuration
+- Component rendering and user interactions
+- StyleController integration
+- Theme switching and style application
 
-**vitest.config.ts** includes the vanilla-extract plugin:
+**System Integration** (`*Integration.test.ts`):
 
-```typescript
-import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
+- End-to-end reader view activation/deactivation
+- Cross-component communication
+- Browser storage persistence
 
-export default defineConfig({
-  plugins: [WxtVitest(), vanillaExtractPlugin()],
-  // ...
-});
-```
+### Styling Architecture
 
-**tests/setup.ts** disables runtime styles for performance:
+This project uses CSS-in-JS with inline CSS imports and CSS variables for theming:
 
-```typescript
-import '@testing-library/jest-dom';
-import '@vanilla-extract/css/disableRuntimeStyles';
-```
+- **CSS Modules**: `ReaderView.css`, `StylePanel.css`, and `theme.css` imported as `?inline` strings
+- **Theme System**: CSS custom properties (variables) defined in `utils/theme.css`
+- **Shadow DOM**: Styles are injected into Shadow DOM to avoid page conflicts
+- **StyleController**: Manages theme switching and style injection
 
-#### Testing vanilla-extract Components
+#### Testing CSS Components
 
-- **Theme Classes**: Use `styleController.getThemeClass()` to test actual theme class application
-- **CSS Variables**: Test `assignInlineVars()` output for dynamic styling
-- **Class Names**: Assert on actual generated class names rather than mocked values
-
-#### Important Testing Guidelines
-
-1. **No Manual Mocks**: Do not mock `@vanilla-extract/dynamic` or theme files - let the plugin handle CSS processing
-2. **Real Class Names**: Test actual generated class names for better integration testing
-3. **Performance**: The `disableRuntimeStyles` import prevents actual CSS insertion during tests while preserving class name generation
-4. **Type Safety**: vanilla-extract integration maintains full TypeScript support in tests
-
-#### Example Test Pattern
+- **Theme Classes**: Test theme class application via `styleController.getThemeClass()`
+- **CSS Injection**: Verify styles are properly injected into Shadow DOM
+- **Dynamic Styling**: Test theme switching and font size adjustments
 
 ```typescript
-// ✅ Correct: Test actual vanilla-extract functionality
-expect(component).toHaveClass('reader-container', styleController.getThemeClass());
+// Test theme application
+expect(element).toHaveClass(styleController.getThemeClass());
 
-// ❌ Incorrect: Mock vanilla-extract (maintenance burden, not realistic)
-vi.mock('@vanilla-extract/dynamic', () => ({ ... }));
+// Test style injection in Shadow DOM
+expect(shadowRoot.querySelector('style')).toContainText('theme-light');
 ```
-
-This configuration ensures tests run against actual vanilla-extract behavior while maintaining performance.
 
 ## Development Patterns
 

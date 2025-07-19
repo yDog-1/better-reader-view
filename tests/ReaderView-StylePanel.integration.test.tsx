@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { fakeBrowser } from 'wxt/testing';
 import ReaderView from '../components/ReaderView';
@@ -104,7 +104,7 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       expect(styleController.getConfig().fontFamily).toBe('serif');
     });
 
-    it('設定のリセット機能が正しく動作する', () => {
+    it('設定のリセット機能が正しく動作する', async () => {
       render(
         <ReaderView
           {...mockProps}
@@ -131,16 +131,18 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       const resetButton = screen.getByRole('button', { name: 'リセット' });
       fireEvent.click(resetButton);
 
-      // デフォルト設定に戻ったことを確認
-      expect(screen.getByDisplayValue('ライト')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('中')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('ゴシック体')).toBeInTheDocument();
-      expect(styleController.getConfig().theme).toBe('light');
-      expect(styleController.getConfig().fontSize).toBe('medium');
-      expect(styleController.getConfig().fontFamily).toBe('sans-serif');
+      // 非同期処理完了を待つ
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('ライト')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('中')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('ゴシック体')).toBeInTheDocument();
+        expect(styleController.getConfig().theme).toBe('light');
+        expect(styleController.getConfig().fontSize).toBe('medium');
+        expect(styleController.getConfig().fontFamily).toBe('sans-serif');
+      });
     });
 
-    it('設定変更後の状態が新しいStyleControllerインスタンスで復元できる', () => {
+    it('設定変更後の状態が新しいStyleControllerインスタンスで復元できる', async () => {
       render(
         <ReaderView
           {...mockProps}
@@ -159,13 +161,15 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       const fontSizeSelect = screen.getByDisplayValue('中');
       fireEvent.change(fontSizeSelect, { target: { value: 'large' } });
 
-      // 設定が保存されていることを確認
-      expect(styleController.getConfig().theme).toBe('dark');
-      expect(styleController.getConfig().fontSize).toBe('large');
+      // 非同期処理完了を待つ
+      await waitFor(() => {
+        expect(styleController.getConfig().theme).toBe('dark');
+        expect(styleController.getConfig().fontSize).toBe('large');
+      });
 
       // 新しいStyleControllerインスタンスで設定を復元
       const newStyleController = new StyleController();
-      const loaded = newStyleController.loadFromStorage();
+      const loaded = await newStyleController.loadFromStorage();
 
       expect(loaded).toBe(true);
       expect(newStyleController.getConfig().theme).toBe('dark');

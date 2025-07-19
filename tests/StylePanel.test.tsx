@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { fakeBrowser } from 'wxt/testing';
 import StylePanel from '../components/StylePanel';
@@ -59,7 +59,7 @@ describe('StylePanel', () => {
   });
 
   describe('テーマ選択', () => {
-    it('テーマ変更が正しく動作する', () => {
+    it('テーマ変更が正しく動作する', async () => {
       render(
         <StylePanel
           styleController={styleController}
@@ -71,13 +71,15 @@ describe('StylePanel', () => {
       const themeSelect = screen.getByDisplayValue('ライト');
       fireEvent.change(themeSelect, { target: { value: 'dark' } });
 
-      // 実際のStyleControllerの状態が変更されたことを確認
-      expect(styleController.getConfig().theme).toBe('dark');
+      // 非同期処理完了を待つ
+      await waitFor(() => {
+        expect(styleController.getConfig().theme).toBe('dark');
+      });
       expect(mockOnStyleChange).toHaveBeenCalled();
 
       // 設定が保存され、新しいStyleControllerインスタンスで復元できることを確認
       const newStyleController = new StyleController();
-      const loaded = newStyleController.loadFromStorage();
+      const loaded = await newStyleController.loadFromStorage();
       expect(loaded).toBe(true);
       expect(newStyleController.getConfig().theme).toBe('dark');
     });
@@ -104,7 +106,7 @@ describe('StylePanel', () => {
   });
 
   describe('フォントサイズ選択', () => {
-    it('フォントサイズ変更が正しく動作する', () => {
+    it('フォントサイズ変更が正しく動作する', async () => {
       render(
         <StylePanel
           styleController={styleController}
@@ -116,7 +118,10 @@ describe('StylePanel', () => {
       const fontSizeSelect = screen.getByDisplayValue('中');
       fireEvent.change(fontSizeSelect, { target: { value: 'large' } });
 
-      expect(styleController.getConfig().fontSize).toBe('large');
+      // 非同期処理完了を待つ
+      await waitFor(() => {
+        expect(styleController.getConfig().fontSize).toBe('large');
+      });
       expect(mockOnStyleChange).toHaveBeenCalled();
     });
 
@@ -137,7 +142,7 @@ describe('StylePanel', () => {
   });
 
   describe('フォントファミリー選択', () => {
-    it('フォントファミリー変更が正しく動作する', () => {
+    it('フォントファミリー変更が正しく動作する', async () => {
       render(
         <StylePanel
           styleController={styleController}
@@ -149,7 +154,10 @@ describe('StylePanel', () => {
       const fontFamilySelect = screen.getByDisplayValue('ゴシック体');
       fireEvent.change(fontFamilySelect, { target: { value: 'serif' } });
 
-      expect(styleController.getConfig().fontFamily).toBe('serif');
+      // 非同期処理完了を待つ
+      await waitFor(() => {
+        expect(styleController.getConfig().fontFamily).toBe('serif');
+      });
       expect(mockOnStyleChange).toHaveBeenCalled();
     });
 
@@ -175,7 +183,7 @@ describe('StylePanel', () => {
   });
 
   describe('ボタン操作', () => {
-    it('リセットボタンが正しく動作する', () => {
+    it('リセットボタンが正しく動作する', async () => {
       // まず設定を変更
       styleController.setTheme('dark');
       styleController.setFontSize('large');
@@ -191,11 +199,13 @@ describe('StylePanel', () => {
       const resetButton = screen.getByRole('button', { name: 'リセット' });
       fireEvent.click(resetButton);
 
-      // デフォルト設定に戻ったことを確認
-      const config = styleController.getConfig();
-      expect(config.theme).toBe('light');
-      expect(config.fontSize).toBe('medium');
-      expect(config.fontFamily).toBe('sans-serif');
+      // 非同期処理完了を待つ
+      await waitFor(() => {
+        const config = styleController.getConfig();
+        expect(config.theme).toBe('light');
+        expect(config.fontSize).toBe('medium');
+        expect(config.fontFamily).toBe('sans-serif');
+      });
       expect(mockOnStyleChange).toHaveBeenCalled();
     });
 
@@ -279,7 +289,7 @@ describe('StylePanel', () => {
   });
 
   describe('イベントハンドリング', () => {
-    it('複数の設定変更が順次処理される', () => {
+    it('複数の設定変更が順次処理される', async () => {
       render(
         <StylePanel
           styleController={styleController}
@@ -295,9 +305,12 @@ describe('StylePanel', () => {
       fireEvent.change(themeSelect, { target: { value: 'dark' } });
       fireEvent.change(fontSizeSelect, { target: { value: 'large' } });
 
-      const config = styleController.getConfig();
-      expect(config.theme).toBe('dark');
-      expect(config.fontSize).toBe('large');
+      // 非同期処理完了を待つ
+      await waitFor(() => {
+        const config = styleController.getConfig();
+        expect(config.theme).toBe('dark');
+        expect(config.fontSize).toBe('large');
+      });
       expect(mockOnStyleChange).toHaveBeenCalledTimes(2);
     });
 

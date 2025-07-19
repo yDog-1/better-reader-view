@@ -21,30 +21,54 @@ const StylePanel: React.FC<StylePanelProps> = ({
   const [config, setConfig] = useState(styleController.getConfig());
 
   const handleThemeChange = (theme: ThemeType) => {
-    styleController.setTheme(theme);
-    setConfig(styleController.getConfig());
-    styleController.saveToStorage();
-    onStyleChange();
+    void (async () => {
+      styleController.setTheme(theme);
+      setConfig(styleController.getConfig());
+      try {
+        await styleController.saveToStorage();
+      } catch (error) {
+        console.warn('テーマ設定の保存に失敗しました:', error);
+      }
+      onStyleChange();
+    })();
   };
 
   const handleFontSizeChange = (fontSize: FontSize) => {
-    styleController.setFontSize(fontSize);
-    setConfig(styleController.getConfig());
-    styleController.saveToStorage();
-    onStyleChange();
+    void (async () => {
+      styleController.setFontSize(fontSize);
+      setConfig(styleController.getConfig());
+      try {
+        await styleController.saveToStorage();
+      } catch (error) {
+        console.warn('フォントサイズ設定の保存に失敗しました:', error);
+      }
+      onStyleChange();
+    })();
   };
 
   const handleFontFamilyChange = (fontFamily: FontFamily) => {
-    styleController.setFontFamily(fontFamily);
-    setConfig(styleController.getConfig());
-    styleController.saveToStorage();
-    onStyleChange();
+    void (async () => {
+      styleController.setFontFamily(fontFamily);
+      setConfig(styleController.getConfig());
+      try {
+        await styleController.saveToStorage();
+      } catch (error) {
+        console.warn('フォント種類設定の保存に失敗しました:', error);
+      }
+      onStyleChange();
+    })();
   };
 
   const handleReset = () => {
-    styleController.reset();
-    setConfig(styleController.getConfig());
-    onStyleChange();
+    void (async () => {
+      try {
+        await styleController.reset();
+      } catch (error) {
+        console.warn('設定のリセットに失敗しました:', error);
+      }
+      setConfig(styleController.getConfig());
+      onStyleChange();
+    })();
   };
 
   return (
