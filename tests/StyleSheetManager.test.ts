@@ -4,8 +4,13 @@ import type { DebugInfo } from '../utils/types';
 
 describe('StyleSheetManager', () => {
   let styleSheetManager: ExtensionStyleSheetManager;
+  let originalCSSStyleSheet: unknown;
 
   beforeEach(() => {
+    // 元のCSSStyleSheetを保存
+    originalCSSStyleSheet = (globalThis as { CSSStyleSheet?: unknown })
+      .CSSStyleSheet;
+
     styleSheetManager = new ExtensionStyleSheetManager();
 
     // adoptedStyleSheetsを初期化
@@ -24,6 +29,12 @@ describe('StyleSheetManager', () => {
 
   afterEach(() => {
     styleSheetManager.cleanup();
+
+    // CSSStyleSheetを元に戻す
+    if (originalCSSStyleSheet) {
+      (globalThis as { CSSStyleSheet?: unknown }).CSSStyleSheet =
+        originalCSSStyleSheet;
+    }
   });
 
   describe('サポート検出', () => {

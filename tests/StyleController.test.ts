@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { StyleController, type StyleConfig } from '../utils/StyleController';
-import type { StyleSheetManager } from '../utils/types';
 import { JSDOM } from 'jsdom';
 
 describe('StyleController', () => {
@@ -23,7 +22,7 @@ describe('StyleController', () => {
     (globalThis as unknown as { window: typeof dom.window }).window =
       dom.window;
 
-    // テスト環境での既存ストレージをクリア
+    // テスト環境でのbrowser.storage.localをクリア
     try {
       sessionStorage.clear();
     } catch {
@@ -31,7 +30,7 @@ describe('StyleController', () => {
     }
 
     // モックのStyleSheetManagerを作成
-    const mockStyleSheetManager: StyleSheetManager = {
+    const mockStyleSheetManager = {
       isSupported: true,
       initialize: vi.fn().mockResolvedValue(undefined),
       cleanup: vi.fn(),

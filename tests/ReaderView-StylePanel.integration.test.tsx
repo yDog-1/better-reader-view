@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { fakeBrowser } from 'wxt/testing';
 import ReaderView from '../components/ReaderView';
@@ -132,15 +132,14 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       fireEvent.click(resetButton);
 
       // 非同期処理完了を待つ
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-      // デフォルト設定に戻ったことを確認
-      expect(screen.getByDisplayValue('ライト')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('中')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('ゴシック体')).toBeInTheDocument();
-      expect(styleController.getConfig().theme).toBe('light');
-      expect(styleController.getConfig().fontSize).toBe('medium');
-      expect(styleController.getConfig().fontFamily).toBe('sans-serif');
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('ライト')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('中')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('ゴシック体')).toBeInTheDocument();
+        expect(styleController.getConfig().theme).toBe('light');
+        expect(styleController.getConfig().fontSize).toBe('medium');
+        expect(styleController.getConfig().fontFamily).toBe('sans-serif');
+      });
     });
 
     it('設定変更後の状態が新しいStyleControllerインスタンスで復元できる', async () => {
@@ -163,11 +162,10 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       fireEvent.change(fontSizeSelect, { target: { value: 'large' } });
 
       // 非同期処理完了を待つ
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-      // 設定が保存されていることを確認
-      expect(styleController.getConfig().theme).toBe('dark');
-      expect(styleController.getConfig().fontSize).toBe('large');
+      await waitFor(() => {
+        expect(styleController.getConfig().theme).toBe('dark');
+        expect(styleController.getConfig().fontSize).toBe('large');
+      });
 
       // 新しいStyleControllerインスタンスで設定を復元
       const newStyleController = new StyleController();

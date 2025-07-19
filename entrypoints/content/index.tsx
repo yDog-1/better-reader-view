@@ -25,7 +25,7 @@ export default defineContentScript({
     try {
       await styleController.loadFromStorage();
     } catch (error) {
-      console.error('Failed to load settings from storage:', error);
+      console.warn('設定の読み込みに失敗しました:', error);
       // デフォルト設定で続行
     }
 

@@ -26,7 +26,7 @@ const StylePanel: React.FC<StylePanelProps> = ({
     try {
       await styleController.saveToStorage();
     } catch (error) {
-      console.error('Failed to save theme settings:', error);
+      console.warn('テーマ設定の保存に失敗しました:', error);
     }
     onStyleChange();
   };
@@ -37,7 +37,7 @@ const StylePanel: React.FC<StylePanelProps> = ({
     try {
       await styleController.saveToStorage();
     } catch (error) {
-      console.error('Failed to save font size settings:', error);
+      console.warn('フォントサイズ設定の保存に失敗しました:', error);
     }
     onStyleChange();
   };
@@ -48,7 +48,7 @@ const StylePanel: React.FC<StylePanelProps> = ({
     try {
       await styleController.saveToStorage();
     } catch (error) {
-      console.error('Failed to save font family settings:', error);
+      console.warn('フォント種類設定の保存に失敗しました:', error);
     }
     onStyleChange();
   };
@@ -57,7 +57,7 @@ const StylePanel: React.FC<StylePanelProps> = ({
     try {
       await styleController.reset();
     } catch (error) {
-      console.error('Failed to reset settings:', error);
+      console.warn('設定のリセットに失敗しました:', error);
     }
     setConfig(styleController.getConfig());
     onStyleChange();
