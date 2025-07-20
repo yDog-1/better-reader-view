@@ -2,33 +2,32 @@ import {
   ThemeClassName,
   FontFamilyClassName,
   StyleSheetManager,
+  ThemeDefinition,
+  ThemeRegistry,
 } from './types';
 import { ExtensionStyleSheetManager } from './StyleSheetManager';
+import { DefaultThemeRegistry } from './ThemeRegistry';
+import { builtInThemes } from './builtInThemes';
+import { ThemeNotFoundError, StyleSystemInitializationError } from './errors';
 
-export type ThemeType = 'light' | 'dark' | 'sepia';
 export type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
 export type FontFamily = 'sans-serif' | 'serif' | 'monospace';
 
 export interface StyleConfig {
-  theme: ThemeType;
+  theme: string; // ThemeType から string に変更してプラガブル対応
   fontSize: FontSize;
   fontFamily: FontFamily;
   customFontSize?: number;
 }
 
 /**
- * 型安全なスタイル管理システム
- * 責務を明確に分離し、テスタブルな設計に変更
+ * プラガブルテーマシステム対応の型安全なスタイル管理システム
+ * Open/Closed Principle に従った設計で、型修正なしで新しいテーマを追加可能
  */
 export class StyleController {
   private config: StyleConfig;
   private styleSheetManager: ExtensionStyleSheetManager | StyleSheetManager;
-
-  private readonly themeClasses: Record<ThemeType, ThemeClassName> = {
-    light: 'theme-light',
-    dark: 'theme-dark',
-    sepia: 'theme-sepia',
-  };
+  private themeRegistry: ThemeRegistry;
 
   private readonly fontFamilyClasses: Record<FontFamily, FontFamilyClassName> =
     {
@@ -43,12 +42,35 @@ export class StyleController {
       fontSize: 'medium',
       fontFamily: 'sans-serif',
     },
-    styleSheetManager?: ExtensionStyleSheetManager | StyleSheetManager
+    styleSheetManager?: ExtensionStyleSheetManager | StyleSheetManager,
+    themeRegistry?: ThemeRegistry
   ) {
     this.config = initialConfig;
     this.styleSheetManager =
       (styleSheetManager as ExtensionStyleSheetManager) ||
       new ExtensionStyleSheetManager();
+
+    // テーマレジストリの初期化
+    this.themeRegistry = themeRegistry || new DefaultThemeRegistry();
+
+    // 組み込みテーマを登録
+    this.initializeBuiltInThemes();
+  }
+
+  /**
+   * 組み込みテーマの初期化
+   */
+  private initializeBuiltInThemes(): void {
+    try {
+      builtInThemes.forEach((theme) => {
+        this.themeRegistry.registerTheme(theme);
+      });
+    } catch (error) {
+      throw new StyleSystemInitializationError(
+        '組み込みテーマの初期化に失敗しました',
+        error as Error
+      );
+    }
   }
 
   /**
@@ -67,8 +89,15 @@ export class StyleController {
   /**
    * 型安全なテーマクラス名の取得
    */
-  getThemeClass(): ThemeClassName {
-    return this.themeClasses[this.config.theme];
+  getThemeClass(): string {
+    const theme = this.themeRegistry.getTheme(this.config.theme);
+    if (!theme) {
+      throw new ThemeNotFoundError(
+        this.config.theme,
+        this.themeRegistry.getThemeIds()
+      );
+    }
+    return theme.className;
   }
 
   /**
@@ -115,9 +144,7 @@ export class StyleController {
    */
   applyStylesToElement(element: HTMLElement): void {
     // 既存のテーマクラスを削除
-    Object.values(this.themeClasses).forEach((className) => {
-      element.classList.remove(className);
-    });
+    this.removeAllThemeClasses(element);
 
     // 既存のフォントファミリークラスを削除
     Object.values(this.fontFamilyClasses).forEach((className) => {
@@ -128,7 +155,24 @@ export class StyleController {
     element.classList.add(this.getThemeClass());
     element.classList.add(this.getFontFamilyClass());
 
-    // カスタムスタイルを適用
+    // カスタムスタイルとテーマのCSS変数を適用
+    this.applyCustomStyles(element);
+    this.applyThemeCSSVariables(element);
+  }
+
+  /**
+   * 全てのテーマクラスを要素から削除
+   */
+  private removeAllThemeClasses(element: HTMLElement): void {
+    this.themeRegistry.getAvailableThemes().forEach((theme) => {
+      element.classList.remove(theme.className);
+    });
+  }
+
+  /**
+   * カスタムスタイルを適用
+   */
+  private applyCustomStyles(element: HTMLElement): void {
     const customStyles = this.getCustomStyles();
     Object.entries(customStyles).forEach(([property, value]) => {
       element.style.setProperty(property, value);
@@ -136,11 +180,26 @@ export class StyleController {
   }
 
   /**
+   * テーマのCSS変数を適用
+   */
+  private applyThemeCSSVariables(element: HTMLElement): void {
+    const theme = this.themeRegistry.getTheme(this.config.theme);
+    if (theme) {
+      Object.entries(theme.cssVariables).forEach(([property, value]) => {
+        element.style.setProperty(property, value);
+      });
+    }
+  }
+
+  /**
    * テーマの変更
    */
-  setTheme(theme: ThemeType): void {
-    this.config.theme = theme;
-    this.styleSheetManager.applyTheme(this.getThemeClass());
+  setTheme(themeId: string): void {
+    if (!this.themeRegistry.hasTheme(themeId)) {
+      throw new ThemeNotFoundError(themeId, this.themeRegistry.getThemeIds());
+    }
+    this.config.theme = themeId;
+    this.styleSheetManager.applyTheme(this.getThemeClass() as ThemeClassName);
   }
 
   /**
@@ -234,6 +293,41 @@ export class StyleController {
   }
 
   /**
+   * 新しいテーマを登録
+   */
+  registerTheme(theme: ThemeDefinition): void {
+    this.themeRegistry.registerTheme(theme);
+  }
+
+  /**
+   * テーマの登録を解除
+   */
+  unregisterTheme(themeId: string): boolean {
+    return this.themeRegistry.unregisterTheme(themeId);
+  }
+
+  /**
+   * 利用可能なテーマの取得
+   */
+  getAvailableThemes(): ThemeDefinition[] {
+    return this.themeRegistry.getAvailableThemes();
+  }
+
+  /**
+   * 現在のテーマ定義を取得
+   */
+  getCurrentTheme(): ThemeDefinition | null {
+    return this.themeRegistry.getTheme(this.config.theme);
+  }
+
+  /**
+   * テーマが存在するかチェック
+   */
+  hasTheme(themeId: string): boolean {
+    return this.themeRegistry.hasTheme(themeId);
+  }
+
+  /**
    * クリーンアップ処理
    */
   cleanup(): void {
@@ -250,6 +344,8 @@ export class StyleController {
       fontFamilyClass: this.getFontFamilyClass(),
       customStyles: this.getCustomStyles(),
       styleSheetManager: this.styleSheetManager.getDebugInfo(),
+      themeRegistry: this.themeRegistry.getDebugInfo(),
+      currentTheme: this.getCurrentTheme(),
     };
   }
 
