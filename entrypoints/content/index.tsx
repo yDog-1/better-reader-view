@@ -4,7 +4,7 @@ import PopupMessage from '@/components/popupMsg';
 import {
   activateReader,
   deactivateReader,
-  initializeReaderViewManager,
+  createReaderViewManager,
 } from '@/utils/reader-utils';
 import { StyleController } from '@/utils/StyleController';
 
@@ -29,24 +29,26 @@ export default defineContentScript({
       // デフォルト設定で続行
     }
 
-    // ReaderViewManagerを初期化
-    initializeReaderViewManager(styleController);
+    // ReaderViewManagerを作成（関数型アプローチ）
+    const readerViewManager = createReaderViewManager(styleController);
 
-    toggleReaderView();
+    toggleReaderView(readerViewManager);
     return;
   },
 });
 
-function toggleReaderView() {
+function toggleReaderView(
+  readerViewManager: ReturnType<typeof createReaderViewManager>
+) {
   const isActive = sessionStorage.getItem(READER_VIEW_ACTIVE_KEY) === 'true';
 
   if (isActive) {
     // リーダービューを無効化
-    deactivateReader(document);
+    deactivateReader(readerViewManager, document);
     sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
   } else {
     // リーダービューを有効化
-    const success = activateReader(document);
+    const success = activateReader(readerViewManager, document);
 
     if (success) {
       sessionStorage.setItem(READER_VIEW_ACTIVE_KEY, 'true');
