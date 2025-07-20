@@ -56,42 +56,48 @@ class ReaderViewManager {
   }
 }
 
-// グローバルインスタンス管理
-let readerViewManager: ReaderViewManager | null = null;
-
 /**
- * ReaderViewManagerを初期化（StyleControllerが必要）
+ * ReaderViewManagerファクトリ関数
+ * グローバル状態を排除し、純粋な関数型プログラミングアプローチを採用
  */
-export const initializeReaderViewManager = (
+export const createReaderViewManager = (
   styleController: StyleController
+): ReaderViewManager => {
+  return new ReaderViewManager(styleController);
+};
+
+/**
+ * リーダービューを有効化（関数型API）
+ * @param manager ReaderViewManagerインスタンス
+ * @param doc ドキュメント
+ * @returns 成功したかどうか
+ */
+export const activateReader = (
+  manager: ReaderViewManager,
+  doc: Document
+): boolean => {
+  return manager.activateReader(doc);
+};
+
+/**
+ * リーダービューを無効化（関数型API）
+ * @param manager ReaderViewManagerインスタンス
+ * @param doc ドキュメント
+ */
+export const deactivateReader = (
+  manager: ReaderViewManager,
+  doc: Document
 ): void => {
-  readerViewManager = new ReaderViewManager(styleController);
+  manager.deactivateReader(doc);
 };
 
 /**
- * ReaderViewManagerインスタンスを取得
+ * リーダービューの状態を確認（関数型API）
+ * @param manager ReaderViewManagerインスタンス
+ * @returns リーダービューが有効かどうか
  */
-export const getReaderViewManager = (): ReaderViewManager => {
-  if (!readerViewManager) {
-    throw new Error(
-      'ReaderViewManager が初期化されていません。initializeReaderViewManager() を先に呼び出してください。'
-    );
-  }
-  return readerViewManager;
-};
-
-/**
- * リーダービューを有効化（グローバル関数としてエクスポート）
- */
-export const activateReader = (doc: Document): boolean => {
-  return getReaderViewManager().activateReader(doc);
-};
-
-/**
- * リーダービューを無効化（グローバル関数としてエクスポート）
- */
-export const deactivateReader = (doc: Document): void => {
-  getReaderViewManager().deactivateReader(doc);
+export const isReaderActive = (manager: ReaderViewManager): boolean => {
+  return manager.isActive();
 };
 
 /**

@@ -5,16 +5,18 @@ import { waitFor, act } from '@testing-library/react';
 import {
   activateReader,
   deactivateReader,
-  initializeReaderViewManager,
+  createReaderViewManager,
 } from '@/utils/reader-utils';
 import { StyleController } from '@/utils/StyleController';
 
 describe('activateReader with Shadow DOM', () => {
+  let readerViewManager: ReturnType<typeof createReaderViewManager>;
+
   beforeEach(() => {
     fakeBrowser.reset();
     // StyleControllerを初期化
     const styleController = new StyleController();
-    initializeReaderViewManager(styleController);
+    readerViewManager = createReaderViewManager(styleController);
   });
 
   function createTestDocument(
@@ -49,7 +51,7 @@ describe('activateReader with Shadow DOM', () => {
 
     let result!: boolean;
     act(() => {
-      result = activateReader(doc);
+      result = activateReader(readerViewManager, doc);
     });
 
     expect(result).toBe(true);
@@ -71,7 +73,7 @@ describe('activateReader with Shadow DOM', () => {
 
     let result!: boolean;
     act(() => {
-      result = activateReader(doc);
+      result = activateReader(readerViewManager, doc);
     });
 
     expect(result).toBe(false);
@@ -107,7 +109,7 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, 'Complex Page');
     let result!: boolean;
     act(() => {
-      result = activateReader(doc);
+      result = activateReader(readerViewManager, doc);
     });
 
     expect(result).toBe(true);
@@ -141,7 +143,7 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, 'Mixed Content Page');
     let result!: boolean;
     act(() => {
-      result = activateReader(doc);
+      result = activateReader(readerViewManager, doc);
     });
 
     expect(result).toBe(true);
@@ -168,14 +170,14 @@ describe('activateReader with Shadow DOM', () => {
     // リーダービューを有効化
     let activateResult!: boolean;
     act(() => {
-      activateResult = activateReader(doc);
+      activateResult = activateReader(readerViewManager, doc);
     });
     expect(activateResult).toBe(true);
     expect(doc.getElementById('better-reader-view-container')).toBeTruthy();
     expect(doc.body.style.display).toBe('none');
 
     // リーダービューを無効化
-    act(() => deactivateReader(doc));
+    act(() => deactivateReader(readerViewManager, doc));
     // 元の状態に復元されている
     expect(doc.body.style.display).toBe('');
     expect(doc.getElementById('better-reader-view-container')).toBeFalsy();
@@ -194,7 +196,7 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, '日本語テストページ');
     let result!: boolean;
     act(() => {
-      result = activateReader(doc);
+      result = activateReader(readerViewManager, doc);
     });
 
     expect(result).toBe(true);
@@ -216,7 +218,7 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, 'Special Characters Test');
     let result!: boolean;
     act(() => {
-      result = activateReader(doc);
+      result = activateReader(readerViewManager, doc);
     });
 
     expect(result).toBe(true);
@@ -249,7 +251,7 @@ describe('activateReader with Shadow DOM', () => {
     const doc = createTestDocument(htmlContent, 'Media Test');
     let result!: boolean;
     act(() => {
-      result = activateReader(doc);
+      result = activateReader(readerViewManager, doc);
     });
 
     expect(result).toBe(true);
@@ -276,7 +278,7 @@ describe('activateReader with Shadow DOM', () => {
 
     let result!: boolean;
     act(() => {
-      result = activateReader(doc);
+      result = activateReader(readerViewManager, doc);
     });
 
     expect(result).toBe(false);
