@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { StorageError, ErrorHandler } from './errors';
 
 /**
  * Reader Viewのスタイル設定インターフェース
@@ -53,7 +54,12 @@ export class StorageManager {
         return { ...DEFAULT_STYLE_CONFIG, ...stored };
       }
       return DEFAULT_STYLE_CONFIG;
-    } catch {
+    } catch (error) {
+      const storageError = new StorageError(
+        'retrieve style configuration',
+        error as Error
+      );
+      ErrorHandler.handle(storageError);
       return DEFAULT_STYLE_CONFIG;
     }
   }
@@ -64,9 +70,18 @@ export class StorageManager {
   static async updateStyleConfig(
     config: Partial<ReaderViewStyleConfig>
   ): Promise<void> {
-    const currentConfig = await this.getStyleConfig();
-    const newConfig = { ...currentConfig, ...config };
-    await browser.storage.local.set({ [STYLE_CONFIG_KEY]: newConfig });
+    try {
+      const currentConfig = await this.getStyleConfig();
+      const newConfig = { ...currentConfig, ...config };
+      await browser.storage.local.set({ [STYLE_CONFIG_KEY]: newConfig });
+    } catch (error) {
+      const storageError = new StorageError(
+        'update style configuration',
+        error as Error
+      );
+      ErrorHandler.handle(storageError);
+      throw storageError;
+    }
   }
 
   /**
@@ -76,7 +91,12 @@ export class StorageManager {
     try {
       const result = await browser.storage.session.get(STATE_KEY);
       return result[STATE_KEY] || DEFAULT_STATE;
-    } catch {
+    } catch (error) {
+      const storageError = new StorageError(
+        'retrieve Reader View state',
+        error as Error
+      );
+      ErrorHandler.handle(storageError);
       return DEFAULT_STATE;
     }
   }
@@ -87,44 +107,80 @@ export class StorageManager {
   static async updateReaderViewState(
     state: Partial<ReaderViewState>
   ): Promise<void> {
-    const currentState = await this.getReaderViewState();
-    const newState = { ...currentState, ...state };
-    await browser.storage.session.set({ [STATE_KEY]: newState });
+    try {
+      const currentState = await this.getReaderViewState();
+      const newState = { ...currentState, ...state };
+      await browser.storage.session.set({ [STATE_KEY]: newState });
+    } catch (error) {
+      const storageError = new StorageError(
+        'update Reader View state',
+        error as Error
+      );
+      ErrorHandler.handle(storageError);
+      throw storageError;
+    }
   }
 
   /**
    * Reader Viewを有効化
    */
   static async activateReaderView(url?: string, title?: string): Promise<void> {
-    await browser.storage.session.set({
-      [STATE_KEY]: {
-        isActive: true,
-        url,
-        title,
-      },
-    });
+    try {
+      await browser.storage.session.set({
+        [STATE_KEY]: {
+          isActive: true,
+          url,
+          title,
+        },
+      });
+    } catch (error) {
+      const storageError = new StorageError(
+        'activate Reader View',
+        error as Error
+      );
+      ErrorHandler.handle(storageError);
+      throw storageError;
+    }
   }
 
   /**
    * Reader Viewを無効化
    */
   static async deactivateReaderView(): Promise<void> {
-    await browser.storage.session.set({
-      [STATE_KEY]: {
-        isActive: false,
-        url: undefined,
-        title: undefined,
-      },
-    });
+    try {
+      await browser.storage.session.set({
+        [STATE_KEY]: {
+          isActive: false,
+          url: undefined,
+          title: undefined,
+        },
+      });
+    } catch (error) {
+      const storageError = new StorageError(
+        'deactivate Reader View',
+        error as Error
+      );
+      ErrorHandler.handle(storageError);
+      throw storageError;
+    }
   }
 
   /**
    * 全ての設定をリセット
    */
   static async resetAllSettings(): Promise<void> {
-    await browser.storage.local.set({
-      [STYLE_CONFIG_KEY]: DEFAULT_STYLE_CONFIG,
-    });
-    await this.deactivateReaderView();
+    try {
+      await browser.storage.local.set({
+        [STYLE_CONFIG_KEY]: DEFAULT_STYLE_CONFIG,
+      });
+      await this.deactivateReaderView();
+    } catch (error) {
+      const storageError = new StorageError(
+        'reset all settings',
+        error as Error
+      );
+      ErrorHandler.handle(storageError);
+      throw storageError;
+    }
   }
 }

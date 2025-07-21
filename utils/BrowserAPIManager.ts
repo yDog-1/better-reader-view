@@ -28,7 +28,10 @@ export class BrowserAPIManager {
    * APIが利用不可能な場合やエラーが発生した場合はフォールバック値を返す
    * @param apiCall - 実行するAPI呼び出し関数
    * @param fallback - フォールバック値
-   * @param apiPath - チェックするAPIパス（オプション）
+   * @param apiPath - チェックするAPIパス（オプション）。指定された場合、このメソッドは
+   *                  API呼び出しを実行する前に`isAPISupported`を使用して
+   *                  機能検出を行います。APIがサポートされていない場合、
+   *                  フォールバック値が返されます。
    * @returns API呼び出しの結果またはフォールバック値
    */
   static safeAPICall<T>(apiCall: () => T, fallback: T, apiPath?: string): T {
@@ -46,7 +49,10 @@ export class BrowserAPIManager {
    * 非同期API呼び出しを安全に実行
    * @param apiCall - 実行する非同期API呼び出し関数
    * @param fallback - フォールバック値
-   * @param apiPath - チェックするAPIパス（オプション）
+   * @param apiPath - チェックするAPIパス（オプション）。指定された場合、このメソッドは
+   *                  API呼び出しを実行する前に`isAPISupported`を使用して
+   *                  機能検出を行います。APIがサポートされていない場合、
+   *                  フォールバック値が返されます。
    * @returns API呼び出しの結果またはフォールバック値
    */
   static async safeAsyncAPICall<T>(
@@ -80,7 +86,8 @@ export class BrowserAPIManager {
   static isTabsSupported(): boolean {
     return (
       this.isAPISupported('tabs.query') &&
-      this.isAPISupported('tabs.executeScript')
+      (this.isAPISupported('tabs.executeScript') ||
+        this.isAPISupported('scripting.executeScript'))
     );
   }
 

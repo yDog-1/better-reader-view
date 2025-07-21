@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { BrowserAPIManager } from '@/utils/BrowserAPIManager';
+import { BrowserAPIManager } from '../utils/BrowserAPIManager';
 
 // wxt/browserをモック
 vi.mock('wxt/browser', () => {

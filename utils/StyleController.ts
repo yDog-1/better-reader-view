@@ -346,7 +346,7 @@ export class StyleController {
         theme: storageConfig.theme,
         fontSize: storageConfig.fontSize,
         fontFamily: storageConfig.fontFamily,
-        customFontSize: this.config.customFontSize, // カスタムフォントサイズは既存の値を保持
+        customFontSize: this.config.customFontSize, // Preserve existing custom font size value
       };
 
       return true;
