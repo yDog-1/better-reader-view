@@ -6,7 +6,6 @@ import {
 } from '../utils/StyleController';
 import { StorageManager, STORAGE_CONFIGS } from '../utils/storage-config';
 import { fakeBrowser } from 'wxt/testing';
-import { browser } from 'wxt/browser';
 
 describe.skip('Settings Persistence Tests (Legacy - requires browser mock)', () => {
   let styleController: StyleController;

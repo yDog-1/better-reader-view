@@ -117,6 +117,17 @@ export class BrowserAPIManager {
   }
 
   /**
+   * スクリプト注入APIが利用可能かチェック
+   */
+  static isScriptingSupported(): boolean {
+    // MV3のscripting APIまたは MV2のtabs.executeScript をチェック
+    return (
+      this.isAPISupported('scripting.executeScript') ||
+      this.isAPISupported('tabs.executeScript')
+    );
+  }
+
+  /**
    * 現在のブラウザタイプを判定
    */
   static getBrowserType(): 'chrome' | 'firefox' | 'unknown' {
@@ -166,6 +177,7 @@ export class BrowserAPIManager {
       tabs: this.isTabsSupported(),
       runtime: this.isRuntimeSupported(),
       browserAction: this.isBrowserActionSupported(),
+      scripting: this.isScriptingSupported(),
     };
   }
 }

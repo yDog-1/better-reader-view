@@ -159,6 +159,10 @@ describe('BrowserAPIManager', () => {
     it('isBrowserActionSupported: ブラウザアクションAPIが利用可能', () => {
       expect(BrowserAPIManager.isBrowserActionSupported()).toBe(true);
     });
+
+    it('isScriptingSupported: スクリプト注入APIが利用可能', () => {
+      expect(BrowserAPIManager.isScriptingSupported()).toBe(true);
+    });
   });
 
   describe('getBrowserType', () => {
@@ -217,6 +221,7 @@ describe('BrowserAPIManager', () => {
         tabs: true,
         runtime: true,
         browserAction: true,
+        scripting: true,
       });
     });
   });
