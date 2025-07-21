@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { StyleController } from '../utils/StyleController';
 import { ExtensionStyleSheetManager } from '../utils/StyleSheetManager';
+import { ThemeDefinition } from '../utils/types';
+import { ThemeNotFoundError } from '../utils/errors';
 
 describe('StyleController Integration Tests', () => {
   let styleController: StyleController;
@@ -58,6 +60,30 @@ describe('StyleController Integration Tests', () => {
 
       styleController.setTheme('sepia');
       expect(styleController.getThemeClass()).toBe('theme-sepia');
+    });
+
+    it('存在しないテーマの場合はエラーを投げる', () => {
+      expect(() => {
+        styleController.setTheme('invalid-theme');
+      }).toThrow(ThemeNotFoundError);
+    });
+
+    it('プラガブルテーマシステムが動作する', () => {
+      const customTheme: ThemeDefinition = {
+        id: 'integration-test',
+        name: '統合テスト',
+        className: 'theme-integration-test',
+        cssVariables: {
+          '--bg-color': '#123456',
+          '--text-color': '#abcdef',
+        },
+      };
+
+      styleController.registerTheme(customTheme);
+      styleController.setTheme('integration-test');
+
+      expect(styleController.getThemeClass()).toBe('theme-integration-test');
+      expect(styleController.getCurrentTheme()?.id).toBe('integration-test');
     });
 
     it('正しいフォントファミリークラス名を返す', () => {
@@ -130,7 +156,7 @@ describe('StyleController Integration Tests', () => {
 
       const debugInfo = styleController.getDebugInfo();
 
-      expect(debugInfo).toEqual({
+      expect(debugInfo).toMatchObject({
         config: {
           theme: 'dark',
           fontSize: 'medium',
@@ -152,6 +178,10 @@ describe('StyleController Integration Tests', () => {
           adoptedStyleSheetsCount: 1,
         },
       });
+
+      // 追加されたプラガブルテーマシステムのフィールドもチェック
+      expect(debugInfo).toHaveProperty('themeRegistry');
+      expect(debugInfo).toHaveProperty('currentTheme');
     });
   });
 

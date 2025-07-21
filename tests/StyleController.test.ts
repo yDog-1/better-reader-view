@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { StyleController, type StyleConfig } from '../utils/StyleController';
+import { ThemeDefinition } from '../utils/types';
+import { ThemeNotFoundError } from '../utils/errors';
 import { JSDOM } from 'jsdom';
 
 describe('StyleController', () => {
@@ -88,6 +90,53 @@ describe('StyleController', () => {
 
       styleController.setTheme('sepia');
       expect(styleController.getThemeClass()).toBe('theme-sepia');
+    });
+
+    it('存在しないテーマの場合はエラーを投げる', () => {
+      expect(() => {
+        styleController.setTheme('non-existent-theme');
+      }).toThrow(ThemeNotFoundError);
+    });
+
+    it('カスタムテーマを登録して使用できる', () => {
+      const customTheme: ThemeDefinition = {
+        id: 'custom-test',
+        name: 'カスタムテスト',
+        className: 'theme-custom-test',
+        cssVariables: {
+          '--bg-color': '#ff0000',
+          '--text-color': '#ffffff',
+        },
+      };
+
+      styleController.registerTheme(customTheme);
+      styleController.setTheme('custom-test');
+
+      expect(styleController.getConfig().theme).toBe('custom-test');
+      expect(styleController.getThemeClass()).toBe('theme-custom-test');
+    });
+
+    it('利用可能なテーマ一覧を取得できる', () => {
+      const themes = styleController.getAvailableThemes();
+
+      expect(themes.length).toBeGreaterThanOrEqual(3); // 最低でも組み込みテーマ3つ
+      expect(themes.some((t) => t.id === 'light')).toBe(true);
+      expect(themes.some((t) => t.id === 'dark')).toBe(true);
+      expect(themes.some((t) => t.id === 'sepia')).toBe(true);
+    });
+
+    it('現在のテーマ定義を取得できる', () => {
+      styleController.setTheme('dark');
+      const currentTheme = styleController.getCurrentTheme();
+
+      expect(currentTheme).not.toBeNull();
+      expect(currentTheme?.id).toBe('dark');
+      expect(currentTheme?.className).toBe('theme-dark');
+    });
+
+    it('テーマの存在をチェックできる', () => {
+      expect(styleController.hasTheme('light')).toBe(true);
+      expect(styleController.hasTheme('non-existent')).toBe(false);
     });
   });
 

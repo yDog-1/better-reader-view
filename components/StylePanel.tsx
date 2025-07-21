@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {
   StyleController,
-  ThemeType,
   FontSize,
   FontFamily,
 } from '../utils/StyleController';
+import { ThemeDefinition } from '../utils/types';
 import './StylePanel.css';
 
 export interface StylePanelProps {
@@ -20,9 +20,9 @@ const StylePanel: React.FC<StylePanelProps> = ({
 }) => {
   const [config, setConfig] = useState(styleController.getConfig());
 
-  const handleThemeChange = (theme: ThemeType) => {
+  const handleThemeChange = (themeId: string) => {
     void (async () => {
-      styleController.setTheme(theme);
+      styleController.setTheme(themeId);
       setConfig(styleController.getConfig());
       try {
         await styleController.saveToStorage();
@@ -80,11 +80,15 @@ const StylePanel: React.FC<StylePanelProps> = ({
         <select
           className="control-select"
           value={config.theme}
-          onChange={(e) => handleThemeChange(e.target.value as ThemeType)}
+          onChange={(e) => handleThemeChange(e.target.value)}
         >
-          <option value="light">ライト</option>
-          <option value="dark">ダーク</option>
-          <option value="sepia">セピア</option>
+          {styleController
+            .getAvailableThemes()
+            .map((theme: ThemeDefinition) => (
+              <option key={theme.id} value={theme.id}>
+                {theme.name}
+              </option>
+            ))}
         </select>
       </div>
 

@@ -18,6 +18,33 @@ export type CSSClassName =
 
 export type ThemeClassName = 'theme-light' | 'theme-dark' | 'theme-sepia';
 
+// プラガブルテーマシステムのインターフェース
+export interface ThemeDefinition {
+  readonly id: string;
+  readonly name: string;
+  readonly className: string;
+  readonly cssVariables: Record<string, string>;
+}
+
+export interface ThemeRegistry {
+  registerTheme(
+    theme: ThemeDefinition,
+    onWarning?: (message: string) => void
+  ): void;
+  unregisterTheme(themeId: string): boolean;
+  getTheme(themeId: string): ThemeDefinition | null;
+  getAvailableThemes(): ThemeDefinition[];
+  hasTheme(themeId: string): boolean;
+  getThemeIds(): string[];
+  getDebugInfo(): object;
+}
+
+// カスタムエラークラスのインターフェース
+export interface ReaderViewError extends Error {
+  readonly code: string;
+  readonly context?: Record<string, unknown>;
+}
+
 export type FontFamilyClassName = 'font-sans' | 'font-serif' | 'font-mono';
 
 export interface CSSModuleContent {
@@ -29,7 +56,7 @@ export interface StyleSheetManager {
   readonly isSupported: boolean;
   initialize(): Promise<void>;
   cleanup(): void;
-  applyTheme(theme: ThemeClassName): void;
+  applyTheme(theme: string): void;
   isReady(): boolean;
   getDebugInfo(): DebugInfo;
 }
