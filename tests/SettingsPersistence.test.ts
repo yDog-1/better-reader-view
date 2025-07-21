@@ -161,7 +161,7 @@ describe.skip('Settings Persistence Tests (Legacy - requires browser mock)', () 
       await expect(
         StorageManager.updateStyleConfig({ theme: 'dark' })
       ).resolves.toBeUndefined();
-      
+
       // エラー後も設定取得は正常に動作する（デフォルト値が返される）
       const config = await StorageManager.getStyleConfig();
       expect(config).toMatchObject({

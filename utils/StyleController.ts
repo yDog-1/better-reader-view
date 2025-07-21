@@ -19,7 +19,6 @@ import {
 } from './errors';
 import { StorageManager, type ReaderViewStyleConfig } from './storage-config';
 import { BrowserAPIManager } from './BrowserAPIManager';
-import { DebugLogger } from './debug-logger';
 
 export type FontSize = 'small' | 'medium' | 'large' | 'extra-large';
 export type FontFamily = 'sans-serif' | 'serif' | 'monospace';
@@ -313,26 +312,19 @@ export class StyleController {
    * WXT Storage APIを使用した型安全な保存
    */
   async saveToStorage(): Promise<void> {
-    DebugLogger.log('StyleController', '=== Saving to Storage ===');
-    DebugLogger.log('StyleController', `Current config:`, this.config);
-    DebugLogger.log('StyleController', `Storage supported:`, BrowserAPIManager.isStorageSupported());
-    
+    if (!BrowserAPIManager.isStorageSupported()) {
+      return;
+    }
+
     await withAsyncErrorHandling(
       async () => {
-        if (!BrowserAPIManager.isStorageSupported()) {
-          DebugLogger.error('StyleController', 'Storage API is not supported');
-          throw new StorageError('Storage API is not supported');
-        }
-
         const storageConfig: ReaderViewStyleConfig = {
           theme: this.config.theme as ReaderViewStyleConfig['theme'],
           fontSize: this.config.fontSize,
           fontFamily: this.config.fontFamily,
         };
 
-        DebugLogger.log('StyleController', `Storage config to save:`, storageConfig);
         await StorageManager.updateStyleConfig(storageConfig);
-        DebugLogger.log('StyleController', 'Storage save completed');
       },
       (cause) => new StorageError('save style config', cause)
     );

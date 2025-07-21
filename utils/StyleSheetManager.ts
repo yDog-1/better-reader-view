@@ -1,7 +1,6 @@
 import { StyleSheetManager, DebugInfo } from './types';
 import { getCombinedCSS } from './CSSLoader';
 import { ErrorHandler, CSSVariableApplicationError } from './errors';
-import { DebugLogger } from './debug-logger';
 
 /**
  * ブラウザ拡張環境でのスタイルシート管理
@@ -13,9 +12,31 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
 
   /**
    * adoptedStyleSheetsがサポートされているかチェック
+   * Firefox content scriptではXray wrapperにより実際の使用時にエラーになるため、
+   * 実際に使用可能かテストする
    */
   get isSupported(): boolean {
-    return 'adoptedStyleSheets' in document && 'CSSStyleSheet' in globalThis;
+    if (!('adoptedStyleSheets' in document && 'CSSStyleSheet' in globalThis)) {
+      return false;
+    }
+
+    // Firefox content scriptでのXray wrapper制限をチェック
+    try {
+      // 一時的なCSSStyleSheetを作成してテスト
+      const testSheet = new globalThis.CSSStyleSheet();
+      testSheet.replaceSync('/* test */');
+
+      // adoptedStyleSheetsへのアクセスをテスト
+      const currentSheets = Array.from(document.adoptedStyleSheets || []);
+      currentSheets.push(testSheet);
+      document.adoptedStyleSheets = currentSheets;
+
+      // 成功した場合は即座にクリーンアップ
+      document.adoptedStyleSheets = currentSheets.slice(0, -1);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -28,40 +49,30 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
       return;
     }
 
-    DebugLogger.log('StyleSheetManager', '=== Initializing StyleSheetManager ===');
-
     try {
       const cssContent = getCombinedCSS();
-      DebugLogger.log('StyleSheetManager', `CSS content length: ${cssContent.length}`);
-      DebugLogger.log('StyleSheetManager', `Adopted stylesheets supported: ${this.isSupported}`);
 
       if (this.isSupported) {
-        DebugLogger.log('StyleSheetManager', 'Using adopted stylesheets');
         await this.initializeWithAdoptedStyleSheets(cssContent);
       } else {
-        DebugLogger.log('StyleSheetManager', 'Using style element fallback');
         this.initializeWithStyleElement(cssContent);
       }
 
       this.isInitialized = true;
-      DebugLogger.log('StyleSheetManager', 'StyleSheetManager initialized successfully');
-    } catch (error) {
-      DebugLogger.error('StyleSheetManager', 'Initialization failed', error);
-      const stylesheetError = new CSSVariableApplicationError(
-        'stylesheet initialization',
-        'combined CSS'
-      );
-      ErrorHandler.handle(stylesheetError);
-      
-      // エラー時はフォールバックを試行
-      DebugLogger.log('StyleSheetManager', 'Attempting fallback initialization');
+    } catch {
+      // エラー時はフォールバックを試行（エラー報告は成功/失敗後に判断）
       try {
         this.initializeWithStyleElement(getCombinedCSS());
         this.isInitialized = true;
-        DebugLogger.log('StyleSheetManager', 'Fallback initialization successful');
-      } catch (fallbackError) {
-        DebugLogger.error('StyleSheetManager', 'Fallback initialization failed', fallbackError);
+      } catch {
         this.isInitialized = true; // Prevent infinite retry
+
+        // フォールバックも失敗した場合のみエラー報告
+        const stylesheetError = new CSSVariableApplicationError(
+          'stylesheet initialization (both primary and fallback failed)',
+          'combined CSS'
+        );
+        ErrorHandler.handle(stylesheetError);
       }
     }
   }

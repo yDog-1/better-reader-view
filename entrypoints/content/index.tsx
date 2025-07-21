@@ -18,8 +18,6 @@ import {
 } from '@/utils/errors';
 import { StorageManager } from '@/utils/storage-config';
 import { BrowserAPIManager } from '@/utils/BrowserAPIManager';
-import { DebugLogger } from '@/utils/debug-logger';
-import { exposeDebugFunctions } from '@/utils/debug-helper';
 
 const articleErrorMessage = '記事が見つかりませんでした。';
 
@@ -29,20 +27,13 @@ export default defineContentScript({
   cssInjectionMode: 'ui',
 
   async main() {
-    DebugLogger.log('ContentScript', '=== Content Script Starting ===');
-    DebugLogger.log('ContentScript', `URL: ${window.location.href}`);
-    DebugLogger.log('ContentScript', `Browser compatibility:`, BrowserAPIManager.getBrowserCompatibility());
-    
     // レガシーストレージからの移行を実行
-    DebugLogger.log('ContentScript', 'Starting legacy storage migration');
     await withAsyncErrorHandling(
       () => StorageManager.migrateFromLegacyStorage(),
       (cause) => new StorageError('レガシーストレージからの移行', cause)
     );
-    DebugLogger.log('ContentScript', 'Legacy storage migration completed');
 
     // StyleControllerを初期化
-    DebugLogger.log('ContentScript', 'Initializing StyleController');
     const styleController = withErrorHandling(
       () => new StyleController(),
       (cause) =>
@@ -79,11 +70,7 @@ export default defineContentScript({
     }
 
     await toggleReaderView(readerViewManager);
-    
-    // デバッグ関数を公開（開発環境またはブラウザ環境で）
-    DebugLogger.log('ContentScript', 'Exposing debug functions');
-    exposeDebugFunctions();
-    
+
     return;
   },
 });

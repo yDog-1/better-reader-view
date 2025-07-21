@@ -1,5 +1,4 @@
 import { browser } from 'wxt/browser';
-import { DebugLogger } from './debug-logger';
 
 /**
  * WXTベストプラクティスに基づくブラウザAPI管理クラス
@@ -67,25 +66,23 @@ export class BrowserAPIManager {
 
   /**
    * ストレージAPIが利用可能かチェック
-   * Firefox互換性を考慮した実装
+   * browser.storage.localが利用可能であれば使用可能とする
    */
   static isStorageSupported(): boolean {
-    DebugLogger.log('BrowserAPIManager', 'Checking storage support');
-    
-    // 直接的なチェック（Firefox対応）
-    const directCheck = !!(browser?.storage?.local && browser?.storage?.session);
-    DebugLogger.log('BrowserAPIManager', `Direct storage check: ${directCheck}`);
-    
     // APIパスチェック
     const localCheck = this.isAPISupported('storage.local');
+
+    // localが利用可能であれば使用可能とする（sessionは優先だがフォールバックとしてlocalを使用）
+    return localCheck;
+  }
+
+  /**
+   * 推奨ストレージエリアを取得
+   * sessionが利用可能ならsession、そうでなければlocalを返す
+   */
+  static getPreferredStorageArea(): 'session' | 'local' {
     const sessionCheck = this.isAPISupported('storage.session');
-    DebugLogger.log('BrowserAPIManager', `API path checks - local: ${localCheck}, session: ${sessionCheck}`);
-    
-    // Firefox: 直接チェックを優先し、フォールバックとしてAPIパスチェック
-    const result = directCheck || (localCheck && sessionCheck);
-    DebugLogger.log('BrowserAPIManager', `Final storage support result: ${result}`);
-    
-    return result;
+    return sessionCheck ? 'session' : 'local';
   }
 
   /**
@@ -140,25 +137,22 @@ export class BrowserAPIManager {
    * @returns ストレージAPI またはnull
    */
   static getStorageAPI(area: 'local' | 'session' | 'sync') {
-    DebugLogger.log('BrowserAPIManager', `Getting storage API for area: ${area}`);
-    DebugLogger.log('BrowserAPIManager', `browser object exists:`, typeof browser !== 'undefined');
-    DebugLogger.log('BrowserAPIManager', `browser.storage exists:`, typeof browser?.storage !== 'undefined');
-    DebugLogger.log('BrowserAPIManager', `browser.storage.${area} exists:`, typeof browser?.storage?.[area] !== 'undefined');
-    
     const result = this.safeAPICall(
       () => {
         if (!browser?.storage?.[area]) {
-          DebugLogger.log('BrowserAPIManager', `Storage area ${area} not available`);
+          // sessionが要求されたがlocalのみ利用可能な場合はフォールバック
+          if (area === 'session' && browser?.storage?.local) {
+            return browser.storage.local;
+          }
+
           return null;
         }
-        DebugLogger.log('BrowserAPIManager', `Storage area ${area} available`);
         return browser.storage[area];
       },
       null,
       `storage.${area}`
     );
-    
-    DebugLogger.log('BrowserAPIManager', `getStorageAPI(${area}) result:`, result !== null);
+
     return result;
   }
 
