@@ -124,7 +124,7 @@ describe('Error Handling System', () => {
       ErrorHandler.handle(error);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        '[ARTICLE_EXTRACTION_FAILED] Failed to extract article content',
+        '[ARTICLE_EXTRACTION_FAILED] 記事コンテンツの抽出に失敗しました',
         expect.objectContaining({
           context: {},
           cause: undefined,

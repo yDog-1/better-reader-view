@@ -105,7 +105,7 @@ export class ArticleExtractionError extends BaseReaderViewError {
   readonly userMessage = '記事が見つかりませんでした。';
 
   constructor(cause?: Error) {
-    super('Failed to extract article content', {}, cause);
+    super('記事コンテンツの抽出に失敗しました', {}, cause);
   }
 }
 
@@ -118,7 +118,7 @@ export class ShadowDOMError extends BaseReaderViewError {
 
   constructor(operation: string, cause?: Error) {
     super(
-      `Shadow DOM operation failed: ${operation}`,
+      `Shadow DOM操作が失敗しました: ${operation}`,
       {
         operation,
       },
@@ -136,7 +136,7 @@ export class StorageError extends BaseReaderViewError {
 
   constructor(operation: string, cause?: Error) {
     super(
-      `Storage operation failed: ${operation}`,
+      `ストレージ操作が失敗しました: ${operation}`,
       {
         operation,
       },
@@ -154,7 +154,7 @@ export class RenderingError extends BaseReaderViewError {
 
   constructor(component: string, cause?: Error) {
     super(
-      `React rendering failed for component: ${component}`,
+      `Reactコンポーネントのレンダリングに失敗しました: ${component}`,
       {
         component,
       },

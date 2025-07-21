@@ -5,6 +5,11 @@ import {
   FontFamily,
 } from '../utils/StyleController';
 import { ThemeDefinition } from '../utils/types';
+import {
+  StorageError,
+  RenderingError,
+  withErrorHandling,
+} from '../utils/errors';
 import './StylePanel.css';
 
 export interface StylePanelProps {
@@ -22,51 +27,79 @@ const StylePanel: React.FC<StylePanelProps> = ({
 
   const handleThemeChange = (themeId: string) => {
     void (async () => {
-      styleController.setTheme(themeId);
-      setConfig(styleController.getConfig());
-      try {
-        await styleController.saveToStorage();
-      } catch (error) {
-        console.warn('テーマ設定の保存に失敗しました:', error);
-      }
+      withErrorHandling(
+        () => {
+          styleController.setTheme(themeId);
+          setConfig(styleController.getConfig());
+          return true;
+        },
+        (cause) => new RenderingError('StylePanel theme change', cause)
+      );
+
+      await withErrorHandling(
+        () => styleController.saveToStorage(),
+        (cause) => new StorageError('save theme setting', cause)
+      );
+
       onStyleChange();
     })();
   };
 
   const handleFontSizeChange = (fontSize: FontSize) => {
     void (async () => {
-      styleController.setFontSize(fontSize);
-      setConfig(styleController.getConfig());
-      try {
-        await styleController.saveToStorage();
-      } catch (error) {
-        console.warn('フォントサイズ設定の保存に失敗しました:', error);
-      }
+      withErrorHandling(
+        () => {
+          styleController.setFontSize(fontSize);
+          setConfig(styleController.getConfig());
+          return true;
+        },
+        (cause) => new RenderingError('StylePanel font size change', cause)
+      );
+
+      await withErrorHandling(
+        () => styleController.saveToStorage(),
+        (cause) => new StorageError('save font size setting', cause)
+      );
+
       onStyleChange();
     })();
   };
 
   const handleFontFamilyChange = (fontFamily: FontFamily) => {
     void (async () => {
-      styleController.setFontFamily(fontFamily);
-      setConfig(styleController.getConfig());
-      try {
-        await styleController.saveToStorage();
-      } catch (error) {
-        console.warn('フォント種類設定の保存に失敗しました:', error);
-      }
+      withErrorHandling(
+        () => {
+          styleController.setFontFamily(fontFamily);
+          setConfig(styleController.getConfig());
+          return true;
+        },
+        (cause) => new RenderingError('StylePanel font family change', cause)
+      );
+
+      await withErrorHandling(
+        () => styleController.saveToStorage(),
+        (cause) => new StorageError('save font family setting', cause)
+      );
+
       onStyleChange();
     })();
   };
 
   const handleReset = () => {
     void (async () => {
-      try {
-        await styleController.reset();
-      } catch (error) {
-        console.warn('設定のリセットに失敗しました:', error);
-      }
-      setConfig(styleController.getConfig());
+      await withErrorHandling(
+        () => styleController.reset(),
+        (cause) => new StorageError('reset settings', cause)
+      );
+
+      withErrorHandling(
+        () => {
+          setConfig(styleController.getConfig());
+          return true;
+        },
+        (cause) => new RenderingError('StylePanel reset', cause)
+      );
+
       onStyleChange();
     })();
   };
@@ -82,13 +115,15 @@ const StylePanel: React.FC<StylePanelProps> = ({
           value={config.theme}
           onChange={(e) => handleThemeChange(e.target.value)}
         >
-          {styleController
-            .getAvailableThemes()
-            .map((theme: ThemeDefinition) => (
-              <option key={theme.id} value={theme.id}>
-                {theme.name}
-              </option>
-            ))}
+          {withErrorHandling(
+            () => styleController.getAvailableThemes(),
+            (cause) =>
+              new RenderingError('StylePanel get available themes', cause)
+          )?.map((theme: ThemeDefinition) => (
+            <option key={theme.id} value={theme.id}>
+              {theme.name}
+            </option>
+          )) || []}
         </select>
       </div>
 

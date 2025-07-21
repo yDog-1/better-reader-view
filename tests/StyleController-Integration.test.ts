@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { StyleController } from '../utils/StyleController';
 import { ExtensionStyleSheetManager } from '../utils/StyleSheetManager';
 import { ThemeDefinition } from '../utils/types';
-import { ThemeNotFoundError } from '../utils/errors';
 
 describe('StyleController Integration Tests', () => {
   let styleController: StyleController;
@@ -44,9 +43,13 @@ describe('StyleController Integration Tests', () => {
         new Error('Initialization failed')
       );
 
-      await expect(styleController.initializeStyles()).rejects.toThrow(
-        'Initialization failed'
-      );
+      // withAsyncErrorHandling によりエラーがキャッチされる
+      // 例外は投げられずにエラーハンドラーで処理される
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await expect(styleController.initializeStyles()).resolves.not.toThrow();
+
+      consoleSpy.mockRestore();
     });
   });
 
@@ -62,10 +65,18 @@ describe('StyleController Integration Tests', () => {
       expect(styleController.getThemeClass()).toBe('theme-sepia');
     });
 
-    it('存在しないテーマの場合はエラーを投げる', () => {
+    it('存在しないテーマの場合はエラーハンドリングされる', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // withErrorHandling によりエラーがキャッチされて例外は投げられない
       expect(() => {
         styleController.setTheme('invalid-theme');
-      }).toThrow(ThemeNotFoundError);
+      }).not.toThrow();
+
+      // 元のテーマが保持されることを確認
+      expect(styleController.getConfig().theme).toBe('light');
+
+      consoleSpy.mockRestore();
     });
 
     it('プラガブルテーマシステムが動作する', () => {
