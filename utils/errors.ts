@@ -204,15 +204,24 @@ export class ErrorHandler {
   }
 
   /**
+   * Type guard to check if showPopupMessage function is available
+   */
+  private static isShowPopupMessageAvailable(
+    globalObject: Record<string, unknown>
+  ): boolean {
+    return (
+      'showPopupMessage' in globalObject &&
+      typeof globalObject.showPopupMessage === 'function'
+    );
+  }
+
+  /**
    * Notify user with error message using popupMsg component
    */
   private static notifyUser(message: string): void {
     // Try to use the global showPopupMessage function if available
     const globalObject = globalThis as Record<string, unknown>;
-    if (
-      'showPopupMessage' in globalObject &&
-      typeof globalObject.showPopupMessage === 'function'
-    ) {
+    if (this.isShowPopupMessageAvailable(globalObject)) {
       (globalObject.showPopupMessage as (message: string) => void)(message);
     } else {
       // Fallback to console warning if popupMsg is not available
@@ -236,8 +245,8 @@ export class ErrorHandler {
     }
 
     return {
-      userAgent: globalThis.navigator?.userAgent,
-      url: globalThis.location?.href,
+      userAgent: globalThis.navigator.userAgent,
+      url: globalThis.location.href,
     };
   }
 
