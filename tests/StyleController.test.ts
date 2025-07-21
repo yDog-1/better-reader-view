@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { StyleController, type StyleConfig } from '../utils/StyleController';
 import { ThemeDefinition } from '../utils/types';
-import { ThemeNotFoundError } from '../utils/errors';
 import { JSDOM } from 'jsdom';
 
 describe('StyleController', () => {
@@ -92,10 +91,18 @@ describe('StyleController', () => {
       expect(styleController.getThemeClass()).toBe('theme-sepia');
     });
 
-    it('存在しないテーマの場合はエラーを投げる', () => {
+    it('存在しないテーマの場合はエラーハンドリングされる', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // withErrorHandling によりエラーがキャッチされて例外は投げられない
       expect(() => {
         styleController.setTheme('non-existent-theme');
-      }).toThrow(ThemeNotFoundError);
+      }).not.toThrow();
+
+      // 元のテーマが保持されることを確認
+      expect(styleController.getConfig().theme).toBe('light');
+
+      consoleSpy.mockRestore();
     });
 
     it('カスタムテーマを登録して使用できる', () => {

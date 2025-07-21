@@ -4,6 +4,12 @@ import StylePanel from './StylePanel';
 import readerViewCSS from './ReaderView.css?inline';
 import stylePanelCSS from './StylePanel.css?inline';
 import themeCSS from '../utils/theme.css?inline';
+import {
+  StyleSystemInitializationError,
+  ShadowDOMError,
+  RenderingError,
+  withErrorHandling,
+} from '../utils/errors';
 
 export interface ReaderViewProps {
   title: string;
@@ -18,13 +24,19 @@ export interface ReaderViewProps {
 const initializeStyleController = async (
   styleController: StyleController
 ): Promise<void> => {
-  try {
-    if (!styleController.isReady()) {
-      await styleController.initializeStyles();
-    }
-  } catch (error) {
-    console.warn('スタイルシステムの初期化に失敗しました:', error);
-  }
+  withErrorHandling(
+    async () => {
+      if (!styleController.isReady()) {
+        await styleController.initializeStyles();
+      }
+      return true;
+    },
+    (cause) =>
+      new StyleSystemInitializationError(
+        'StyleController initialization failed in ReaderView',
+        cause
+      )
+  );
 };
 
 /**
@@ -35,39 +47,42 @@ const injectCSSIntoShadowDOM = (shadowRoot: ShadowRoot | null): void => {
     return;
   }
 
-  try {
-    // Remove existing style elements to avoid duplicates
-    const existingStyles = shadowRoot.querySelectorAll(
-      'style[data-reader-view]'
-    );
-    existingStyles.forEach((style) => style.remove());
+  withErrorHandling(
+    () => {
+      // Remove existing style elements to avoid duplicates
+      const existingStyles = shadowRoot.querySelectorAll(
+        'style[data-reader-view]'
+      );
+      existingStyles.forEach((style) => style.remove());
 
-    // Inject theme CSS
-    const themeStyle =
-      shadowRoot.ownerDocument?.createElement('style') ||
-      document.createElement('style');
-    themeStyle.setAttribute('data-reader-view', 'theme');
-    themeStyle.textContent = themeCSS;
-    shadowRoot.appendChild(themeStyle);
+      // Inject theme CSS
+      const themeStyle =
+        shadowRoot.ownerDocument?.createElement('style') ||
+        document.createElement('style');
+      themeStyle.setAttribute('data-reader-view', 'theme');
+      themeStyle.textContent = themeCSS;
+      shadowRoot.appendChild(themeStyle);
 
-    // Inject ReaderView CSS
-    const readerViewStyle =
-      shadowRoot.ownerDocument?.createElement('style') ||
-      document.createElement('style');
-    readerViewStyle.setAttribute('data-reader-view', 'reader-view');
-    readerViewStyle.textContent = readerViewCSS;
-    shadowRoot.appendChild(readerViewStyle);
+      // Inject ReaderView CSS
+      const readerViewStyle =
+        shadowRoot.ownerDocument?.createElement('style') ||
+        document.createElement('style');
+      readerViewStyle.setAttribute('data-reader-view', 'reader-view');
+      readerViewStyle.textContent = readerViewCSS;
+      shadowRoot.appendChild(readerViewStyle);
 
-    // Inject StylePanel CSS
-    const stylePanelStyle =
-      shadowRoot.ownerDocument?.createElement('style') ||
-      document.createElement('style');
-    stylePanelStyle.setAttribute('data-reader-view', 'style-panel');
-    stylePanelStyle.textContent = stylePanelCSS;
-    shadowRoot.appendChild(stylePanelStyle);
-  } catch (error) {
-    console.warn('Shadow DOMへのCSS注入に失敗しました:', error);
-  }
+      // Inject StylePanel CSS
+      const stylePanelStyle =
+        shadowRoot.ownerDocument?.createElement('style') ||
+        document.createElement('style');
+      stylePanelStyle.setAttribute('data-reader-view', 'style-panel');
+      stylePanelStyle.textContent = stylePanelCSS;
+      shadowRoot.appendChild(stylePanelStyle);
+
+      return true;
+    },
+    (cause) => new ShadowDOMError('CSS injection into Shadow DOM', cause)
+  );
 };
 
 const ReaderView: React.FC<ReaderViewProps> = ({
@@ -81,7 +96,12 @@ const ReaderView: React.FC<ReaderViewProps> = ({
 
   // Get custom styles from StyleController - recalculate when styleVersion changes
   const customStyles = useMemo(() => {
-    return styleController.getCustomStyles();
+    return (
+      withErrorHandling(
+        () => styleController.getCustomStyles(),
+        (cause) => new RenderingError('ReaderView custom styles', cause)
+      ) ?? {}
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleController, styleVersion]);
 
@@ -93,16 +113,34 @@ const ReaderView: React.FC<ReaderViewProps> = ({
   // Initialize StyleController and inject CSS into Shadow DOM
   useEffect(() => {
     const initStyles = async () => {
-      await initializeStyleController(styleController);
-      injectCSSIntoShadowDOM(shadowRoot);
+      withErrorHandling(
+        async () => {
+          await initializeStyleController(styleController);
+          injectCSSIntoShadowDOM(shadowRoot);
+          return true;
+        },
+        (cause) => new RenderingError('ReaderView style initialization', cause)
+      );
     };
 
     initStyles();
   }, [shadowRoot, styleController, styleVersion]);
 
+  const themeClass =
+    withErrorHandling(
+      () => styleController.getThemeClass(),
+      (cause) => new RenderingError('ReaderView theme class', cause)
+    ) ?? 'theme-light';
+
+  const fontFamilyClass =
+    withErrorHandling(
+      () => styleController.getFontFamilyClass(),
+      (cause) => new RenderingError('ReaderView font family class', cause)
+    ) ?? 'font-sans';
+
   return (
     <div
-      className={`reader-container ${styleController.getThemeClass()} ${styleController.getFontFamilyClass()}`}
+      className={`reader-container ${themeClass} ${fontFamilyClass}`}
       style={customStyles}
     >
       <button

@@ -42,7 +42,9 @@ export interface ThemeRegistry {
 // カスタムエラークラスのインターフェース
 export interface ReaderViewError extends Error {
   readonly code: string;
+  readonly userMessage: string;
   readonly context?: Record<string, unknown>;
+  readonly cause?: Error;
 }
 
 export type FontFamilyClassName = 'font-sans' | 'font-serif' | 'font-mono';

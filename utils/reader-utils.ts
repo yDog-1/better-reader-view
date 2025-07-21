@@ -3,6 +3,13 @@ import { ShadowDOMManager } from './DOMManager';
 import { ReactComponentRenderer } from './ReactRenderer';
 import { ReaderLifecycleManager } from './LifecycleManager';
 import type { Article } from './types';
+import {
+  ArticleExtractionError,
+  ShadowDOMError,
+  RenderingError,
+  ErrorHandler,
+  withErrorHandling,
+} from './errors';
 
 /**
  * リーダービューの状態とライフサイクルを管理するクラス
@@ -16,8 +23,21 @@ class ReaderViewManager {
     this.styleController = styleController;
 
     // 各責任を分離したコンポーネントを作成
-    const domManager = new ShadowDOMManager();
-    const reactRenderer = new ReactComponentRenderer();
+    const domManager = withErrorHandling(
+      () => new ShadowDOMManager(),
+      (cause) => new ShadowDOMError('ShadowDOMManagerの初期化', cause)
+    );
+
+    const reactRenderer = withErrorHandling(
+      () => new ReactComponentRenderer(),
+      (cause) => new RenderingError('ReactComponentRendererの初期化', cause)
+    );
+
+    if (!domManager || !reactRenderer) {
+      throw new ShadowDOMError(
+        'ReaderViewManagerコンポーネントの初期化に失敗しました'
+      );
+    }
 
     // ライフサイクルマネージャが全体を協調
     this.lifecycleManager = new ReaderLifecycleManager(
@@ -31,14 +51,25 @@ class ReaderViewManager {
    * リーダービューをShadow DOMで表示
    */
   activateReader(doc: Document): boolean {
-    return this.lifecycleManager.activate(doc);
+    return (
+      withErrorHandling(
+        () => this.lifecycleManager.activate(doc),
+        (cause) => new ShadowDOMError('リーダービューの有効化', cause)
+      ) ?? false
+    );
   }
 
   /**
    * リーダービューを非表示にして元ページを復元
    */
   deactivateReader(doc: Document): void {
-    this.lifecycleManager.deactivate(doc);
+    withErrorHandling(
+      () => {
+        this.lifecycleManager.deactivate(doc);
+        return true;
+      },
+      (cause) => new ShadowDOMError('リーダービューの無効化', cause)
+    );
   }
 
   /**
@@ -52,7 +83,12 @@ class ReaderViewManager {
    * リーダービューが有効かどうかを確認
    */
   isActive(): boolean {
-    return this.lifecycleManager.isActive();
+    return (
+      withErrorHandling(
+        () => this.lifecycleManager.isActive(),
+        (cause) => new ShadowDOMError('リーダービューの状態確認', cause)
+      ) ?? false
+    );
   }
 }
 
@@ -62,8 +98,11 @@ class ReaderViewManager {
  */
 export const createReaderViewManager = (
   styleController: StyleController
-): ReaderViewManager => {
-  return new ReaderViewManager(styleController);
+): ReaderViewManager | null => {
+  return withErrorHandling(
+    () => new ReaderViewManager(styleController),
+    (cause) => new ShadowDOMError('ReaderViewManagerの作成', cause)
+  );
 };
 
 /**
@@ -73,9 +112,15 @@ export const createReaderViewManager = (
  * @returns 成功したかどうか
  */
 export const activateReader = (
-  manager: ReaderViewManager,
+  manager: ReaderViewManager | null,
   doc: Document
 ): boolean => {
+  if (!manager) {
+    ErrorHandler.handle(
+      new ShadowDOMError('無効なReaderViewManagerインスタンス')
+    );
+    return false;
+  }
   return manager.activateReader(doc);
 };
 
@@ -85,9 +130,15 @@ export const activateReader = (
  * @param doc ドキュメント
  */
 export const deactivateReader = (
-  manager: ReaderViewManager,
+  manager: ReaderViewManager | null,
   doc: Document
 ): void => {
+  if (!manager) {
+    ErrorHandler.handle(
+      new ShadowDOMError('無効なReaderViewManagerインスタンス')
+    );
+    return;
+  }
   manager.deactivateReader(doc);
 };
 
@@ -96,7 +147,13 @@ export const deactivateReader = (
  * @param manager ReaderViewManagerインスタンス
  * @returns リーダービューが有効かどうか
  */
-export const isReaderActive = (manager: ReaderViewManager): boolean => {
+export const isReaderActive = (manager: ReaderViewManager | null): boolean => {
+  if (!manager) {
+    ErrorHandler.handle(
+      new ShadowDOMError('無効なReaderViewManagerインスタンス')
+    );
+    return false;
+  }
   return manager.isActive();
 };
 
@@ -104,19 +161,26 @@ export const isReaderActive = (manager: ReaderViewManager): boolean => {
  * Type guard function: Check if article is valid Article type
  */
 export function isValidArticle(article: unknown): article is Article {
-  if (!article || typeof article !== 'object') {
-    return false;
-  }
-
-  const candidateArticle = article as Partial<Article>;
-
   return (
-    typeof candidateArticle.title === 'string' &&
-    candidateArticle.title.trim() !== '' &&
-    typeof candidateArticle.content === 'string' &&
-    candidateArticle.content.trim() !== '' &&
-    typeof candidateArticle.textContent === 'string' &&
-    typeof candidateArticle.length === 'number' &&
-    typeof candidateArticle.excerpt === 'string'
+    withErrorHandling(
+      () => {
+        if (!article || typeof article !== 'object') {
+          return false;
+        }
+
+        const candidateArticle = article as Partial<Article>;
+
+        return (
+          typeof candidateArticle.title === 'string' &&
+          candidateArticle.title.trim() !== '' &&
+          typeof candidateArticle.content === 'string' &&
+          candidateArticle.content.trim() !== '' &&
+          typeof candidateArticle.textContent === 'string' &&
+          typeof candidateArticle.length === 'number' &&
+          typeof candidateArticle.excerpt === 'string'
+        );
+      },
+      (cause) => new ArticleExtractionError(cause)
+    ) ?? false
   );
 }
