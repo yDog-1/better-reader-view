@@ -49,9 +49,6 @@ describe(
     });
 
     it('should not cause significant memory leaks during repeated activation/deactivation', () => {
-      // This is a simplified memory leak test.
-      // For more accurate results, this should be run in a browser environment
-      // with access to garbage collection and more precise memory measurement tools.
       const readerViewManager = createReaderViewManager(styleController);
       const doc = createLargeDocument(100);
 
@@ -60,14 +57,33 @@ describe(
         deactivateReader(readerViewManager, doc);
       };
 
-      // Warm-up run
+      // Warm-up run to stabilize memory baseline
       runLifecycle();
 
-      // We can't reliably measure memory in Node.js with vitest,
-      // so we will just check if the process doesn't crash.
+      // Force garbage collection if available in Node.js environment
+      if (global.gc) {
+        global.gc();
+      }
+
+      const initialMemory = globalThis.process.memoryUsage();
+
+      // Run multiple lifecycle iterations
       for (let i = 0; i < 100; i++) {
         runLifecycle();
       }
+
+      // Force garbage collection again to clear temporary objects
+      if (global.gc) {
+        global.gc();
+      }
+
+      const finalMemory = globalThis.process.memoryUsage();
+      const memoryIncrease = finalMemory.heapUsed - initialMemory.heapUsed;
+
+      // Memory increase should be minimal (less than 200MB) after GC in test environment
+      // This is a heuristic threshold for detecting potential memory leaks
+      // Note: Test environments can have higher memory usage due to test framework overhead
+      expect(memoryIncrease).toBeLessThan(200 * 1024 * 1024); // 200MB threshold for test environment
     });
 
     it('should handle large documents efficiently, activating within 1500ms', () => {
