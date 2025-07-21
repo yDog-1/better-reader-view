@@ -13,11 +13,14 @@ import {
   CSSVariableApplicationError,
   StorageError,
   ThemeRegistrationError,
+  ErrorHandler,
   withErrorHandling,
   withAsyncErrorHandling,
 } from './errors';
+import { StorageManager, type ReaderViewStyleConfig } from './storage-config';
+import { BrowserAPIManager } from './BrowserAPIManager';
 
-export type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
+export type FontSize = 'small' | 'medium' | 'large' | 'extra-large';
 export type FontFamily = 'sans-serif' | 'serif' | 'monospace';
 
 export interface StyleConfig {
@@ -142,7 +145,7 @@ export class StyleController {
       small: '14px',
       medium: '16px',
       large: '18px',
-      xlarge: '24px',
+      'extra-large': '24px',
     };
 
     // ベースフォントサイズの設定
@@ -306,47 +309,58 @@ export class StyleController {
 
   /**
    * 設定のブラウザストレージへの保存
+   * WXT Storage APIを使用した型安全な保存
    */
   async saveToStorage(): Promise<void> {
     await withAsyncErrorHandling(
-      () =>
-        browser.storage.local.set({
-          globalReaderViewStyleConfig: this.config,
-        }),
+      async () => {
+        if (!BrowserAPIManager.isStorageSupported()) {
+          throw new Error('Storage API is not supported');
+        }
+
+        const storageConfig: ReaderViewStyleConfig = {
+          theme: this.config.theme as ReaderViewStyleConfig['theme'],
+          fontSize: this.config.fontSize,
+          fontFamily: this.config.fontFamily,
+        };
+
+        await StorageManager.updateStyleConfig(storageConfig);
+      },
       (cause) => new StorageError('save style config', cause)
     );
   }
 
   /**
    * ブラウザストレージからの設定読み込み
+   * WXT Storage APIを使用した型安全な読み込み
    */
   async loadFromStorage(): Promise<boolean> {
-    const result = await withAsyncErrorHandling(
-      async () => {
-        const storageResult = await browser.storage.local.get(
-          'globalReaderViewStyleConfig'
-        );
-        if (storageResult.globalReaderViewStyleConfig) {
-          const parsedConfig =
-            storageResult.globalReaderViewStyleConfig as Partial<StyleConfig>;
-          this.config = {
-            theme: parsedConfig.theme || 'light',
-            fontSize: parsedConfig.fontSize || 'medium',
-            fontFamily: parsedConfig.fontFamily || 'sans-serif',
-            customFontSize: parsedConfig.customFontSize,
-          };
-          return true;
-        }
+    try {
+      if (!BrowserAPIManager.isStorageSupported()) {
         return false;
-      },
-      (cause) => new StorageError('load style config', cause)
-    );
+      }
 
-    return result ?? false;
+      const storageConfig = await StorageManager.getStyleConfig();
+
+      this.config = {
+        theme: storageConfig.theme,
+        fontSize: storageConfig.fontSize,
+        fontFamily: storageConfig.fontFamily,
+        customFontSize: this.config.customFontSize, // カスタムフォントサイズは既存の値を保持
+      };
+
+      return true;
+    } catch (cause) {
+      // エラーが発生した場合でもデフォルト設定を読み込んで継続
+      const error = cause instanceof Error ? cause : new Error(String(cause));
+      ErrorHandler.handle(new StorageError('load style config', error));
+      return false;
+    }
   }
 
   /**
    * 設定のリセット
+   * WXT Storage APIを使用したリセット
    */
   async reset(): Promise<void> {
     this.config = {
@@ -356,7 +370,11 @@ export class StyleController {
     };
 
     await withAsyncErrorHandling(
-      () => browser.storage.local.remove('globalReaderViewStyleConfig'),
+      async () => {
+        if (BrowserAPIManager.isStorageSupported()) {
+          await StorageManager.resetAllSettings();
+        }
+      },
       (cause) => new StorageError('reset style config', cause)
     );
   }

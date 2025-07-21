@@ -229,7 +229,7 @@ describe('StylePanel', () => {
     it('異なる初期設定で正しく初期化される', () => {
       const customStyleController = new StyleController({
         theme: 'sepia',
-        fontSize: 'xlarge',
+        fontSize: 'extra-large',
         fontFamily: 'monospace',
         customFontSize: 20,
       });

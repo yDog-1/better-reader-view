@@ -16,10 +16,10 @@ import {
   withErrorHandling,
   withAsyncErrorHandling,
 } from '@/utils/errors';
+import { StorageManager } from '@/utils/storage-config';
+import { BrowserAPIManager } from '@/utils/BrowserAPIManager';
 
 const articleErrorMessage = '記事が見つかりませんでした。';
-
-const READER_VIEW_ACTIVE_KEY = 'readerViewActive';
 
 export default defineContentScript({
   registration: 'runtime',
@@ -63,29 +63,48 @@ export default defineContentScript({
       return;
     }
 
-    toggleReaderView(readerViewManager);
+    await toggleReaderView(readerViewManager);
     return;
   },
 });
 
-function toggleReaderView(
+async function toggleReaderView(
   readerViewManager: NonNullable<ReturnType<typeof createReaderViewManager>>
 ) {
-  withErrorHandling(
-    () => {
-      const isActive =
-        sessionStorage.getItem(READER_VIEW_ACTIVE_KEY) === 'true';
+  await withAsyncErrorHandling(
+    async () => {
+      // WXT Storage APIを使用してFeature Detectionと共に状態を取得
+      const isActive = await BrowserAPIManager.safeAsyncAPICall(
+        async () => {
+          const state = await StorageManager.getReaderViewState();
+          return state.isActive;
+        },
+        false,
+        'storage.session'
+      );
 
       if (isActive) {
         // リーダービューを無効化
         deactivateReader(readerViewManager, document);
-        sessionStorage.removeItem(READER_VIEW_ACTIVE_KEY);
+        await BrowserAPIManager.safeAsyncAPICall(
+          () => StorageManager.deactivateReaderView(),
+          undefined,
+          'storage.session'
+        );
       } else {
         // リーダービューを有効化
         const success = activateReader(readerViewManager, document);
 
         if (success) {
-          sessionStorage.setItem(READER_VIEW_ACTIVE_KEY, 'true');
+          await BrowserAPIManager.safeAsyncAPICall(
+            () =>
+              StorageManager.activateReaderView(
+                window.location.href,
+                document.title
+              ),
+            undefined,
+            'storage.session'
+          );
         } else {
           showPopupMessage(articleErrorMessage);
         }

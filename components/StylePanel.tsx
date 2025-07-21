@@ -137,7 +137,7 @@ const StylePanel: React.FC<StylePanelProps> = ({
           <option value="small">小</option>
           <option value="medium">中</option>
           <option value="large">大</option>
-          <option value="xlarge">特大</option>
+          <option value="extra-large">特大</option>
         </select>
       </div>
 
