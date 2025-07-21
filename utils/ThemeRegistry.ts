@@ -11,7 +11,10 @@ export class DefaultThemeRegistry implements ThemeRegistry {
   /**
    * テーマを登録
    */
-  registerTheme(theme: ThemeDefinition): void {
+  registerTheme(
+    theme: ThemeDefinition,
+    onWarning?: (message: string) => void
+  ): void {
     // バリデーション
     if (!theme.id || typeof theme.id !== 'string') {
       throw new ThemeRegistrationError(
@@ -34,9 +37,10 @@ export class DefaultThemeRegistry implements ThemeRegistry {
 
     // 重複チェック
     if (this.themes.has(theme.id)) {
-      console.warn(
-        `テーマ '${theme.id}' は既に登録されています。上書きします。`
-      );
+      const warningMessage = `テーマ '${theme.id}' は既に登録されています。上書きします。`;
+      if (onWarning) {
+        onWarning(warningMessage);
+      }
     }
 
     this.themes.set(theme.id, theme);

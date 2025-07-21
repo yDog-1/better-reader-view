@@ -1,4 +1,4 @@
-import { StyleSheetManager, ThemeClassName, DebugInfo } from './types';
+import { StyleSheetManager, DebugInfo } from './types';
 import { getCombinedCSS } from './CSSLoader';
 
 /**
@@ -78,7 +78,7 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
    * テーマクラスの適用
    * 現在はユーザーが手動でクラスを適用する想定
    */
-  applyTheme(theme: ThemeClassName): void {
+  applyTheme(theme: string): void {
     // この実装では、StyleControllerが直接DOMクラスを操作する
     // 将来的にはここでテーマ変更の処理を集約できる
     console.log(`テーマ ${theme} の適用準備完了`);

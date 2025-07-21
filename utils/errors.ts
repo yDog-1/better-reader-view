@@ -15,7 +15,7 @@ export abstract class BaseReaderViewError
     this.name = this.constructor.name;
     this.context = context;
 
-    // Error.captureStackTrace が利用可能な場合に使用
+    // Use Error.captureStackTrace if it is available
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);
     }

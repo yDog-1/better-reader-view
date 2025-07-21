@@ -71,16 +71,6 @@ export const builtInThemes: ThemeDefinition[] = [
 export type BuiltInThemeId = 'light' | 'dark' | 'sepia';
 
 /**
- * 組み込みテーマがすべて定義されているかチェック
- */
-export function validateBuiltInThemes(): boolean {
-  const expectedIds: BuiltInThemeId[] = ['light', 'dark', 'sepia'];
-  const actualIds = builtInThemes.map((theme) => theme.id);
-
-  return expectedIds.every((id) => actualIds.includes(id));
-}
-
-/**
  * 特定の組み込みテーマを取得
  */
 export function getBuiltInTheme(id: BuiltInThemeId): ThemeDefinition | null {

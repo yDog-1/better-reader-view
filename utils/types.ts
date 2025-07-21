@@ -27,7 +27,10 @@ export interface ThemeDefinition {
 }
 
 export interface ThemeRegistry {
-  registerTheme(theme: ThemeDefinition): void;
+  registerTheme(
+    theme: ThemeDefinition,
+    onWarning?: (message: string) => void
+  ): void;
   unregisterTheme(themeId: string): boolean;
   getTheme(themeId: string): ThemeDefinition | null;
   getAvailableThemes(): ThemeDefinition[];
@@ -53,7 +56,7 @@ export interface StyleSheetManager {
   readonly isSupported: boolean;
   initialize(): Promise<void>;
   cleanup(): void;
-  applyTheme(theme: ThemeClassName): void;
+  applyTheme(theme: string): void;
   isReady(): boolean;
   getDebugInfo(): DebugInfo;
 }

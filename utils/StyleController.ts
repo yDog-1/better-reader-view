@@ -1,5 +1,4 @@
 import {
-  ThemeClassName,
   FontFamilyClassName,
   StyleSheetManager,
   ThemeDefinition,
@@ -199,7 +198,7 @@ export class StyleController {
       throw new ThemeNotFoundError(themeId, this.themeRegistry.getThemeIds());
     }
     this.config.theme = themeId;
-    this.styleSheetManager.applyTheme(this.getThemeClass() as ThemeClassName);
+    this.styleSheetManager.applyTheme(this.getThemeClass());
   }
 
   /**
