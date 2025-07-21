@@ -107,3 +107,65 @@ export interface LifecycleManager {
   deactivate(doc: Document): void;
   isActive(): boolean;
 }
+
+// Storage-related types
+export type FontSize = 'small' | 'medium' | 'large' | 'extra-large';
+export type FontFamily = 'sans-serif' | 'serif' | 'monospace';
+export type Theme = 'light' | 'dark' | 'sepia';
+
+/**
+ * Reader Viewのスタイル設定インターフェース
+ */
+export interface ReaderViewStyleConfig {
+  theme: Theme;
+  fontSize: FontSize;
+  fontFamily: FontFamily;
+}
+
+/**
+ * Reader Viewの状態インターフェース
+ */
+export interface ReaderViewState {
+  isActive: boolean;
+  url?: string;
+  title?: string;
+}
+
+/**
+ * Storage operation types
+ */
+export type StorageArea = 'local' | 'session' | 'sync';
+
+/**
+ * Generic storage configuration interface
+ */
+export interface StorageConfig<T = unknown> {
+  key: string;
+  area: StorageArea;
+  defaultValue: T;
+}
+
+/**
+ * Pluggable storage manager interface
+ */
+export interface StorageManager<T = unknown> {
+  get(config: StorageConfig<T>): Promise<T>;
+  set(config: StorageConfig<T>, value: Partial<T>): Promise<void>;
+  update(config: StorageConfig<T>, updates: Partial<T>): Promise<void>;
+  reset(config: StorageConfig<T>): Promise<void>;
+  clear(area?: StorageArea): Promise<void>;
+}
+
+/**
+ * Storage event types for reactive updates
+ */
+export interface StorageChangeEvent<T = unknown> {
+  key: string;
+  area: StorageArea;
+  oldValue?: T;
+  newValue?: T;
+}
+
+export type StorageChangeListener<T = unknown> = (
+  event: StorageChangeEvent<T>
+) => void;
