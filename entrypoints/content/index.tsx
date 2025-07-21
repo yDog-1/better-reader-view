@@ -27,6 +27,12 @@ export default defineContentScript({
   cssInjectionMode: 'ui',
 
   async main() {
+    // レガシーストレージからの移行を実行
+    await withAsyncErrorHandling(
+      () => StorageManager.migrateFromLegacyStorage(),
+      (cause) => new StorageError('レガシーストレージからの移行', cause)
+    );
+
     // StyleControllerを初期化
     const styleController = withErrorHandling(
       () => new StyleController(),

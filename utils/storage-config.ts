@@ -252,6 +252,29 @@ export class StorageManager {
   }
 
   /**
+   * Migrate from legacy storage keys for backward compatibility
+   */
+  static async migrateFromLegacyStorage(): Promise<void> {
+    try {
+      const legacyData = await browser.storage.local.get(
+        'globalReaderViewStyleConfig'
+      );
+      if (legacyData.globalReaderViewStyleConfig) {
+        // Migrate to new key
+        await this.updateStyleConfig(legacyData.globalReaderViewStyleConfig);
+        // Remove old key
+        await browser.storage.local.remove('globalReaderViewStyleConfig');
+      }
+    } catch (error) {
+      const storageError = new StorageError(
+        'legacy storage migration',
+        error as Error
+      );
+      ErrorHandler.handle(storageError);
+    }
+  }
+
+  /**
    * Reset all settings to defaults
    */
   static async resetAllSettings(): Promise<void> {
