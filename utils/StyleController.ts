@@ -351,7 +351,7 @@ export class StyleController {
 
       return true;
     } catch (cause) {
-      // エラーが発生した場合でもデフォルト設定を読み込んで継続
+      // Continue with default settings even if an error occurs
       const error = cause instanceof Error ? cause : new Error(String(cause));
       ErrorHandler.handle(new StorageError('load style config', error));
       return false;

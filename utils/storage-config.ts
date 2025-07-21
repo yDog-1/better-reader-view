@@ -186,7 +186,11 @@ export class StorageManager {
         try {
           listener(event);
         } catch (error) {
-          console.error('Error in storage change listener:', error);
+          const storageListenerError = new StorageError(
+            'storage change listener',
+            error as Error
+          );
+          ErrorHandler.handle(storageListenerError);
         }
       });
     }

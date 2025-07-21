@@ -1,5 +1,6 @@
 import { StyleSheetManager, DebugInfo } from './types';
 import { getCombinedCSS } from './CSSLoader';
+import { ErrorHandler, CSSVariableApplicationError } from './errors';
 
 /**
  * ブラウザ拡張環境でのスタイルシート管理
@@ -36,8 +37,12 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
       }
 
       this.isInitialized = true;
-    } catch (error) {
-      console.warn('スタイルシートの初期化に失敗しました:', error);
+    } catch {
+      const stylesheetError = new CSSVariableApplicationError(
+        'stylesheet initialization',
+        'combined CSS'
+      );
+      ErrorHandler.handle(stylesheetError);
       // エラー時はフォールバックを試行
       this.initializeWithStyleElement(getCombinedCSS());
       this.isInitialized = true;
@@ -78,10 +83,10 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
    * テーマクラスの適用
    * 現在はユーザーが手動でクラスを適用する想定
    */
-  applyTheme(theme: string): void {
+  applyTheme(_theme: string): void {
     // この実装では、StyleControllerが直接DOMクラスを操作する
     // 将来的にはここでテーマ変更の処理を集約できる
-    console.log(`テーマ ${theme} の適用準備完了`);
+    // Debug: Theme application prepared for ${theme}
   }
 
   /**

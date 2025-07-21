@@ -3,6 +3,7 @@ import { JSDOM } from 'jsdom';
 import { ReaderLifecycleManager } from '@/utils/LifecycleManager';
 import type { DOMManager, ReactRenderer } from '@/utils/types';
 import { StyleController } from '@/utils/StyleController';
+import { ErrorHandler } from '@/utils/errors';
 import DOMPurify from 'dompurify';
 import { Readability } from '@mozilla/readability';
 
@@ -130,20 +131,18 @@ describe('ライフサイクル管理機能', () => {
         throw new Error('DOM作成エラー');
       });
 
-      const consoleSpy = vi
-        .spyOn(console, 'error')
+      // ErrorHandlerのhandle メソッドをモック
+      const errorHandlerSpy = vi
+        .spyOn(ErrorHandler, 'handle')
         .mockImplementation(() => {});
 
       const result = lifecycleManager.activate(document);
 
       expect(result).toBe(false);
       expect(lifecycleManager.isActive()).toBe(false);
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'リーダービューの有効化に失敗しました:',
-        expect.any(Error)
-      );
+      expect(errorHandlerSpy).toHaveBeenCalled();
 
-      consoleSpy.mockRestore();
+      errorHandlerSpy.mockRestore();
     });
   });
 
@@ -182,19 +181,19 @@ describe('ライフサイクル管理機能', () => {
         throw new Error('アンマウントエラー');
       });
 
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      // ErrorHandlerのhandle メソッドをモック
+      const errorHandlerSpy = vi
+        .spyOn(ErrorHandler, 'handle')
+        .mockImplementation(() => {});
 
       expect(() => {
         lifecycleManager.deactivate(document);
       }).not.toThrow();
 
       expect(lifecycleManager.isActive()).toBe(false);
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'リーダービューの無効化で一部エラーが発生しました:',
-        expect.any(Error)
-      );
+      expect(errorHandlerSpy).toHaveBeenCalled();
 
-      consoleSpy.mockRestore();
+      errorHandlerSpy.mockRestore();
     });
   });
 

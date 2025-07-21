@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { ReactComponentRenderer } from '@/utils/ReactRenderer';
 import { StyleController } from '@/utils/StyleController';
+import { ErrorHandler } from '@/utils/errors';
 import ReactDOM from 'react-dom/client';
 import React from 'react';
 
@@ -134,39 +135,35 @@ describe('React レンダリング機能', () => {
         }),
       };
 
-      // コンソール警告をスパイ
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      // ErrorHandlerのhandle メソッドをモック
+      const errorHandlerSpy = vi
+        .spyOn(ErrorHandler, 'handle')
+        .mockImplementation(() => {});
 
       expect(() => {
         reactRenderer.unmount(mockRoot as unknown);
       }).not.toThrow();
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'React root のアンマウントに失敗しました:',
-        expect.any(Error)
-      );
+      expect(errorHandlerSpy).toHaveBeenCalled();
 
-      consoleSpy.mockRestore();
+      errorHandlerSpy.mockRestore();
     });
 
     it('null や undefined を渡した場合はエラーをログ出力する', () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      // ErrorHandlerのhandle メソッドをモック
+      const errorHandlerSpy = vi
+        .spyOn(ErrorHandler, 'handle')
+        .mockImplementation(() => {});
 
       reactRenderer.unmount(null);
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '無効な React root が渡されました:',
-        null
-      );
+      expect(errorHandlerSpy).toHaveBeenCalled();
 
-      consoleSpy.mockClear();
+      errorHandlerSpy.mockClear();
 
       reactRenderer.unmount(undefined);
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '無効な React root が渡されました:',
-        undefined
-      );
+      expect(errorHandlerSpy).toHaveBeenCalled();
 
-      consoleSpy.mockRestore();
+      errorHandlerSpy.mockRestore();
     });
   });
 
