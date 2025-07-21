@@ -121,6 +121,24 @@ export class BrowserAPIManager {
   }
 
   /**
+   * ストレージAPIを取得（Feature Detection付き）
+   * @param area - ストレージエリア ('local', 'session', 'sync')
+   * @returns ストレージAPI またはnull
+   */
+  static getStorageAPI(area: 'local' | 'session' | 'sync') {
+    return this.safeAPICall(
+      () => {
+        if (!browser?.storage?.[area]) {
+          return null;
+        }
+        return browser.storage[area];
+      },
+      null,
+      `storage.${area}`
+    );
+  }
+
+  /**
    * ブラウザ互換性情報を取得
    */
   static getBrowserCompatibility() {

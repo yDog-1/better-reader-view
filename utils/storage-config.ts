@@ -1,4 +1,3 @@
-import { browser } from 'wxt/browser';
 import { StorageError, ErrorHandler } from './errors';
 import {
   ReaderViewStyleConfig,
@@ -8,6 +7,7 @@ import {
   StorageChangeEvent,
   StorageChangeListener,
 } from './types';
+import { BrowserAPIManager } from './BrowserAPIManager';
 
 /**
  * Storage configurations for Reader View
@@ -43,56 +43,57 @@ export class StorageManager {
    * Get value from storage with type safety and error handling
    */
   static async get<T>(config: StorageConfig<T>): Promise<T> {
-    try {
-      const storageArea = browser.storage[config.area];
-      const result = await storageArea.get(config.key);
-      const stored = result[config.key];
+    return BrowserAPIManager.safeAsyncAPICall(
+      async () => {
+        const storageArea = BrowserAPIManager.getStorageAPI(config.area);
+        if (!storageArea) {
+          throw new Error(`Storage area ${config.area} not available`);
+        }
 
-      // Merge with defaults for partial data
-      if (
-        stored &&
-        typeof stored === 'object' &&
-        typeof config.defaultValue === 'object'
-      ) {
-        return { ...config.defaultValue, ...stored } as T;
-      }
+        const result = await storageArea.get(config.key);
+        const stored = result[config.key];
 
-      return stored ?? config.defaultValue;
-    } catch (error) {
-      const storageError = new StorageError(
-        `retrieve ${config.key} from ${config.area}`,
-        error as Error
-      );
-      ErrorHandler.handle(storageError);
-      return config.defaultValue;
-    }
+        // Merge with defaults for partial data
+        if (
+          stored &&
+          typeof stored === 'object' &&
+          typeof config.defaultValue === 'object'
+        ) {
+          return { ...config.defaultValue, ...stored } as T;
+        }
+
+        return stored ?? config.defaultValue;
+      },
+      config.defaultValue,
+      `storage.${config.area}`
+    );
   }
 
   /**
    * Set complete value in storage
    */
   static async set<T>(config: StorageConfig<T>, value: T): Promise<void> {
-    try {
-      const storageArea = browser.storage[config.area];
-      const oldValue = await this.get(config);
+    await BrowserAPIManager.safeAsyncAPICall(
+      async () => {
+        const storageArea = BrowserAPIManager.getStorageAPI(config.area);
+        if (!storageArea) {
+          throw new Error(`Storage area ${config.area} not available`);
+        }
 
-      await storageArea.set({ [config.key]: value });
+        const oldValue = await this.get(config);
+        await storageArea.set({ [config.key]: value });
 
-      // Emit change event
-      this.emitChange({
-        key: config.key,
-        area: config.area,
-        oldValue,
-        newValue: value,
-      });
-    } catch (error) {
-      const storageError = new StorageError(
-        `set ${config.key} in ${config.area}`,
-        error as Error
-      );
-      ErrorHandler.handle(storageError);
-      throw storageError;
-    }
+        // Emit change event
+        this.emitChange({
+          key: config.key,
+          area: config.area,
+          oldValue,
+          newValue: value,
+        });
+      },
+      undefined,
+      `storage.${config.area}`
+    );
   }
 
   /**
@@ -127,29 +128,34 @@ export class StorageManager {
    * Clear storage area or specific keys
    */
   static async clear(area?: StorageArea, keys?: string[]): Promise<void> {
-    try {
-      if (area) {
-        const storageArea = browser.storage[area];
-        if (keys && keys.length > 0) {
-          await storageArea.remove(keys);
+    await BrowserAPIManager.safeAsyncAPICall(
+      async () => {
+        if (area) {
+          const storageArea = BrowserAPIManager.getStorageAPI(area);
+          if (!storageArea) {
+            throw new Error(`Storage area ${area} not available`);
+          }
+
+          if (keys && keys.length > 0) {
+            await storageArea.remove(keys);
+          } else {
+            await storageArea.clear();
+          }
         } else {
-          await storageArea.clear();
+          // Clear all areas
+          const localStorage = BrowserAPIManager.getStorageAPI('local');
+          const sessionStorage = BrowserAPIManager.getStorageAPI('session');
+
+          const clearPromises = [];
+          if (localStorage) clearPromises.push(localStorage.clear());
+          if (sessionStorage) clearPromises.push(sessionStorage.clear());
+
+          await Promise.all(clearPromises);
         }
-      } else {
-        // Clear all areas
-        await Promise.all([
-          browser.storage.local.clear(),
-          browser.storage.session.clear(),
-        ]);
-      }
-    } catch (error) {
-      const storageError = new StorageError(
-        `clear ${area || 'all'} storage`,
-        error as Error
-      );
-      ErrorHandler.handle(storageError);
-      throw storageError;
-    }
+      },
+      undefined,
+      'storage'
+    );
   }
 
   /**
@@ -255,23 +261,26 @@ export class StorageManager {
    * Migrate from legacy storage keys for backward compatibility
    */
   static async migrateFromLegacyStorage(): Promise<void> {
-    try {
-      const legacyData = await browser.storage.local.get(
-        'globalReaderViewStyleConfig'
-      );
-      if (legacyData.globalReaderViewStyleConfig) {
-        // Migrate to new key
-        await this.updateStyleConfig(legacyData.globalReaderViewStyleConfig);
-        // Remove old key
-        await browser.storage.local.remove('globalReaderViewStyleConfig');
-      }
-    } catch (error) {
-      const storageError = new StorageError(
-        'legacy storage migration',
-        error as Error
-      );
-      ErrorHandler.handle(storageError);
-    }
+    await BrowserAPIManager.safeAsyncAPICall(
+      async () => {
+        const localStorage = BrowserAPIManager.getStorageAPI('local');
+        if (!localStorage) {
+          throw new Error('Local storage not available');
+        }
+
+        const legacyData = await localStorage.get(
+          'globalReaderViewStyleConfig'
+        );
+        if (legacyData.globalReaderViewStyleConfig) {
+          // Migrate to new key
+          await this.updateStyleConfig(legacyData.globalReaderViewStyleConfig);
+          // Remove old key
+          await localStorage.remove('globalReaderViewStyleConfig');
+        }
+      },
+      undefined,
+      'storage.local'
+    );
   }
 
   /**
