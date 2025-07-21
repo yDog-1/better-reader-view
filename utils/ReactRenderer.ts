@@ -3,6 +3,7 @@ import React from 'react';
 import ReaderView from '~/components/ReaderView';
 import type { ReactRenderer } from './types';
 import type { StyleController } from './StyleController';
+import { ErrorHandler, ShadowDOMError } from './errors';
 import { isReactRoot } from './typeGuards';
 
 /**
@@ -40,14 +41,19 @@ export class ReactComponentRenderer implements ReactRenderer {
    */
   unmount(root: unknown): void {
     if (!isReactRoot(root)) {
-      console.warn('無効な React root が渡されました:', root);
+      const reactRootError = new ShadowDOMError('React root validation');
+      ErrorHandler.handle(reactRootError);
       return;
     }
 
     try {
       root.unmount();
     } catch (error) {
-      console.warn('React root のアンマウントに失敗しました:', error);
+      const unmountError = new ShadowDOMError(
+        'React root unmount',
+        error as Error
+      );
+      ErrorHandler.handle(unmountError);
     }
   }
 }

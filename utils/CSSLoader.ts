@@ -31,7 +31,7 @@ export const THEME_CSS = `
   --font-size-small: 14px;
   --font-size-medium: 16px;
   --font-size-large: 18px;
-  --font-size-xlarge: 24px;
+  --font-size-extra-large: 24px;
 
   /* Font weights */
   --font-weight-normal: 400;
@@ -115,7 +115,7 @@ export const READER_VIEW_CSS = `
 }
 
 .reader-title {
-  font-size: var(--font-size-xlarge);
+  font-size: var(--font-size-extra-large);
   margin-bottom: 1em;
   color: var(--color-text);
   font-weight: var(--font-weight-bold);
@@ -226,7 +226,7 @@ export const READER_VIEW_CSS = `
 }
 
 .content-area h1 {
-  font-size: var(--font-size-xlarge);
+  font-size: var(--font-size-extra-large);
 }
 
 .content-area h2 {

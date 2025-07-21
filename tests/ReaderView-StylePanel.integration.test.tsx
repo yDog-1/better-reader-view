@@ -121,7 +121,7 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       fireEvent.change(themeSelect, { target: { value: 'sepia' } });
 
       const fontSizeSelect = screen.getByDisplayValue('中');
-      fireEvent.change(fontSizeSelect, { target: { value: 'xlarge' } });
+      fireEvent.change(fontSizeSelect, { target: { value: 'extra-large' } });
 
       // 変更が適用されたことを確認
       expect(screen.getByDisplayValue('セピア')).toBeInTheDocument();
@@ -229,7 +229,7 @@ describe('ReaderView + StylePanel 統合テスト', () => {
       });
 
       // フォントサイズオプション
-      const fontSizeOptions = ['small', 'medium', 'large', 'xlarge'];
+      const fontSizeOptions = ['small', 'medium', 'large', 'extra-large'];
       const allSelects = screen.getAllByRole('combobox');
       const fontSizeSelect = allSelects[1]; // テーマが0、フォントサイズが1
 

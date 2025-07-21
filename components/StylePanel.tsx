@@ -36,10 +36,12 @@ const StylePanel: React.FC<StylePanelProps> = ({
         (cause) => new RenderingError('StylePanel theme change', cause)
       );
 
-      await withErrorHandling(
-        () => styleController.saveToStorage(),
-        (cause) => new StorageError('save theme setting', cause)
-      );
+      try {
+        await styleController.saveToStorage();
+      } catch (error) {
+        // ストレージエラーはログに記録するが、UIの動作は継続
+        console.warn('Theme setting could not be saved to storage:', error);
+      }
 
       onStyleChange();
     })();
@@ -56,10 +58,12 @@ const StylePanel: React.FC<StylePanelProps> = ({
         (cause) => new RenderingError('StylePanel font size change', cause)
       );
 
-      await withErrorHandling(
-        () => styleController.saveToStorage(),
-        (cause) => new StorageError('save font size setting', cause)
-      );
+      try {
+        await styleController.saveToStorage();
+      } catch (error) {
+        // ストレージエラーはログに記録するが、UIの動作は継続
+        console.warn('Font size setting could not be saved to storage:', error);
+      }
 
       onStyleChange();
     })();
@@ -76,10 +80,15 @@ const StylePanel: React.FC<StylePanelProps> = ({
         (cause) => new RenderingError('StylePanel font family change', cause)
       );
 
-      await withErrorHandling(
-        () => styleController.saveToStorage(),
-        (cause) => new StorageError('save font family setting', cause)
-      );
+      try {
+        await styleController.saveToStorage();
+      } catch (error) {
+        // ストレージエラーはログに記録するが、UIの動作は継続
+        console.warn(
+          'Font family setting could not be saved to storage:',
+          error
+        );
+      }
 
       onStyleChange();
     })();
@@ -137,7 +146,7 @@ const StylePanel: React.FC<StylePanelProps> = ({
           <option value="small">小</option>
           <option value="medium">中</option>
           <option value="large">大</option>
-          <option value="xlarge">特大</option>
+          <option value="extra-large">特大</option>
         </select>
       </div>
 

@@ -3,6 +3,7 @@ import { Readability } from '@mozilla/readability';
 import type { LifecycleManager, DOMManager, ReactRenderer } from './types';
 import type { StyleController } from './StyleController';
 import { isValidArticle } from './typeGuards';
+import { ErrorHandler, StorageError, ShadowDOMError } from './errors';
 
 // localStorage エラーをフォールバックで処理する関数
 const safeLocalStorageAccess = (callback: () => void) => {
@@ -14,7 +15,8 @@ const safeLocalStorageAccess = (callback: () => void) => {
       error.message.includes('localStorage is not available')
     ) {
       // localStorage が利用できない場合はスキップ
-      console.warn('localStorage が利用できません。設定は保存されません。');
+      const storageError = new StorageError('localStorage access failed');
+      ErrorHandler.handle(storageError);
     } else {
       throw error;
     }
@@ -102,7 +104,11 @@ export class ReaderLifecycleManager implements LifecycleManager {
       this.currentState.isActive = true;
       return true;
     } catch (error) {
-      console.error('リーダービューの有効化に失敗しました:', error);
+      const activationError = new ShadowDOMError(
+        'reader view activation',
+        error as Error
+      );
+      ErrorHandler.handle(activationError);
       this.cleanup(doc);
       return false;
     }
@@ -150,7 +156,11 @@ export class ReaderLifecycleManager implements LifecycleManager {
 
       this.currentState.isActive = false;
     } catch (error) {
-      console.warn('リーダービューの無効化で一部エラーが発生しました:', error);
+      const deactivationError = new ShadowDOMError(
+        'reader view deactivation',
+        error as Error
+      );
+      ErrorHandler.handle(deactivationError);
       this.currentState.isActive = false;
     }
   }

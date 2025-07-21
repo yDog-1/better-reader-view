@@ -18,7 +18,7 @@ vi.mock('../utils/theme.css', () => ({
         small: '--font-size-small',
         medium: '--font-size-medium',
         large: '--font-size-large',
-        xlarge: '--font-size-xlarge',
+        'extra-large': '--font-size-extra-large',
       },
     },
   },

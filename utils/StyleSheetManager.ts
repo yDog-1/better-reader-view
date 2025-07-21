@@ -1,5 +1,6 @@
 import { StyleSheetManager, DebugInfo } from './types';
 import { getCombinedCSS } from './CSSLoader';
+import { ErrorHandler, CSSVariableApplicationError } from './errors';
 
 /**
  * ブラウザ拡張環境でのスタイルシート管理
@@ -11,9 +12,31 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
 
   /**
    * adoptedStyleSheetsがサポートされているかチェック
+   * Firefox content scriptではXray wrapperにより実際の使用時にエラーになるため、
+   * 実際に使用可能かテストする
    */
   get isSupported(): boolean {
-    return 'adoptedStyleSheets' in document && 'CSSStyleSheet' in globalThis;
+    if (!('adoptedStyleSheets' in document && 'CSSStyleSheet' in globalThis)) {
+      return false;
+    }
+
+    // Firefox content scriptでのXray wrapper制限をチェック
+    try {
+      // 一時的なCSSStyleSheetを作成してテスト
+      const testSheet = new globalThis.CSSStyleSheet();
+      testSheet.replaceSync('/* test */');
+
+      // adoptedStyleSheetsへのアクセスをテスト
+      const currentSheets = Array.from(document.adoptedStyleSheets || []);
+      currentSheets.push(testSheet);
+      document.adoptedStyleSheets = currentSheets;
+
+      // 成功した場合は即座にクリーンアップ
+      document.adoptedStyleSheets = currentSheets.slice(0, -1);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -36,11 +59,21 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
       }
 
       this.isInitialized = true;
-    } catch (error) {
-      console.warn('スタイルシートの初期化に失敗しました:', error);
-      // エラー時はフォールバックを試行
-      this.initializeWithStyleElement(getCombinedCSS());
-      this.isInitialized = true;
+    } catch {
+      // エラー時はフォールバックを試行（エラー報告は成功/失敗後に判断）
+      try {
+        this.initializeWithStyleElement(getCombinedCSS());
+        this.isInitialized = true;
+      } catch {
+        this.isInitialized = true; // Prevent infinite retry
+
+        // フォールバックも失敗した場合のみエラー報告
+        const stylesheetError = new CSSVariableApplicationError(
+          'stylesheet initialization (both primary and fallback failed)',
+          'combined CSS'
+        );
+        ErrorHandler.handle(stylesheetError);
+      }
     }
   }
 
@@ -78,10 +111,10 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
    * テーマクラスの適用
    * 現在はユーザーが手動でクラスを適用する想定
    */
-  applyTheme(theme: string): void {
+  applyTheme(_theme: string): void {
     // この実装では、StyleControllerが直接DOMクラスを操作する
     // 将来的にはここでテーマ変更の処理を集約できる
-    console.log(`テーマ ${theme} の適用準備完了`);
+    // Debug: Theme application prepared for ${theme}
   }
 
   /**
