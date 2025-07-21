@@ -131,9 +131,14 @@ function showPopupMessage(message: string) {
           document.documentElement.appendChild(container);
         } else {
           // 通常ここには来ないはずだが、フォールバック
-          throw new Error(
-            'ポップアップを表示できません: コンテナを追加するbodyまたはdocumentElementが見つかりません。'
+          const renderingError = new RenderingError(
+            'PopupMessage',
+            new Error(
+              'ポップアップを表示できません: コンテナを追加するbodyまたはdocumentElementが見つかりません。'
+            )
           );
+          ErrorHandler.handle(renderingError);
+          throw renderingError;
         }
       }
       const root = ReactDOM.createRoot(container);

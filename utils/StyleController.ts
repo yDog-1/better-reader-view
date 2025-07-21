@@ -315,7 +315,7 @@ export class StyleController {
     await withAsyncErrorHandling(
       async () => {
         if (!BrowserAPIManager.isStorageSupported()) {
-          throw new Error('Storage API is not supported');
+          throw new StorageError('Storage API is not supported');
         }
 
         const storageConfig: ReaderViewStyleConfig = {
