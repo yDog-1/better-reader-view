@@ -1,6 +1,7 @@
 import { StyleSheetManager, DebugInfo } from './types';
 import { getCombinedCSS } from './CSSLoader';
 import { ErrorHandler, CSSVariableApplicationError } from './errors';
+import { DebugLogger } from './debug-logger';
 
 /**
  * ブラウザ拡張環境でのスタイルシート管理
@@ -27,25 +28,41 @@ export class ExtensionStyleSheetManager implements StyleSheetManager {
       return;
     }
 
+    DebugLogger.log('StyleSheetManager', '=== Initializing StyleSheetManager ===');
+
     try {
       const cssContent = getCombinedCSS();
+      DebugLogger.log('StyleSheetManager', `CSS content length: ${cssContent.length}`);
+      DebugLogger.log('StyleSheetManager', `Adopted stylesheets supported: ${this.isSupported}`);
 
       if (this.isSupported) {
+        DebugLogger.log('StyleSheetManager', 'Using adopted stylesheets');
         await this.initializeWithAdoptedStyleSheets(cssContent);
       } else {
+        DebugLogger.log('StyleSheetManager', 'Using style element fallback');
         this.initializeWithStyleElement(cssContent);
       }
 
       this.isInitialized = true;
-    } catch {
+      DebugLogger.log('StyleSheetManager', 'StyleSheetManager initialized successfully');
+    } catch (error) {
+      DebugLogger.error('StyleSheetManager', 'Initialization failed', error);
       const stylesheetError = new CSSVariableApplicationError(
         'stylesheet initialization',
         'combined CSS'
       );
       ErrorHandler.handle(stylesheetError);
+      
       // エラー時はフォールバックを試行
-      this.initializeWithStyleElement(getCombinedCSS());
-      this.isInitialized = true;
+      DebugLogger.log('StyleSheetManager', 'Attempting fallback initialization');
+      try {
+        this.initializeWithStyleElement(getCombinedCSS());
+        this.isInitialized = true;
+        DebugLogger.log('StyleSheetManager', 'Fallback initialization successful');
+      } catch (fallbackError) {
+        DebugLogger.error('StyleSheetManager', 'Fallback initialization failed', fallbackError);
+        this.isInitialized = true; // Prevent infinite retry
+      }
     }
   }
 

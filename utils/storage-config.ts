@@ -8,6 +8,7 @@ import {
   StorageChangeListener,
 } from './types';
 import { BrowserAPIManager } from './BrowserAPIManager';
+import { DebugLogger } from './debug-logger';
 
 /**
  * Storage configurations for Reader View
@@ -43,15 +44,21 @@ export class StorageManager {
    * Get value from storage with type safety and error handling
    */
   static async get<T>(config: StorageConfig<T>): Promise<T> {
-    return BrowserAPIManager.safeAsyncAPICall(
+    DebugLogger.log('StorageManager', `Getting ${config.key} from ${config.area}`);
+    
+    const result = await BrowserAPIManager.safeAsyncAPICall(
       async () => {
         const storageArea = BrowserAPIManager.getStorageAPI(config.area);
+        DebugLogger.log('StorageManager', `Storage area ${config.area}:`, storageArea !== null);
+        
         if (!storageArea) {
           throw new Error(`Storage area ${config.area} not available`);
         }
 
         const result = await storageArea.get(config.key);
         const stored = result[config.key];
+        
+        DebugLogger.log('StorageManager', `Raw stored data for ${config.key}:`, stored);
 
         // Merge with defaults for partial data
         if (
@@ -59,29 +66,46 @@ export class StorageManager {
           typeof stored === 'object' &&
           typeof config.defaultValue === 'object'
         ) {
-          return { ...config.defaultValue, ...stored } as T;
+          const merged = { ...config.defaultValue, ...stored } as T;
+          DebugLogger.log('StorageManager', `Merged with defaults:`, merged);
+          return merged;
         }
 
-        return stored ?? config.defaultValue;
+        const finalValue = stored ?? config.defaultValue;
+        DebugLogger.log('StorageManager', `Final value for ${config.key}:`, finalValue);
+        return finalValue;
       },
       config.defaultValue,
       `storage.${config.area}`
     );
+    
+    DebugLogger.log('StorageManager', `Retrieved value for ${config.key}:`, result);
+    return result;
   }
 
   /**
    * Set complete value in storage
    */
   static async set<T>(config: StorageConfig<T>, value: T): Promise<void> {
+    DebugLogger.log('StorageManager', `Setting ${config.key} in ${config.area}:`, value);
+    
     await BrowserAPIManager.safeAsyncAPICall(
       async () => {
         const storageArea = BrowserAPIManager.getStorageAPI(config.area);
+        DebugLogger.log('StorageManager', `Storage area ${config.area} for set:`, storageArea !== null);
+        
         if (!storageArea) {
           throw new Error(`Storage area ${config.area} not available`);
         }
 
         const oldValue = await this.get(config);
-        await storageArea.set({ [config.key]: value });
+        DebugLogger.log('StorageManager', `Old value for ${config.key}:`, oldValue);
+        
+        const setData = { [config.key]: value };
+        DebugLogger.log('StorageManager', `Setting data:`, setData);
+        
+        await storageArea.set(setData);
+        DebugLogger.log('StorageManager', `Successfully set ${config.key}`);
 
         // Emit change event
         this.emitChange({
