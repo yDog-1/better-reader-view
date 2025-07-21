@@ -30,18 +30,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 主要な開発方針
 
 1. **WXTベストプラクティスの徹底実装**
+
    - フレームワーク規約に準拠した設計パターンの採用
    - 型安全性とパフォーマンスの最適化
 
 2. **SOLID原則に基づく設計改善**
+
    - 単一責任原則（SRP）に基づくアーキテクチャリファクタリング
    - オープン・クローズド原則（OCP）準拠のプラガブルシステム実装
 
 3. **関数型プログラミングパラダイムの採用**
+
    - グローバル状態の排除と純粋関数アプローチ
    - 副作用の最小化とテスタビリティの向上
 
 4. **統一エラーハンドリングシステム**
+
    - 日本語ユーザーメッセージでの一貫したエラー体験
    - WXT環境に最適化されたエラー処理
 
@@ -108,7 +112,7 @@ export abstract class BaseReaderViewError extends Error {
   constructor(
     message: string,
     public readonly context: Record<string, unknown> = {},
-    public readonly userMessage: string = "エラーが発生しました",
+    public readonly userMessage: string = 'エラーが発生しました',
     cause?: Error
   ) {
     super(message, { cause });
@@ -135,9 +139,11 @@ export interface ThemeDefinition {
 
 ```typescript
 // DOM操作の型安全性保証
-export function isValidDocument(doc: unknown): doc is Document & { body: HTMLElement }
-export function isReactRoot(root: unknown): root is ReactDOM.Root
-export function canAttachShadow(element: unknown): element is HTMLElement
+export function isValidDocument(
+  doc: unknown
+): doc is Document & { body: HTMLElement };
+export function isReactRoot(root: unknown): root is ReactDOM.Root;
+export function canAttachShadow(element: unknown): element is HTMLElement;
 ```
 
 #### リアクティブストレージシステム (`utils/storage-config.ts`)
@@ -183,11 +189,13 @@ export interface StorageConfig<T> {
 **主要関数:**
 
 - `extractContent(document: Document)`: Mozilla Readabilityを使用した記事抽出
+
   - `Article`インターフェースでメタデータ（タイトル、コンテンツ、著者等）を返却
   - 副作用回避のためのdocumentクローニング
   - DOMPurifyによるXSS脆弱性対策
 
 - `activateReader(document: Document)`: Shadow DOMリーダービュー作成
+
   - `createReaderViewManager`による疎結合なコンポーネント連携
   - 元ページの復元可能な保存
   - 型安全なブール値リターン
@@ -331,7 +339,7 @@ const customTheme: ThemeDefinition = {
   id: 'high-contrast',
   name: 'ハイコントラスト',
   className: 'theme-high-contrast',
-  cssVariables: { '--bg-color': '#000000' }
+  cssVariables: { '--bg-color': '#000000' },
 };
 expect(() => styleController.registerTheme(customTheme)).not.toThrow();
 ```

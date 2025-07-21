@@ -1,3 +1,5 @@
+import { Readability } from '@mozilla/readability';
+import DOMPurify from 'dompurify';
 import { StyleController } from './StyleController';
 import { ShadowDOMManager } from './DOMManager';
 import { ReactComponentRenderer } from './ReactRenderer';
@@ -10,6 +12,59 @@ import {
   ErrorHandler,
   withErrorHandling,
 } from './errors';
+
+/**
+ * 記事コンテンツを抽出する純粋関数
+ * Mozilla Readabilityを使用してメインコンテンツを抽出し、DOMPurifyでサニタイズ
+ */
+export function extractContent(document: Document): Article | null {
+  return withErrorHandling(
+    () => {
+      // ドキュメントをクローンして元のDOMに影響しないようにする
+      const documentClone = document.cloneNode(true) as Document;
+      
+      // Mozilla Readabilityで記事コンテンツを抽出
+      const reader = new Readability(documentClone);
+      const article = reader.parse();
+
+      if (!article) {
+        return null;
+      }
+
+      // DOMPurifyでHTMLをサニタイズ
+      const sanitizedContent = DOMPurify.sanitize(article.content || '', {
+        ALLOWED_TAGS: [
+          'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del',
+          'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+          'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+          'blockquote', 'pre', 'code',
+          'a', 'img', 'figure', 'figcaption',
+          'table', 'thead', 'tbody', 'tr', 'td', 'th',
+          'div', 'span', 'article', 'section', 'aside', 'header', 'footer',
+        ],
+        ALLOWED_ATTR: [
+          'href', 'src', 'alt', 'title', 'width', 'height',
+          'class', 'id', 'role', 'aria-label', 'aria-describedby',
+        ],
+        KEEP_CONTENT: true,
+      });
+
+      return {
+        title: article.title || document.title || 'Untitled',
+        content: sanitizedContent,
+        textContent: article.textContent || '',
+        length: article.length || 0,
+        excerpt: article.excerpt || '',
+        byline: article.byline || '',
+        dir: article.dir || 'ltr',
+        siteName: article.siteName || '',
+        lang: article.lang || 'ja',
+        publishedTime: article.publishedTime || null,
+      };
+    },
+    (cause) => new ArticleExtractionError(cause)
+  );
+}
 
 /**
  * リーダービューの状態とライフサイクルを管理するクラス

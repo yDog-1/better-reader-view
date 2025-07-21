@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom/client';
 import React from 'react';
 import ReaderView from '~/components/ReaderView';
-import type { ReactRenderer } from './types';
+import type { ReactRenderer, Article } from './types';
 import type { StyleController } from './StyleController';
 import { ErrorHandler, ShadowDOMError } from './errors';
 import { isReactRoot } from './typeGuards';
@@ -15,17 +15,16 @@ export class ReactComponentRenderer implements ReactRenderer {
    * ReaderView コンポーネントを Shadow DOM にレンダリング
    */
   render(
-    content: { title: string; content: string },
+    article: Article,
     shadowRoot: ShadowRoot,
-    styleController: StyleController
+    onClose: () => void
   ): ReactDOM.Root {
     try {
       const root = ReactDOM.createRoot(shadowRoot);
       root.render(
         React.createElement(ReaderView, {
-          ...content,
-          styleController,
-          shadowRoot,
+          article,
+          onClose,
         })
       );
       return root;

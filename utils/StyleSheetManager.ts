@@ -1,4 +1,4 @@
-import { StyleSheetManager, DebugInfo } from './types';
+import { StyleSheetManager as IStyleSheetManager, DebugInfo } from './types';
 import { getCombinedCSS } from './CSSLoader';
 import { ErrorHandler, CSSVariableApplicationError } from './errors';
 
@@ -6,7 +6,81 @@ import { ErrorHandler, CSSVariableApplicationError } from './errors';
  * ブラウザ拡張環境でのスタイルシート管理
  * Document.adoptedStyleSheetsとフォールバックを適切に処理
  */
-export class ExtensionStyleSheetManager implements StyleSheetManager {
+export class StyleSheetManager {
+  private styleSheet: globalThis.CSSStyleSheet | HTMLElement | null = null;
+  private isInitialized = false;
+
+  /**
+   * adoptedStyleSheetsがサポートされているかチェック
+   */
+  get isSupported(): boolean {
+    if (!('adoptedStyleSheets' in document && 'CSSStyleSheet' in globalThis)) {
+      return false;
+    }
+
+    try {
+      const testSheet = new globalThis.CSSStyleSheet();
+      testSheet.replaceSync('/* test */');
+      const currentSheets = Array.from(document.adoptedStyleSheets || []);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  constructor(private shadowRoot?: ShadowRoot) {}
+
+  /**
+   * 初期化
+   */
+  async initialize(): Promise<void> {
+    // 実装
+  }
+
+  /**
+   * テーマを適用
+   */
+  applyTheme(themeClass: string): void {
+    // Shadow DOM環境での実装
+    if (this.shadowRoot) {
+      const host = this.shadowRoot.host as HTMLElement;
+      host.classList.remove('theme-light', 'theme-dark', 'theme-sepia');
+      host.classList.add(themeClass);
+    }
+  }
+
+  /**
+   * クリーンアップ
+   */
+  cleanup(): void {
+    // 実装
+  }
+
+  /**
+   * 準備完了状態
+   */
+  isReady(): boolean {
+    return true;
+  }
+
+  /**
+   * デバッグ情報
+   */
+  getDebugInfo(): DebugInfo {
+    return { 
+      isSupported: true,
+      isInitialized: true,
+      styleSheetType: 'shadow-root',
+      adoptedStyleSheetsCount: 0
+    };
+  }
+}
+
+/**
+ * ブラウザ拡張環境でのスタイルシート管理
+ * Document.adoptedStyleSheetsとフォールバックを適切に処理
+ */
+export class ExtensionStyleSheetManager implements IStyleSheetManager {
   private styleSheet: globalThis.CSSStyleSheet | HTMLElement | null = null;
   private isInitialized = false;
 

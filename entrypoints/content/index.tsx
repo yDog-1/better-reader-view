@@ -1,23 +1,25 @@
+import React from 'react';
 import ReactDOM from 'react-dom/client';
+import type { ContentScriptContext } from 'wxt/utils/content-script-context';
 import './style.css';
+import ReaderView from '@/components/ReaderView';
 import PopupMessage from '@/components/popupMsg';
-import {
-  activateReader,
-  deactivateReader,
-  createReaderViewManager,
-} from '@/utils/reader-utils';
+import StyleProvider from '@/components/StyleProvider';
+import { extractContent } from '@/utils/reader-utils';
 import { StyleController } from '@/utils/StyleController';
+import { createResourceManager } from '@/utils/WXTResourceManager';
+import { createUIStateManager } from '@/utils/WXTUIStateManager';
 import {
   StyleSystemInitializationError,
   ShadowDOMError,
   StorageError,
   RenderingError,
+  ContentExtractionError,
   ErrorHandler,
   withErrorHandling,
   withAsyncErrorHandling,
 } from '@/utils/errors';
 import { StorageManager } from '@/utils/storage-config';
-import { BrowserAPIManager } from '@/utils/BrowserAPIManager';
 
 const articleErrorMessage = '記事が見つかりませんでした。';
 
@@ -26,7 +28,20 @@ export default defineContentScript({
   matches: [],
   cssInjectionMode: 'ui',
 
-  async main() {
+  async main(ctx) {
+    // WXTResourceManagerを作成
+    const resourceManager = withErrorHandling(
+      () => createResourceManager(ctx),
+      (cause) => new ShadowDOMError('WXTResourceManagerの作成', cause)
+    );
+
+    if (!resourceManager) {
+      ErrorHandler.handle(
+        new ShadowDOMError('WXTResourceManagerの作成に失敗しました')
+      );
+      return;
+    }
+
     // レガシーストレージからの移行を実行
     await withAsyncErrorHandling(
       () => StorageManager.migrateFromLegacyStorage(),
@@ -59,67 +74,131 @@ export default defineContentScript({
         new StorageError('コンテンツスクリプトでのスタイル設定読み込み', cause)
     );
 
-    // ReaderViewManagerを作成（関数型アプローチ）
-    const readerViewManager = createReaderViewManager(styleController);
+    // UIStateManagerを作成
+    const uiStateManager = withErrorHandling(
+      () => createUIStateManager(resourceManager),
+      (cause) => new ShadowDOMError('UIStateManagerの作成', cause)
+    );
 
-    if (!readerViewManager) {
+    if (!uiStateManager) {
       ErrorHandler.handle(
-        new ShadowDOMError('ReaderViewManagerの作成に失敗しました')
+        new ShadowDOMError('UIStateManagerの作成に失敗しました')
       );
       return;
     }
 
-    await toggleReaderView(readerViewManager);
+    await toggleReaderView(
+      ctx,
+      resourceManager,
+      styleController,
+      uiStateManager
+    );
 
     return;
   },
 });
 
 async function toggleReaderView(
-  readerViewManager: NonNullable<ReturnType<typeof createReaderViewManager>>
+  ctx: ContentScriptContext,
+  resourceManager: NonNullable<ReturnType<typeof createResourceManager>>,
+  styleController: StyleController,
+  uiStateManager: NonNullable<ReturnType<typeof createUIStateManager>>
 ) {
   await withAsyncErrorHandling(
     async () => {
-      // WXT Storage APIを使用してFeature Detectionと共に状態を取得
-      const isActive = await BrowserAPIManager.safeAsyncAPICall(
-        async () => {
-          const state = await StorageManager.getReaderViewState();
-          return state.isActive;
-        },
-        false,
-        'storage.session'
-      );
+      const currentState = uiStateManager.getState();
 
-      if (isActive) {
+      if (currentState.isReaderViewActive) {
         // リーダービューを無効化
-        deactivateReader(readerViewManager, document);
-        await BrowserAPIManager.safeAsyncAPICall(
-          () => StorageManager.deactivateReaderView(),
-          undefined,
-          'storage.session'
-        );
+        await deactivateReaderView(uiStateManager);
       } else {
         // リーダービューを有効化
-        const success = activateReader(readerViewManager, document);
-
-        if (success) {
-          await BrowserAPIManager.safeAsyncAPICall(
-            () =>
-              StorageManager.activateReaderView(
-                window.location.href,
-                document.title
-              ),
-            undefined,
-            'storage.session'
-          );
-        } else {
-          showPopupMessage(articleErrorMessage);
-        }
+        await activateReaderView(
+          ctx,
+          resourceManager,
+          styleController,
+          uiStateManager
+        );
       }
       return true;
     },
     (cause) => new ShadowDOMError('リーダービューの切り替え', cause)
   );
+}
+
+async function activateReaderView(
+  ctx: ContentScriptContext,
+  resourceManager: NonNullable<ReturnType<typeof createResourceManager>>,
+  styleController: StyleController,
+  uiStateManager: NonNullable<ReturnType<typeof createUIStateManager>>
+) {
+  // 記事コンテンツを抽出
+  const article = withErrorHandling(
+    () => extractContent(document),
+    (cause) => new ContentExtractionError('記事コンテンツの抽出', cause)
+  );
+
+  if (!article) {
+    showPopupMessage(articleErrorMessage);
+    return;
+  }
+
+  // WXTのcreateShadowRootUiを使用してShadow DOM UI作成
+  await createShadowRootUi(ctx, {
+    name: 'better-reader-view',
+    position: 'overlay',
+    onMount: (container) => {
+      // UIStateManagerの状態を更新
+      uiStateManager.setShadowDOMAttached(true);
+
+      // Reactコンポーネントをマウント
+      const root = ReactDOM.createRoot(container);
+
+      const handleClose = async () => {
+        await deactivateReaderView(uiStateManager);
+      };
+
+      // StyleProviderでラップしてレンダリング
+      root.render(
+        <StyleProvider
+          styleController={styleController}
+          shadowRoot={container.getRootNode() as ShadowRoot}
+          resourceManager={resourceManager}
+        >
+          <ReaderView article={article} onClose={handleClose} />
+        </StyleProvider>
+      );
+
+      uiStateManager.setUIMounted(true);
+
+      // リソースクリーンアップの登録
+      resourceManager.registerCleanup(() => {
+        try {
+          root.unmount();
+        } catch (error) {
+          console.error('React root unmount エラー:', error);
+        }
+      });
+    },
+    onRemove: () => {
+      uiStateManager.setShadowDOMAttached(false);
+      uiStateManager.setUIMounted(false);
+    },
+  });
+
+  // 状態を更新
+  await uiStateManager.setReaderViewActive(
+    true,
+    window.location.href,
+    document.title
+  );
+}
+
+async function deactivateReaderView(
+  uiStateManager: NonNullable<ReturnType<typeof createUIStateManager>>
+) {
+  // 状態を更新（この操作によりWXTResourceManagerが自動的にUIをクリーンアップ）
+  await uiStateManager.setReaderViewActive(false);
 }
 
 function showPopupMessage(message: string) {

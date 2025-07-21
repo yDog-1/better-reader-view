@@ -47,6 +47,9 @@ export default [
         HTMLElement: 'readonly',
         HTMLDivElement: 'readonly',
         ShadowRoot: 'readonly',
+        EventTarget: 'readonly',
+        EventListenerOrEventListenerObject: 'readonly',
+        AddEventListenerOptions: 'readonly',
       },
     },
     plugins: {

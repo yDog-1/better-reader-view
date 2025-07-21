@@ -164,6 +164,110 @@ export class RenderingError extends BaseReaderViewError {
 }
 
 /**
+ * コンテンツ抽出に失敗した場合のエラー
+ */
+export class ContentExtractionError extends BaseReaderViewError {
+  readonly code = 'CONTENT_EXTRACTION_ERROR';
+  readonly userMessage = '記事が見つかりませんでした。';
+
+  constructor(operation: string, cause?: Error) {
+    super(
+      `コンテンツ抽出に失敗しました: ${operation}`,
+      {
+        operation,
+      },
+      cause
+    );
+  }
+}
+
+/**
+ * スタイルプロバイダーエラー
+ */
+export class StyleProviderError extends BaseReaderViewError {
+  readonly code = 'STYLE_PROVIDER_ERROR';
+  readonly userMessage = 'スタイルの初期化に失敗しました。';
+
+  constructor(operation: string, cause?: Error) {
+    super(
+      `StyleProviderでエラーが発生しました: ${operation}`,
+      {
+        operation,
+      },
+      cause
+    );
+  }
+}
+
+/**
+ * リソース管理エラー
+ */
+export class ResourceManagementError extends BaseReaderViewError {
+  readonly code = 'RESOURCE_MANAGEMENT_ERROR';
+  readonly userMessage = 'リソースの管理に失敗しました。';
+
+  constructor(operation: string, cause?: Error, context?: Record<string, unknown>) {
+    super(
+      `リソース管理でエラーが発生しました: ${operation}`,
+      context,
+      cause
+    );
+  }
+}
+
+/**
+ * メモリリークエラー
+ */
+export class MemoryLeakError extends BaseReaderViewError {
+  readonly code = 'MEMORY_LEAK_ERROR';
+  readonly userMessage = 'メモリリークが検出されました。';
+
+  constructor(operation: string, cause?: Error) {
+    super(
+      `メモリリークが発生しました: ${operation}`,
+      {
+        operation,
+      },
+      cause
+    );
+  }
+}
+
+/**
+ * WXTライフサイクルエラー
+ */
+export class WXTLifecycleError extends BaseReaderViewError {
+  readonly code = 'WXT_LIFECYCLE_ERROR';
+  readonly userMessage = 'アプリケーションのライフサイクルエラーが発生しました。';
+
+  constructor(operation: string, cause?: Error) {
+    super(
+      `WXTライフサイクルでエラーが発生しました: ${operation}`,
+      {
+        operation,
+      },
+      cause
+    );
+  }
+}
+
+/**
+ * 状態管理エラー
+ */
+export class StateManagementError extends BaseReaderViewError {
+  readonly code = 'STATE_MANAGEMENT_ERROR';
+  readonly userMessage = '状態の管理に失敗しました。';
+
+  constructor(operation: string, cause?: Error, context?: Record<string, unknown>) {
+    super(
+      `状態管理でエラーが発生しました: ${operation}`,
+      context,
+      cause
+    );
+  }
+}
+
+/**
  * Error handler utility class for unified error processing
  */
 export class ErrorHandler {
