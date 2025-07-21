@@ -23,7 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ユーザーの明示的な許可なしにコミットしない
 - コミット前は必ず実行: `bun run fix && bun run test && bun run compile`
 
-## プロジェクトの方向性（PR#13〜現在の分析結果）
+## プロジェクトの方向性（PR#13〜PR#38の分析結果）
 
 このプロジェクトは、WXTフレームワークを使用したブラウザ拡張機能として、以下の明確な技術的発展を遂げています：
 
@@ -49,7 +49,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - 実装詳細ではなく行動の単位をテスト
    - リファクタリング耐性の向上
 
-### 最近の主要実装 (PR#13-#38)
+### 最近の主要実装 (PR#13〜PR#38)
 
 #### 🧪 テスト品質革命 (PR#13)
 
@@ -110,7 +110,12 @@ export abstract class BaseReaderViewError extends Error {
     public readonly context: Record<string, unknown> = {},
     public readonly userMessage: string = "エラーが発生しました",
     cause?: Error
-  ) { /* WXT最適化実装 */ }
+  ) {
+    super(message, { cause });
+    this.context = context;
+    this.userMessage = userMessage;
+    /* WXT最適化実装 */
+  }
 }
 ```
 
@@ -285,19 +290,19 @@ PR#13で確立されたClassical/Detroit学派のテスト戦略：
 - コンポーネント間通信
 - ブラウザストレージ永続化
 
-**パフォーマンステスト** (`Performance.test.ts`):
+**パフォーマンステスト**:
 
 - メモリ使用量監視（200MB閾値）
 - リーダービュー有効化速度ベンチマーク
 - ガベージコレクション動作確認
 
-**ブラウザ互換性テスト** (`BrowserCompatibility.test.ts`):
+**ブラウザ互換性テスト**:
 
 - CSP制限シミュレーション
 - Chrome/Firefox横断サポート
 - セキュリティ制約下での動作確認
 
-**エラーハンドリングテスト** (`ErrorHandling.test.ts`):
+**エラーハンドリングテスト**:
 
 - 22種類のエラークラス検証
 - 日本語メッセージ一貫性確認
