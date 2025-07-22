@@ -144,53 +144,58 @@ async function activateReaderView(
   }
 
   // WXTのcreateShadowRootUiを使用してShadow DOM UI作成
-  await createShadowRootUi(ctx, {
-    name: 'better-reader-view',
-    position: 'overlay',
-    onMount: (container) => {
-      // UIStateManagerの状態を更新
-      uiStateManager.setShadowDOMAttached(true);
+  await withAsyncErrorHandling(
+    async () => {
+      await createShadowRootUi(ctx, {
+        name: 'better-reader-view',
+        position: 'overlay',
+        onMount: (container) => {
+          // UIStateManagerの状態を更新
+          uiStateManager.setShadowDOMAttached(true);
 
-      // Reactコンポーネントをマウント
-      const root = ReactDOM.createRoot(container);
+          // Reactコンポーネントをマウント
+          const root = ReactDOM.createRoot(container);
 
-      const handleClose = async () => {
-        await deactivateReaderView(uiStateManager);
-      };
+          const handleClose = async () => {
+            await deactivateReaderView(uiStateManager);
+          };
 
-      // StyleProviderでラップしてレンダリング
-      root.render(
-        <StyleProvider
-          styleController={styleController}
-          shadowRoot={container.getRootNode() as ShadowRoot}
-          resourceManager={resourceManager}
-        >
-          <ReaderView article={article} onClose={handleClose} />
-        </StyleProvider>
-      );
+          // StyleProviderでラップしてレンダリング
+          root.render(
+            <StyleProvider
+              styleController={styleController}
+              shadowRoot={container.getRootNode() as ShadowRoot}
+              resourceManager={resourceManager}
+            >
+              <ReaderView article={article} onClose={handleClose} />
+            </StyleProvider>
+          );
 
-      uiStateManager.setUIMounted(true);
+          uiStateManager.setUIMounted(true);
 
-      // リソースクリーンアップの登録
-      resourceManager.registerCleanup(() => {
-        try {
-          root.unmount();
-        } catch (error) {
-          console.error('React root unmount エラー:', error);
-        }
+          // リソースクリーンアップの登録
+          resourceManager.registerCleanup(() => {
+            try {
+              root.unmount();
+            } catch (error) {
+              console.error('React root unmount エラー:', error);
+            }
+          });
+        },
+        onRemove: () => {
+          uiStateManager.setShadowDOMAttached(false);
+          uiStateManager.setUIMounted(false);
+        },
       });
-    },
-    onRemove: () => {
-      uiStateManager.setShadowDOMAttached(false);
-      uiStateManager.setUIMounted(false);
-    },
-  });
 
-  // 状態を更新
-  await uiStateManager.setReaderViewActive(
-    true,
-    window.location.href,
-    document.title
+      // 状態を更新
+      await uiStateManager.setReaderViewActive(
+        true,
+        window.location.href,
+        document.title
+      );
+    },
+    (cause) => new ShadowDOMError('Shadow DOM UI作成', cause)
   );
 }
 

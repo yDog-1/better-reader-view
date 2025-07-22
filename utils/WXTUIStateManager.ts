@@ -10,6 +10,11 @@ import { BrowserAPIManager } from '@/utils/BrowserAPIManager';
 import type { WXTResourceManager } from '@/utils/WXTResourceManager';
 
 /**
+ * ストレージセッションキー定数
+ */
+const STORAGE_SESSION_KEY = 'storage.session';
+
+/**
  * WXT UI状態管理インターフェース
  */
 interface UIState {
@@ -68,7 +73,7 @@ export class WXTUIStateManager {
             title: undefined,
             lastActivated: undefined,
           },
-          'storage.session'
+          STORAGE_SESSION_KEY
         );
 
         const newState: UIState = {
@@ -129,13 +134,13 @@ export class WXTUIStateManager {
                 newState.currentTitle!
               ),
             undefined,
-            'storage.session'
+            STORAGE_SESSION_KEY
           );
         } else {
           await BrowserAPIManager.safeAsyncAPICall(
             () => StorageManager.deactivateReaderView(),
             undefined,
-            'storage.session'
+            STORAGE_SESSION_KEY
           );
         }
       },
@@ -288,7 +293,7 @@ export class WXTUIStateManager {
             title: undefined,
             lastActivated: undefined,
           },
-          'storage.session'
+          STORAGE_SESSION_KEY
         );
 
         // ストレージと現在の状態が異なる場合のみ更新

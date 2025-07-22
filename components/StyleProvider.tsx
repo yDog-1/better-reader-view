@@ -65,7 +65,7 @@ export function StyleProvider({
         styleSheetManagerRef.current = manager;
 
         // StyleControllerとの連携
-        styleController.setStyleSheetManager(manager);
+        styleController.updateStyleSheetManager(manager);
 
         // リソースクリーンアップの登録
         if (resourceManager) {

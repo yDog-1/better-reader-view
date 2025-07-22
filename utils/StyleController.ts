@@ -450,10 +450,22 @@ export class StyleController {
   }
 
   /**
-   * StyleSheetManagerを設定
+   * StyleSheetManagerを設定 (内部専用)
    */
-  setStyleSheetManager(manager: StyleSheetManager): void {
+  private setStyleSheetManager(manager: StyleSheetManager): void {
     this.styleSheetManager = manager;
+  }
+
+  /**
+   * StyleSheetManagerを更新 (外部用)
+   */
+  updateStyleSheetManager(manager: StyleSheetManager): void {
+    if (!manager || !manager.isReady()) {
+      throw new Error(
+        'Invalid StyleSheetManager: The manager must be properly initialized and ready.'
+      );
+    }
+    this.setStyleSheetManager(manager);
   }
 
   /**
