@@ -4,6 +4,7 @@ import { ReactComponentRenderer } from '@/utils/ReactRenderer';
 import { ErrorHandler } from '@/utils/errors';
 import ReactDOM from 'react-dom/client';
 import React from 'react';
+import type { Article } from '@/utils/types';
 
 // React と ReactDOM をモック
 vi.mock('react-dom/client', () => ({
@@ -29,7 +30,7 @@ vi.mock('~/components/ReaderView', () => ({
 describe('React レンダリング機能', () => {
   let reactRenderer: ReactComponentRenderer;
   let shadowRoot: ShadowRoot;
-  let article: { title: string; content: string; byline?: string };
+  let article: Article;
   let onClose: () => void;
 
   beforeEach(() => {

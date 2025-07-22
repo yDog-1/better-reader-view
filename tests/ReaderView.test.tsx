@@ -94,7 +94,7 @@ describe('ReaderView', () => {
     });
 
     it('bylineがない場合は表示されない', () => {
-      const articleWithoutByline = { ...mockArticle, byline: undefined };
+      const articleWithoutByline = { ...mockArticle, byline: null };
 
       render(
         <ReaderView article={articleWithoutByline} onClose={mockOnClose} />
