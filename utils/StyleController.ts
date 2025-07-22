@@ -448,4 +448,44 @@ export class StyleController {
   isReady(): boolean {
     return this.styleSheetManager.isReady();
   }
+
+  /**
+   * StyleSheetManagerを設定 (内部専用)
+   */
+  private setStyleSheetManager(manager: StyleSheetManager): void {
+    this.styleSheetManager = manager;
+  }
+
+  /**
+   * StyleSheetManagerを更新 (外部用)
+   */
+  updateStyleSheetManager(manager: StyleSheetManager): void {
+    if (!manager || !manager.isReady()) {
+      throw new Error(
+        'Invalid StyleSheetManager: The manager must be properly initialized and ready.'
+      );
+    }
+    this.setStyleSheetManager(manager);
+  }
+
+  /**
+   * 現在のスタイルを適用
+   */
+  applyCurrentStyle(): void {
+    this.styleSheetManager.applyTheme(this.getThemeClass());
+
+    // CSS変数の適用
+    const customStyles = this.getCustomStyles();
+    Object.entries(customStyles).forEach(([property, value]) => {
+      document.documentElement.style.setProperty(property, value);
+    });
+
+    // テーマのCSS変数の適用
+    const theme = this.getCurrentTheme();
+    if (theme) {
+      Object.entries(theme.cssVariables).forEach(([property, value]) => {
+        document.documentElement.style.setProperty(property, value);
+      });
+    }
+  }
 }

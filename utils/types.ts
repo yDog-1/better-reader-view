@@ -95,9 +95,9 @@ export interface DOMManager {
 
 export interface ReactRenderer {
   render(
-    content: { title: string; content: string },
+    article: Article,
     shadowRoot: ShadowRoot,
-    styleController: unknown
+    onClose: () => void
   ): unknown;
   unmount(root: unknown): void;
 }
@@ -129,6 +129,7 @@ export interface ReaderViewState {
   isActive: boolean;
   url?: string;
   title?: string;
+  lastActivated?: number;
 }
 
 /**

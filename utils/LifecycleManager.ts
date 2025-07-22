@@ -1,6 +1,11 @@
 import DOMPurify from 'dompurify';
 import { Readability } from '@mozilla/readability';
-import type { LifecycleManager, DOMManager, ReactRenderer } from './types';
+import type {
+  LifecycleManager,
+  DOMManager,
+  ReactRenderer,
+  Article,
+} from './types';
 import type { StyleController } from './StyleController';
 import { isValidArticle } from './typeGuards';
 import { ErrorHandler, StorageError, ShadowDOMError } from './errors';
@@ -90,7 +95,7 @@ export class ReaderLifecycleManager implements LifecycleManager {
       this.currentState.reactRoot = this.reactRenderer.render(
         content,
         this.currentState.shadowRoot,
-        this.styleController
+        () => this.deactivate(doc)
       );
 
       // コンテナをドキュメントに追加
@@ -175,9 +180,7 @@ export class ReaderLifecycleManager implements LifecycleManager {
   /**
    * コンテンツ抽出の純粋関数
    */
-  private extractContent(
-    document: Document
-  ): { title: string; content: string } | null {
+  private extractContent(document: Document): Article | null {
     const documentClone = document.cloneNode(true) as Document;
     const article = new Readability(documentClone).parse();
 
@@ -189,8 +192,16 @@ export class ReaderLifecycleManager implements LifecycleManager {
     const sanitizedContent = DOMPurify.sanitize(article.content);
 
     return {
-      title: article.title,
+      title: article.title || '',
       content: sanitizedContent,
+      textContent: article.textContent || '',
+      length: article.length || 0,
+      excerpt: article.excerpt || '',
+      byline: article.byline || null,
+      dir: article.dir || null,
+      siteName: article.siteName || null,
+      lang: article.lang || null,
+      publishedTime: article.publishedTime || null,
     };
   }
 

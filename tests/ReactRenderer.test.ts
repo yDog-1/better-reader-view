@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { ReactComponentRenderer } from '@/utils/ReactRenderer';
-import { StyleController } from '@/utils/StyleController';
 import { ErrorHandler } from '@/utils/errors';
 import ReactDOM from 'react-dom/client';
 import React from 'react';
+import type { Article } from '@/utils/types';
 
 // React と ReactDOM をモック
 vi.mock('react-dom/client', () => ({
@@ -30,8 +30,8 @@ vi.mock('~/components/ReaderView', () => ({
 describe('React レンダリング機能', () => {
   let reactRenderer: ReactComponentRenderer;
   let shadowRoot: ShadowRoot;
-  let styleController: StyleController;
-  let content: { title: string; content: string };
+  let article: Article;
+  let onClose: () => void;
 
   beforeEach(() => {
     // JSDOM でテスト環境をセットアップ
@@ -54,11 +54,19 @@ describe('React レンダリング機能', () => {
     shadowRoot = container.attachShadow({ mode: 'open' });
 
     reactRenderer = new ReactComponentRenderer();
-    styleController = new StyleController();
-    content = {
+    article = {
       title: 'テスト記事タイトル',
       content: '<p>テスト記事コンテンツ</p>',
+      textContent: 'テスト記事コンテンツ',
+      length: 50,
+      excerpt: 'テスト記事コンテンツ',
+      byline: null,
+      dir: null,
+      siteName: null,
+      lang: 'ja',
+      publishedTime: null,
     };
+    onClose = vi.fn();
 
     // モックをリセット
     vi.clearAllMocks();
@@ -69,17 +77,15 @@ describe('React レンダリング機能', () => {
       const mockRoot = { render: vi.fn(), unmount: vi.fn() };
       vi.mocked(ReactDOM.createRoot).mockReturnValue(mockRoot);
 
-      const result = reactRenderer.render(content, shadowRoot, styleController);
+      const result = reactRenderer.render(article, shadowRoot, onClose);
 
       expect(ReactDOM.createRoot).toHaveBeenCalledWith(shadowRoot);
       expect(mockRoot.render).toHaveBeenCalled();
       expect(React.createElement).toHaveBeenCalledWith(
         expect.anything(), // ReaderView コンポーネント
         expect.objectContaining({
-          title: content.title,
-          content: content.content,
-          styleController,
-          shadowRoot,
+          article,
+          onClose,
         })
       );
       expect(result).toBe(mockRoot);
@@ -91,7 +97,7 @@ describe('React レンダリング機能', () => {
       });
 
       expect(() => {
-        reactRenderer.render(content, shadowRoot, styleController);
+        reactRenderer.render(article, shadowRoot, onClose);
       }).toThrow('React コンポーネントのレンダリングに失敗しました');
     });
 
@@ -99,20 +105,27 @@ describe('React レンダリング機能', () => {
       const mockRoot = { render: vi.fn(), unmount: vi.fn() };
       vi.mocked(ReactDOM.createRoot).mockReturnValue(mockRoot);
 
-      const customContent = {
+      const customArticle = {
         title: 'カスタムタイトル',
         content: '<div>カスタムコンテンツ</div>',
+        textContent: 'カスタムコンテンツ',
+        length: 30,
+        excerpt: 'カスタムコンテンツ',
+        byline: null,
+        dir: null,
+        siteName: null,
+        lang: 'ja',
+        publishedTime: null,
       };
+      const customOnClose = vi.fn();
 
-      reactRenderer.render(customContent, shadowRoot, styleController);
+      reactRenderer.render(customArticle, shadowRoot, customOnClose);
 
       expect(React.createElement).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
-          title: 'カスタムタイトル',
-          content: '<div>カスタムコンテンツ</div>',
-          styleController,
-          shadowRoot,
+          article: customArticle,
+          onClose: customOnClose,
         })
       );
     });
@@ -175,7 +188,7 @@ describe('React レンダリング機能', () => {
       });
 
       expect(() => {
-        reactRenderer.render(content, shadowRoot, styleController);
+        reactRenderer.render(article, shadowRoot, onClose);
       }).toThrow(
         'React コンポーネントのレンダリングに失敗しました: Error: 内部エラー詳細'
       );
@@ -191,7 +204,7 @@ describe('React レンダリング機能', () => {
       });
 
       expect(() => {
-        reactRenderer.render(content, shadowRoot, styleController);
+        reactRenderer.render(article, shadowRoot, onClose);
       }).toThrow('React コンポーネントのレンダリングに失敗しました');
     });
   });
@@ -202,7 +215,7 @@ describe('React レンダリング機能', () => {
       vi.mocked(ReactDOM.createRoot).mockReturnValue(mockRoot);
 
       // 1. レンダリング
-      const root = reactRenderer.render(content, shadowRoot, styleController);
+      const root = reactRenderer.render(article, shadowRoot, onClose);
       expect(root).toBe(mockRoot);
       expect(mockRoot.render).toHaveBeenCalledOnce();
 
