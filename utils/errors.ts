@@ -206,12 +206,12 @@ export class ResourceManagementError extends BaseReaderViewError {
   readonly code = 'RESOURCE_MANAGEMENT_ERROR';
   readonly userMessage = 'リソースの管理に失敗しました。';
 
-  constructor(operation: string, cause?: Error, context?: Record<string, unknown>) {
-    super(
-      `リソース管理でエラーが発生しました: ${operation}`,
-      context,
-      cause
-    );
+  constructor(
+    operation: string,
+    cause?: Error,
+    context?: Record<string, unknown>
+  ) {
+    super(`リソース管理でエラーが発生しました: ${operation}`, context, cause);
   }
 }
 
@@ -238,7 +238,8 @@ export class MemoryLeakError extends BaseReaderViewError {
  */
 export class WXTLifecycleError extends BaseReaderViewError {
   readonly code = 'WXT_LIFECYCLE_ERROR';
-  readonly userMessage = 'アプリケーションのライフサイクルエラーが発生しました。';
+  readonly userMessage =
+    'アプリケーションのライフサイクルエラーが発生しました。';
 
   constructor(operation: string, cause?: Error) {
     super(
@@ -258,12 +259,12 @@ export class StateManagementError extends BaseReaderViewError {
   readonly code = 'STATE_MANAGEMENT_ERROR';
   readonly userMessage = '状態の管理に失敗しました。';
 
-  constructor(operation: string, cause?: Error, context?: Record<string, unknown>) {
-    super(
-      `状態管理でエラーが発生しました: ${operation}`,
-      context,
-      cause
-    );
+  constructor(
+    operation: string,
+    cause?: Error,
+    context?: Record<string, unknown>
+  ) {
+    super(`状態管理でエラーが発生しました: ${operation}`, context, cause);
   }
 }
 

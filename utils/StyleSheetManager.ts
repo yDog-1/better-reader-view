@@ -21,7 +21,6 @@ export class StyleSheetManager {
     try {
       const testSheet = new globalThis.CSSStyleSheet();
       testSheet.replaceSync('/* test */');
-      const currentSheets = Array.from(document.adoptedStyleSheets || []);
       return true;
     } catch {
       return false;
@@ -67,11 +66,11 @@ export class StyleSheetManager {
    * デバッグ情報
    */
   getDebugInfo(): DebugInfo {
-    return { 
+    return {
       isSupported: true,
       isInitialized: true,
       styleSheetType: 'shadow-root',
-      adoptedStyleSheetsCount: 0
+      adoptedStyleSheetsCount: 0,
     };
   }
 }

@@ -461,7 +461,7 @@ export class StyleController {
    */
   applyCurrentStyle(): void {
     this.styleSheetManager.applyTheme(this.getThemeClass());
-    
+
     // CSS変数の適用
     const customStyles = this.getCustomStyles();
     Object.entries(customStyles).forEach(([property, value]) => {

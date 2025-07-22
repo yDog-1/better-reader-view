@@ -90,7 +90,7 @@ export class ReaderLifecycleManager implements LifecycleManager {
       this.currentState.reactRoot = this.reactRenderer.render(
         content,
         this.currentState.shadowRoot,
-        this.styleController
+        () => this.deactivate(doc)
       );
 
       // コンテナをドキュメントに追加

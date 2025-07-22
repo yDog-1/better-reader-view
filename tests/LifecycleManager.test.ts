@@ -296,7 +296,7 @@ describe('ライフサイクル管理機能', () => {
           content: '<p>テスト記事コンテンツ</p>',
         }),
         container.shadowRoot,
-        styleController
+        expect.any(Function)
       );
       expect(mockDOMManager.attachToDocument).toHaveBeenCalledWith(
         container,

@@ -62,7 +62,12 @@ export class WXTUIStateManager {
       async () => {
         const readerState = await BrowserAPIManager.safeAsyncAPICall(
           () => StorageManager.getReaderViewState(),
-          { isActive: false, url: undefined, title: undefined, lastActivated: undefined },
+          {
+            isActive: false,
+            url: undefined,
+            title: undefined,
+            lastActivated: undefined,
+          },
           'storage.session'
         );
 
@@ -277,7 +282,12 @@ export class WXTUIStateManager {
       async () => {
         const readerState = await BrowserAPIManager.safeAsyncAPICall(
           () => StorageManager.getReaderViewState(),
-          { isActive: false, url: undefined, title: undefined, lastActivated: undefined },
+          {
+            isActive: false,
+            url: undefined,
+            title: undefined,
+            lastActivated: undefined,
+          },
           'storage.session'
         );
 

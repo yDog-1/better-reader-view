@@ -2,7 +2,6 @@ import ReactDOM from 'react-dom/client';
 import React from 'react';
 import ReaderView from '~/components/ReaderView';
 import type { ReactRenderer, Article } from './types';
-import type { StyleController } from './StyleController';
 import { ErrorHandler, ShadowDOMError } from './errors';
 import { isReactRoot } from './typeGuards';
 
