@@ -117,7 +117,13 @@ async function toggleReaderView(
   );
 }
 
-let currentUI: unknown = null;
+// WXTのcreateShadowRootUiの戻り値の型を定義
+interface WXTShadowRootUI {
+  mount(): void;
+  remove(): void;
+}
+
+let currentUI: WXTShadowRootUI | null = null;
 
 async function activateReaderView(
   ctx: ContentScriptContext,
@@ -183,8 +189,8 @@ async function deactivateReaderView() {
   await withAsyncErrorHandling(
     async () => {
       // UIをクリーンアップ
-      if (currentUI && typeof currentUI === 'object' && 'remove' in currentUI) {
-        (currentUI as { remove: () => void }).remove();
+      if (currentUI) {
+        currentUI.remove();
         currentUI = null;
       }
 
@@ -210,18 +216,39 @@ function showPopupMessage(message: string) {
           z-index: 2147483647;
           max-width: 300px;
         `;
-        document.body.appendChild(container);
+        // body が存在する場合のみ body に追加する
+        if (document.body) {
+          document.body.appendChild(container);
+        } else if (document.documentElement) {
+          // body がまだ利用できない場合 (例: DOMContentLoaded 前)、documentElement に追加
+          document.documentElement.appendChild(container);
+        } else {
+          // 通常ここには来ないはずだが、フォールバック
+          const renderingError = new RenderingError(
+            'PopupMessage',
+            new Error(
+              'ポップアップを表示できません: コンテナを追加するbodyまたはdocumentElementが見つかりません。'
+            )
+          );
+          ErrorHandler.handle(renderingError);
+          throw renderingError;
+        }
       }
 
       const root = ReactDOM.createRoot(container);
-      root.render(<PopupMessage message={message} onClose={() => {
-        try {
-          root.unmount();
-          container?.remove();
-        } catch (error) {
-          console.error('ポップアップメッセージの削除中にエラー:', error);
-        }
-      }} />);
+      root.render(
+        <PopupMessage
+          message={message}
+          onClose={() => {
+            try {
+              root.unmount();
+              container?.remove();
+            } catch (error) {
+              console.error('ポップアップメッセージの削除中にエラー:', error);
+            }
+          }}
+        />
+      );
 
       // 3秒後に自動的に削除
       setTimeout(() => {
@@ -233,6 +260,6 @@ function showPopupMessage(message: string) {
         }
       }, 3000);
     },
-(cause) => new RenderingError('ポップアップメッセージ表示', cause)
+    (cause) => new RenderingError('ポップアップメッセージ表示', cause)
   );
 }
