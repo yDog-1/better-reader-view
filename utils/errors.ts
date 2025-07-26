@@ -44,6 +44,22 @@ export class ThemeNotFoundError extends BaseReaderViewError {
 }
 
 /**
+ * リソース管理エラー
+ */
+export class ResourceManagerError extends BaseReaderViewError {
+  readonly code = 'RESOURCE_MANAGER_ERROR';
+  readonly userMessage = 'リソース管理でエラーが発生しました。';
+
+  constructor(message: string, context?: Record<string, unknown> | Error) {
+    if (context instanceof Error) {
+      super(message, { originalError: context.message }, context);
+    } else {
+      super(message, context);
+    }
+  }
+}
+
+/**
  * テーマの登録に失敗した場合のエラー
  */
 export class ThemeRegistrationError extends BaseReaderViewError {
