@@ -1,38 +1,61 @@
+import React from 'react';
 import ReactDOM from 'react-dom/client';
+import type { ContentScriptContext } from 'wxt/utils/content-script-context';
+import { createShadowRootUi } from 'wxt/utils/content-script-ui/shadow-root';
+import DOMPurify from 'dompurify';
+import { Readability } from '@mozilla/readability';
 import './style.css';
+import ReaderView from '@/components/ReaderView';
 import PopupMessage from '@/components/popupMsg';
-import {
-  activateReader,
-  deactivateReader,
-  createReaderViewManager,
-} from '@/utils/reader-utils';
 import { StyleController } from '@/utils/StyleController';
+import { isValidArticle } from '@/utils/typeGuards';
+import type { Article } from '@/utils/types';
 import {
   StyleSystemInitializationError,
   ShadowDOMError,
   StorageError,
+  ArticleExtractionError,
   RenderingError,
   ErrorHandler,
   withErrorHandling,
   withAsyncErrorHandling,
 } from '@/utils/errors';
 import { StorageManager } from '@/utils/storage-config';
-import { BrowserAPIManager } from '@/utils/BrowserAPIManager';
 
 const articleErrorMessage = '記事が見つかりませんでした。';
+
+// 記事抽出関数
+function extractContent(document: Document): Article | null {
+  const documentClone = document.cloneNode(true) as Document;
+  const article = new Readability(documentClone).parse();
+
+  if (!isValidArticle(article)) {
+    return null;
+  }
+
+  // DOMPurify でサニタイズ
+  const sanitizedContent = DOMPurify.sanitize(article.content);
+
+  return {
+    title: article.title,
+    content: sanitizedContent,
+    textContent: article.textContent || '',
+    length: article.length || 0,
+    excerpt: article.excerpt || '',
+    byline: article.byline || '',
+    dir: article.dir || '',
+    siteName: article.siteName || '',
+    lang: article.lang || '',
+    publishedTime: article.publishedTime || '',
+  } as Article;
+}
 
 export default defineContentScript({
   registration: 'runtime',
   matches: [],
   cssInjectionMode: 'ui',
 
-  async main() {
-    // レガシーストレージからの移行を実行
-    await withAsyncErrorHandling(
-      () => StorageManager.migrateFromLegacyStorage(),
-      (cause) => new StorageError('レガシーストレージからの移行', cause)
-    );
-
+  async main(ctx: ContentScriptContext) {
     // StyleControllerを初期化
     const styleController = withErrorHandling(
       () => new StyleController(),
@@ -46,11 +69,17 @@ export default defineContentScript({
     if (!styleController) {
       ErrorHandler.handle(
         new StyleSystemInitializationError(
-          'StyleControllerの作成に失敗しました'
+          'StyleControllerの初期化に失敗しました'
         )
       );
       return;
     }
+
+    // レガシーストレージからの移行を実行
+    await withAsyncErrorHandling(
+      () => StorageManager.migrateFromLegacyStorage(),
+      (cause) => new StorageError('レガシーストレージからの移行', cause)
+    );
 
     // ストレージから設定を読み込み
     await withAsyncErrorHandling(
@@ -59,66 +88,116 @@ export default defineContentScript({
         new StorageError('コンテンツスクリプトでのスタイル設定読み込み', cause)
     );
 
-    // ReaderViewManagerを作成（関数型アプローチ）
-    const readerViewManager = createReaderViewManager(styleController);
-
-    if (!readerViewManager) {
-      ErrorHandler.handle(
-        new ShadowDOMError('ReaderViewManagerの作成に失敗しました')
-      );
-      return;
-    }
-
-    await toggleReaderView(readerViewManager);
+    await toggleReaderView(ctx, styleController);
 
     return;
   },
 });
 
 async function toggleReaderView(
-  readerViewManager: NonNullable<ReturnType<typeof createReaderViewManager>>
+  ctx: ContentScriptContext,
+  styleController: StyleController
 ) {
   await withAsyncErrorHandling(
     async () => {
-      // WXT Storage APIを使用してFeature Detectionと共に状態を取得
-      const isActive = await BrowserAPIManager.safeAsyncAPICall(
-        async () => {
-          const state = await StorageManager.getReaderViewState();
-          return state.isActive;
-        },
-        false,
-        'storage.session'
-      );
+      // ストレージから状態を取得
+      const state = await StorageManager.getReaderViewState();
+      const isActive = state.isActive;
 
       if (isActive) {
         // リーダービューを無効化
-        deactivateReader(readerViewManager, document);
-        await BrowserAPIManager.safeAsyncAPICall(
-          () => StorageManager.deactivateReaderView(),
-          undefined,
-          'storage.session'
-        );
+        await deactivateReaderView();
       } else {
         // リーダービューを有効化
-        const success = activateReader(readerViewManager, document);
-
-        if (success) {
-          await BrowserAPIManager.safeAsyncAPICall(
-            () =>
-              StorageManager.activateReaderView(
-                window.location.href,
-                document.title
-              ),
-            undefined,
-            'storage.session'
-          );
-        } else {
-          showPopupMessage(articleErrorMessage);
-        }
+        await activateReaderView(ctx, styleController);
       }
       return true;
     },
     (cause) => new ShadowDOMError('リーダービューの切り替え', cause)
+  );
+}
+
+// WXTのcreateShadowRootUiの戻り値の型を定義
+interface WXTShadowRootUI {
+  mount(): void;
+  remove(): void;
+}
+
+let currentUI: WXTShadowRootUI | null = null;
+
+async function activateReaderView(
+  ctx: ContentScriptContext,
+  styleController: StyleController
+) {
+  // 記事の抽出
+  const article = withErrorHandling(
+    () => extractContent(document),
+    (cause) => new ArticleExtractionError(cause)
+  );
+
+  if (!article) {
+    showPopupMessage(articleErrorMessage);
+    return;
+  }
+
+  // WXTのcreateShadowRootUiを使用してShadow DOM UI作成
+  await withAsyncErrorHandling(
+    async () => {
+      const ui = await createShadowRootUi(ctx, {
+        name: 'better-reader-view',
+        position: 'overlay',
+        anchor: 'body',
+        isolateEvents: false,
+        onMount: (container: HTMLElement, shadow: ShadowRoot) => {
+          // Reactコンポーネントをマウント
+          const root = ReactDOM.createRoot(container);
+
+          // 基本的なReaderViewコンポーネントをレンダリング
+          root.render(
+            <ReaderView
+              title={article.title}
+              content={article.content}
+              styleController={styleController}
+              shadowRoot={shadow}
+            />
+          );
+
+          // React rootを返すことで、onRemoveで自動的にunmountされる
+          return root;
+        },
+        onRemove: (root: ReactDOM.Root | undefined) => {
+          // React rootのアンマウント
+          root?.unmount();
+        },
+      });
+
+      // UIをマウント
+      ui.mount();
+      currentUI = ui;
+
+      // 状態を更新
+      await StorageManager.activateReaderView(
+        window.location.href,
+        document.title
+      );
+    },
+    (cause) => new ShadowDOMError('Shadow DOM UI作成', cause)
+  );
+}
+
+async function deactivateReaderView() {
+  await withAsyncErrorHandling(
+    async () => {
+      // UIをクリーンアップ
+      if (currentUI) {
+        currentUI.remove();
+        currentUI = null;
+      }
+
+      // 状態を更新
+      await StorageManager.deactivateReaderView();
+    },
+    (cause) => new ShadowDOMError('リーダービューの無効化', cause)
   );
 }
 
@@ -130,6 +209,13 @@ function showPopupMessage(message: string) {
       if (!container) {
         container = document.createElement('div');
         container.id = containerId;
+        container.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 2147483647;
+          max-width: 300px;
+        `;
         // body が存在する場合のみ body に追加する
         if (document.body) {
           document.body.appendChild(container);
@@ -148,28 +234,32 @@ function showPopupMessage(message: string) {
           throw renderingError;
         }
       }
+
       const root = ReactDOM.createRoot(container);
-
-      const handleClose = () => {
-        withErrorHandling(
-          () => {
-            root.unmount();
-            if (container && container.parentNode) {
-              // container が null でないことを確認
-              container.parentNode.removeChild(container);
+      root.render(
+        <PopupMessage
+          message={message}
+          onClose={() => {
+            try {
+              root.unmount();
+              container?.remove();
+            } catch (error) {
+              console.error('ポップアップメッセージの削除中にエラー:', error);
             }
-            return true;
-          },
-          (cause) => new RenderingError('ポップアップクローズ', cause)
-        );
-      };
+          }}
+        />
+      );
 
-      root.render(<PopupMessage message={message} onClose={handleClose} />);
-      return true;
+      // 3秒後に自動的に削除
+      setTimeout(() => {
+        try {
+          root.unmount();
+          container?.remove();
+        } catch (error) {
+          console.error('ポップアップメッセージの削除中にエラー:', error);
+        }
+      }, 3000);
     },
-    (cause) => new RenderingError('ポップアップメッセージ', cause)
+    (cause) => new RenderingError('ポップアップメッセージ表示', cause)
   );
 }
-
-// グローバル関数として登録してエラーハンドラーから使用可能にする
-(globalThis as Record<string, unknown>).showPopupMessage = showPopupMessage;
