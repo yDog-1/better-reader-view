@@ -62,7 +62,7 @@ export class WXTResourceManager {
           throw new ResourceManagerError('Context is invalidated');
         }
 
-        // WXTのContextScriptContextを使用した自動管理
+        // WXTのContentScriptContextを使用した自動管理
         this.ctx.addEventListener(element, event, listener, options);
         return true;
       },
