@@ -21,6 +21,9 @@ import {
   withAsyncErrorHandling,
 } from '@/utils/errors';
 import { StorageManager } from '@/utils/storage-config';
+import { StyleProvider } from '@/components/StyleProvider';
+import { WXTUIStateManager } from '@/utils/WXTUIStateManager';
+import { WXTResourceManager } from '@/utils/WXTResourceManager';
 
 const articleErrorMessage = '記事が見つかりませんでした。';
 
@@ -56,9 +59,14 @@ export default defineContentScript({
   cssInjectionMode: 'ui',
 
   async main(ctx: ContentScriptContext) {
-    // StyleControllerを初期化
+    // WXTUIStateManagerを使用してStyleControllerを初期化
     const styleController = withErrorHandling(
-      () => new StyleController(),
+      () =>
+        WXTUIStateManager.createInstance(
+          'styleController',
+          ctx,
+          () => new StyleController()
+        ),
       (cause) =>
         new StyleSystemInitializationError(
           'StyleControllerの作成に失敗しました',
@@ -100,6 +108,11 @@ async function toggleReaderView(
 ) {
   await withAsyncErrorHandling(
     async () => {
+      // リソースマネージャーを初期化
+      if (!resourceManager) {
+        resourceManager = new WXTResourceManager(ctx);
+      }
+
       // ストレージから状態を取得
       const state = await StorageManager.getReaderViewState();
       const isActive = state.isActive;
@@ -124,6 +137,7 @@ interface WXTShadowRootUI {
 }
 
 let currentUI: WXTShadowRootUI | null = null;
+let resourceManager: WXTResourceManager | null = null;
 
 async function activateReaderView(
   ctx: ContentScriptContext,
@@ -152,14 +166,16 @@ async function activateReaderView(
           // Reactコンポーネントをマウント
           const root = ReactDOM.createRoot(container);
 
-          // 基本的なReaderViewコンポーネントをレンダリング
+          // StyleProviderでラップしたReaderViewコンポーネントをレンダリング
           root.render(
-            <ReaderView
-              title={article.title}
-              content={article.content}
-              styleController={styleController}
-              shadowRoot={shadow}
-            />
+            <StyleProvider container={container} ctx={ctx}>
+              <ReaderView
+                title={article.title}
+                content={article.content}
+                styleController={styleController}
+                shadowRoot={shadow}
+              />
+            </StyleProvider>
           );
 
           // React rootを返すことで、onRemoveで自動的にunmountされる
@@ -250,15 +266,27 @@ function showPopupMessage(message: string) {
         />
       );
 
-      // 3秒後に自動的に削除
-      setTimeout(() => {
-        try {
-          root.unmount();
-          container?.remove();
-        } catch (error) {
-          console.error('ポップアップメッセージの削除中にエラー:', error);
-        }
-      }, 3000);
+      // 3秒後に自動的に削除（WXTResourceManagerを使用）
+      if (resourceManager) {
+        resourceManager.addTimer(() => {
+          try {
+            root.unmount();
+            container?.remove();
+          } catch (error) {
+            console.error('ポップアップメッセージの削除中にエラー:', error);
+          }
+        }, 3000);
+      } else {
+        // フォールバック: 通常のsetTimeout
+        setTimeout(() => {
+          try {
+            root.unmount();
+            container?.remove();
+          } catch (error) {
+            console.error('ポップアップメッセージの削除中にエラー:', error);
+          }
+        }, 3000);
+      }
     },
     (cause) => new RenderingError('ポップアップメッセージ表示', cause)
   );
