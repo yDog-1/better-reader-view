@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import type { ContentScriptContext } from 'wxt/utils/content-script-context';
 import {
   ResourceManagerError,
@@ -169,6 +170,14 @@ export class WXTResourceManager {
     }
 
     this.cleanupHandlers.clear();
+  }
+
+  /**
+   * リソースクリーンアップハンドラーを登録（別名メソッド）
+   * @param cleanup クリーンアップ関数
+   */
+  addCleanupHandler(cleanup: () => void): void {
+    this.registerCleanup(cleanup);
   }
 
   /**
