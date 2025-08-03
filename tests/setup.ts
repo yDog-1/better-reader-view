@@ -46,6 +46,7 @@ Object.defineProperty(globalThis, 'navigator', {
 
 // Ensure TextEncoder/TextDecoder are available
 if (typeof globalThis.TextEncoder === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, no-undef
   const { TextEncoder, TextDecoder } = require('util');
   globalThis.TextEncoder = TextEncoder;
   globalThis.TextDecoder = TextDecoder;

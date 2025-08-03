@@ -1,18 +1,33 @@
 import type { ContentScriptContext } from 'wxt/utils/content-script-context';
 
 /**
- * WXTのUI Lifecycleに合わせたステート管理クラス
- * ContentScriptContextの無効化時に自動的にインスタンスをクリーンアップ
+ * WXT UIライフサイクルに統合されたステート管理クラス
+ *
+ * このクラスは以下の機能を提供します：
+ * - シングルトンインスタンスの管理
+ * - ContentScriptContext無効化時の自動インスタンス削除
+ * - 型安全なインスタンス作成とアクセス
+ *
+ * @example
+ * ```typescript
+ * const styleController = WXTUIStateManager.createInstance(
+ *   'styleController',
+ *   ctx,
+ *   () => new StyleController()
+ * );
+ * ```
  */
 export class WXTUIStateManager {
   private static instances = new Map<string, unknown>();
 
   /**
-   * シングルトンインスタンスの作成または取得
+   * 指定した名前でインスタンスを作成または取得
+   * ContentScriptContext無効化時に自動的にインスタンスが削除されます
+   *
    * @param name インスタンスの識別名
-   * @param ctx WXTのContentScriptContext
-   * @param factory インスタンスを作成するファクトリ関数
-   * @returns 作成または取得されたインスタンス
+   * @param ctx WXT ContentScriptContext
+   * @param factory インスタンス作成ファクトリ関数
+   * @returns 作成または既存のインスタンス
    */
   static createInstance<T>(
     name: string,
@@ -23,7 +38,7 @@ export class WXTUIStateManager {
       const instance = factory();
       this.instances.set(name, instance);
 
-      // コンテキスト無効化時のクリーンアップ
+      // ContentScriptContext無効化時に自動削除
       ctx.onInvalidated(() => {
         this.instances.delete(name);
       });
@@ -33,15 +48,15 @@ export class WXTUIStateManager {
   }
 
   /**
-   * インスタンスの手動削除
-   * @param name インスタンスの識別名
+   * インスタンスを削除
+   * @param name 削除するインスタンスの識別名
    */
   static removeInstance(name: string): void {
     this.instances.delete(name);
   }
 
   /**
-   * すべてのインスタンスをクリア
+   * 全てのインスタンスをクリア
    */
   static clearAll(): void {
     this.instances.clear();
