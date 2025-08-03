@@ -196,14 +196,6 @@ export class WXTResourceManager {
   getContext(): ContentScriptContext {
     return this.ctx;
   }
-
-  /**
-   * リソースクリーンアップハンドラーを登録（別名メソッド）
-   * @param cleanup クリーンアップ関数
-   */
-  addCleanupHandler(cleanup: () => void): void {
-    this.registerCleanup(cleanup);
-  }
 }
 
 /**
