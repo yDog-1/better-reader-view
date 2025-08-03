@@ -172,6 +172,14 @@ export class WXTResourceManager {
   }
 
   /**
+   * リソースクリーンアップハンドラーを登録（別名メソッド）
+   * @param cleanup クリーンアップ関数
+   */
+  addCleanupHandler(cleanup: () => void): void {
+    this.registerCleanup(cleanup);
+  }
+
+  /**
    * コンテキストが有効かどうかを確認
    *
    * @returns コンテキストが有効な場合はtrue
