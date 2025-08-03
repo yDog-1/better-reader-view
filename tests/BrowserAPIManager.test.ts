@@ -199,15 +199,22 @@ describe('BrowserAPIManager', () => {
     });
 
     it('navigatorが存在しない場合はunknownを返す', () => {
-      // navigatorを一時的に削除
+      // navigatorを一時的にundefinedに設定
       const originalNavigator = globalThis.navigator;
-      // @ts-expect-error テスト用にnavigatorを削除
-      delete globalThis.navigator;
+      Object.defineProperty(globalThis, 'navigator', {
+        writable: true,
+        configurable: true,
+        value: undefined,
+      });
 
       expect(BrowserAPIManager.getBrowserType()).toBe('unknown');
 
       // navigatorを復元
-      globalThis.navigator = originalNavigator;
+      Object.defineProperty(globalThis, 'navigator', {
+        writable: true,
+        configurable: true,
+        value: originalNavigator,
+      });
     });
   });
 
