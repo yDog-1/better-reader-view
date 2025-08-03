@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import type { ContentScriptContext } from 'wxt/utils/content-script-context';
 import {
   ResourceManagerError,

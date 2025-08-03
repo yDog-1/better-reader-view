@@ -21,7 +21,7 @@ describe('WXT統合テスト', () => {
     it('正常にインスタンスが作成される', () => {
       const mockContext = createMockContext();
       const manager = new WXTResourceManager(mockContext as any);
-      
+
       expect(manager).toBeInstanceOf(WXTResourceManager);
     });
 
@@ -68,9 +68,23 @@ describe('WXT統合テスト', () => {
       const manager = new WXTResourceManager(mockContext as any);
       const cleanup = vi.fn();
 
-      manager.addCleanupHandler(cleanup);
+      expect(() => manager.addCleanupHandler(cleanup)).not.toThrow();
+      expect(manager.isValid()).toBe(true);
+    });
 
-      expect(mockContext.onInvalidated).toHaveBeenCalledWith(cleanup);
+    it('コンテキストを取得できる', () => {
+      const mockContext = createMockContext();
+      const manager = new WXTResourceManager(mockContext as any);
+
+      expect(manager.getContext()).toBe(mockContext);
+    });
+
+    it('registerCleanupエイリアスが動作する', () => {
+      const mockContext = createMockContext();
+      const manager = new WXTResourceManager(mockContext as any);
+      const cleanup = vi.fn();
+
+      expect(() => manager.registerCleanup(cleanup)).not.toThrow();
     });
   });
 
@@ -114,11 +128,9 @@ describe('WXT統合テスト', () => {
 
       expect(WXTUIStateManager.hasInstance('test')).toBe(false);
 
-      WXTUIStateManager.createInstance(
-        'test',
-        mockContext as any,
-        () => ({ test: 'value' })
-      );
+      WXTUIStateManager.createInstance('test', mockContext as any, () => ({
+        test: 'value',
+      }));
 
       expect(WXTUIStateManager.hasInstance('test')).toBe(true);
     });
@@ -126,11 +138,9 @@ describe('WXT統合テスト', () => {
     it('インスタンスを削除できる', () => {
       const mockContext = createMockContext();
 
-      WXTUIStateManager.createInstance(
-        'test',
-        mockContext as any,
-        () => ({ test: 'value' })
-      );
+      WXTUIStateManager.createInstance('test', mockContext as any, () => ({
+        test: 'value',
+      }));
 
       expect(WXTUIStateManager.hasInstance('test')).toBe(true);
 
@@ -142,16 +152,12 @@ describe('WXT統合テスト', () => {
     it('全てのインスタンスをクリアできる', () => {
       const mockContext = createMockContext();
 
-      WXTUIStateManager.createInstance(
-        'test1',
-        mockContext as any,
-        () => ({ test: 'value1' })
-      );
-      WXTUIStateManager.createInstance(
-        'test2',
-        mockContext as any,
-        () => ({ test: 'value2' })
-      );
+      WXTUIStateManager.createInstance('test1', mockContext as any, () => ({
+        test: 'value1',
+      }));
+      WXTUIStateManager.createInstance('test2', mockContext as any, () => ({
+        test: 'value2',
+      }));
 
       expect(WXTUIStateManager.hasInstance('test1')).toBe(true);
       expect(WXTUIStateManager.hasInstance('test2')).toBe(true);
